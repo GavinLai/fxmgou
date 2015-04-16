@@ -1,0 +1,84 @@
+@CHARSET "UTF-8";
+
+.fl {float: left;display: inline;}
+.fr {float: right;display: inline;}
+.hide {display: none;}
+
+/* Clearfix */
+.clearfix:after {
+	content: ".";
+	display: block;
+	height: 0;
+	clear: both;
+	visibility: hidden;
+}
+.clearfix {
+  /*display: inline;*/
+	overflow:hidden;
+}
+.bbsizing {
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -o-box-sizing: border-box;
+  -ms-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.autoflow {overflow: auto;zoom: 1;}
+a {text-decoration: none}
+a:hover {text-decoration: underline}
+a.nudl:hover {text-decoration: none;}
+button,input,select,textarea {margin: 0}
+input[type="button"],input[type="submit"],input[type="image"],button {cursor: pointer}
+textarea {overflow: auto;border: 1px solid #ccc;padding: 4px 3px;font-size: 100%;resize: none}
+select {padding: 2px;border: 1px solid #ccc}
+button {width: auto;overflow: visible;line-height: 1.2}
+button::-moz-focus-inner {border: 0; padding: 0}
+
+html, body {height: 100%;min-height:100%;overflow: hidden;display: block;}
+body {font: normal 14px/1.4 "Helvetica Neue",Helvetica,Arial,sans-serif;background: #BEBDC1;word-wrap: break-word;word-break: break-all;}
+
+/*----- the following is project relative -----*/
+#rtWrap {width: 100%;min-height: 100%;}
+#rtWrap a:hover {text-decoration: none;}
+.page {position: absolute;top: 80px;right: 0;bottom: 80px;left: 0;overflow-x:hidden;overflow-y:scroll;-webkit-overflow-scrolling: touch;}
+
+.header {height: 80px;line-height: 80px;background-color:#cc3300;text-align: center;position: fixed;top:0;width:100%;z-index:100;}
+.header .headit{height: 100%;display: none;}
+.header .head-cur{display: block;}
+.header .txt {color: #fff;font-size: 40px;font-weight: bold;}
+.header .bg{ position: absolute;background:url(../img/icon_title.png) no-repeat;width: 60px;height: 62px;text-indent: -9999px; }
+.header .u { background-position: 0 -125px;top: 13px;right: 10px;}
+.header .b { background-position: 0 -186px;top: 13px;left: 0;}
+.header .e { background-position: 0 -310px;top: 13px;right: 10px;}
+.header .s { background-position: 0 0;top: 13px;left: 0px;}
+.header .i { background-position: 0 -62px;top: 13px;right: 10px;}
+.header .f { background-position: 0 -245px;top: 13px;right: 10px;}
+.header .r { background:#fff; line-height:35px; font:normal 24px/40px Helvetica; color:#cc3300;padding:0 15px; -webkit-border-radius: 8px;-moz-border-radius: 8px;border-radius: 8px; display:inline-block; position:absolute; top:18px; right:10px;}
+
+.content {background-color:#fff;position:absolute;left:0;top:0;width:100%;}
+
+.nav {height:80px;line-height:80px;position:fixed;bottom:0;width:100%;background-color:#333;z-index:1000;}
+.nav .main {height:100%;width:100%;color:#fff;text-align:center;margin:0 auto;}
+.nav .main li {float:left;width:25%;}
+.nav .main li.cur {background-color:#cc3300;}
+.nav .main a{color:#fff;display:block;}
+.nav .main .txt {font-size:36px;font-weight:bold;color:#fff;}
+.nav .main img {background:url(../img/icon_menu.png) no-repeat;width:35px;height:28px;}
+.nav .main .tj img {background-position:0 0;}
+.nav .main .yx img {background-position:0 -28px;}
+.nav .main .zx img {background-position:0 -56px;}
+.nav .main .kf img {background-position:0 -84px;}
+
+.tabs {background-color:#dbdbdb;overflow:auto;zoom:1;}
+.tabs li{float:left;width:50%;text-align:center;font:bold 25px/70px Helvetica;}
+.tabs li a{color:#333;display:block;}
+.tabs .curr a{color:#cc3300;border-bottom:8px solid #cc3300;}
+
+.popdlg,.popdlg-bg {display:none;position:absolute;z-index:30000;}
+.popdlg-bg {opacity:.45;background:#000;top:0;right:0;bottom:0;left:0;}
+.popdlg {display:none;top:100px;width:420px;z-index:30003;background:#fff;-moz-box-shadow:0 0 2px #ccc;-webkit-box-shadow:0 0 2px #ccc;box-shadow:0 0 2px #ccc;}
+.popdlg .poptit {height:80px;line-height:80px;background-color:#cc3300;text-align:center;}
+.popdlg .poptit .txt {color:#fff;font-size:38px;}
+.popdlg .poptit .bg {position:absolute;background:url(../img/icon_title.png) no-repeat;width:60px;height:62px;text-indent:-9999px;}
+.popdlg .poptit .x {background-position: 0 -364px;top: 13px;right: 10px;}
+.popdlg .popcont {padding:10px;min-height:200px;}

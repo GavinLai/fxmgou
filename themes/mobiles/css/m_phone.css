@@ -1,0 +1,193 @@
+@CHARSET "UTF-8";
+
+/*---------- common.css ----------*/
+
+.header {height: 40px;line-height: 40px;}
+.header .txt {font-size: 20px;}
+
+.page {top: 40px;bottom: 40px;}
+
+.nav {height: 40px;line-height: 40px;}
+.nav .main li {float: left;}
+.nav .main .txt {font-size: 18px;}
+
+.tabs li{font: bold 16px/35px Helvetica;}
+.tabs .curr a{border-bottom:4px solid #cc3300;}
+
+.popdlg {top:0;bottom:40px;width:100%;}
+.popdlg .poptit {height:40px;line-height:40px;}
+.popdlg .poptit .txt {font-size:20px;}
+.popdlg .poptit .bg {background:url(../img/icon_title@2x.png) no-repeat;background-size:100%;width:30px;height:31px;}
+.popdlg .poptit .x {background-position: 0 -184px;top: 9px;right: 5px;}
+
+/*---------- m.css ----------*/
+
+/* index */
+.content ul.gamelist {padding: 8px 5px;}
+.content .gamelist li {width: 77px;}
+img.gamelogo {width:71px;}
+
+/* pic slider */
+.slider li span{height:25px;font:14px/25px Helvetica;}
+.pagenavi {bottom:8px;}
+
+/* game */
+.main-game ul li .imgw{ width:95px; text-align:center;}
+.main-game ul li img.next{top:36px;right:20px;width:10px;height:28px;}
+.main-game ul li .text b{font:normal 14px/1.1 Helvetica;}
+.main-game ul li .text font{font:normal 12px/1 Helvetica;}
+
+/* game detail */
+.main-detail {padding:20px 5px;}
+.main-detail .gameleft {width:81px;}
+.main-detail .gameright {left:81px;}
+.main-detail .gametitle h2 {font:normal 18px Helvetica;}
+.main-detail .gamel p {font:normal 12px/18px Helvetica;}
+.main-detail .gamer{margin:14px 0 0 0; padding:5px 9px;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;font-size:12px;}
+.main-detail .title{border-bottom:2px solid #ccc;margin-top:5px;}
+.main-detail .title h2{margin-bottom:-2px; font:normal 16px/20px Helvetica;border-bottom:2px solid #cc3300;}
+.main-detail .info{font-size:14px;padding:8px 0 2px;height:60px;line-height:1.5em;text-indent:20px; border-bottom:1px solid #ccc;}
+.main-detail .bodyMain {height:170px;}
+.main-detail .bodyMain .bodyBox {width:280px;height:155px;}
+.main-detail .bodyMain .btndir {top:85px;width:10px;height:19px;background-size:100%;}
+.main-detail .bodyMain .bodyPage{height:16px;}
+.main-detail .bodyMain .bodyPage a{width:5px;height:5px;margin:0px 2px;-webkit-border-radius: 20px;-moz-border-radius: 20px;border-radius: 20px;}
+
+.download-list a {padding-left:55px;height:48px;line-height:48px;font-size:18px;background:url(../img/icon_down@2x.png) no-repeat;background-size:40px;-webkit-border-radius: 5px;-moz-border-radius: 5px;border-radius: 5px;}
+.download-list a.lc{background-position: 10px -38px;}
+.download-list a.as{background-position: 10px -38px;}
+.download-list a.apk{background-position:10px 5px;}
+
+/* info */
+.main-info .infobox {padding:10px 5px 25px;}
+.main-info .listle {margin-right:70px;}
+.main-info .listle h2 {font:normal 16px/20px Helvetica;padding-bottom:4px;}
+.main-info .listle .tips{font:normal 12px/15px Helvetica;padding-left:13px;}
+.main-info .listimg {width:67px;height:48px;}
+.main-info .gameac a{margin-bottom:2px;}
+.main-info .gameac span{height:30px;bottom:4px;font:normal 16px/30px Helvetica;}
+
+/* info-detail */
+.main-infodt .mainne{padding:10px 10px 15px;}
+.main-infodt .tt{font-size:18px;}
+.main-infodt .time1{font-size:12px;line-height:15px;margin-bottom:7px;}
+.main-infodt .infoimg{margin-bottom:5px;}
+
+/* login */
+.main-login .bitian{font:normal 12px/30px Helvetica; height:30px;}
+.main-login .txtinput{height:90px;}
+.main-login .txtinput1 span{font:normal 15px/45px Helvetica;}
+.main-login .txtinput1 .w112{width:56px;}
+.main-login .txtinput1 .w450{width:225px;}
+.main-login .txtinput1 .w450 input{width:225px;font:normal 14px/44px Helvetica;}
+.main-login .autoj {padding:15px 0 5px 0 ;font-size:12px;}
+.main-login .regbtn{margin:10px 0 0 0;font:normal 18px/44px Helvetica;}
+.main-user .user{padding:15px 0 10px;}
+.main-user .photo{width:110px;}
+.main-user .photo img{width:67px; height:67px; -webkit-border-radius: 67px;-moz-border-radius: 67px;border-radius: 67px;}
+.main-user .upinfo{padding:8px 0 65px;}
+.main-user .phoright h2{font:normal 15px Helvetica;}
+.main-user .phoright span{font:normal 12px Helvetica;}
+.main-user .listup{padding-bottom:8px;}
+.main-user .listup span{font:12px/15px Helvetica;}
+.main-user .listup .w205{width:102px;}
+.main-user .listup .w288{width:144px;}
+.main-user .listup .upa{padding:1px 11px;font:normal 11px Helvetica;}
+.main-user .zhux{margin:15px auto 0; font:normal 15px/32px Helvetica;-webkit-border-radius: 3px;-moz-border-radius: 3px;border-radius: 3px;width:290px;}
+.main-user .input_edit{width:125px;height:11px;margin-right:17px;}
+.main-login .chek{padding:15px 0 0 12px;font:normal 12px/18px Helvetica;}
+
+/* kefu */
+.main-kf {padding:15px;}
+
+/*========== match retina display ==========*/
+/*
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (   min--moz-device-pixel-ratio: 2),
+only screen and (     -o-min-device-pixel-ratio: 2/1),
+only screen and (        min-device-pixel-ratio: 2),
+only screen and (                min-resolution: 192dpi),
+only screen and (                min-resolution: 2dppx) {
+*/
+/*----- common.css -----*/
+
+.header .bg{background:url(../img/icon_title@2x.png) no-repeat;background-size: 100%;width:30px;height:31px;top: 6px;}
+.header .u {background-position: 0 -64px;top: 9px;right: 5px;}
+.header .b {background-position: 0 -91px;left: 0;}
+.header .s {background-position: 0 0;left: 0;}
+.header .i {background-position: 0 -31px;right: 5px;}
+
+.nav .main img {background: url(../img/icon_menu@2x.png) no-repeat;background-size: 100%;width: 18px;height: 14px;}
+.nav .main .tj img {background-position: 0 1px;}
+.nav .main .yx img {background-position: 0 -15px;}
+.nav .main .zx img {background-position: 0 -29px;}
+.nav .main .kf img {background-position: 0 -45px;}
+
+/*----- m.css -----*/
+.main-info .listle .num{background:url(../img/num@2x.png) no-repeat left center;background-size:11px 10px; width:35px;}
+.main-info .listle .time{background:url(../img/time@2x.png) no-repeat left center;background-size:10px;}
+  
+/*}*/
+
+/* for 320px(like iphone4/4s/5/5s) width screen 
+@media only screen and (max-width:320px){
+  
+}
+*/
+
+/* greater than 320px screen */
+@media only screen and (min-width:321px){
+  .content .gamelist li {margin-bottom: 15px;}
+}
+
+/* for 360px(like samsung note3) width screen */
+@media only screen and (min-width:321px) and (max-width:360px){
+  .content .gamelist li {width: 86px;}
+}
+
+/* for 480px width screen */
+@media only screen and (min-width:361px) and (max-width:480px){
+  .content .gamelist li {width: 78px;}
+}
+
+/* for 568px(iphone5/5s landscape) width screen */
+@media only screen and (min-width:481px) and (max-width:568px){
+  .content .gamelist li {width: 79px;}
+}
+
+/* for 640px(like samsung note3 landscape) width screen */
+@media only screen and (min-width:569px) and (max-width:640px){
+  .content .gamelist li {width: 90px;}
+}
+ 
+/* for 768px(ipad portrait) width screen */
+@media only screen and (min-width:641px) and (max-width:768px){
+	.content .gamelist li {width: 84px;}
+}
+ 
+/* for 1024px(ipad landscape) width screen */
+@media only screen and (min-width:769px){
+	.content .gamelist li {width: 92px;}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
