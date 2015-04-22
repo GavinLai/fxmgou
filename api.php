@@ -5,7 +5,7 @@
  * @author Gavin<laigw.vip@gmail.com>
  */
 if (!isset($_GET['q']) || empty($_GET['q'])) {
-  $_GET['q'] = 'wxserver';
+  $_GET['q'] = 'weixin/fxmgou';
 }
 
 //~ require init.php

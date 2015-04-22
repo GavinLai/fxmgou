@@ -24,7 +24,7 @@ class Weixin {
 	 * Allow weixin public account
 	 * @var array
 	 */
-	public static $allowAccount = array('fxm','zfy','lyl');
+	public static $allowAccount = array('fxmgou');
 	
 	/**
 	 * WeixinHelper instance
@@ -127,11 +127,10 @@ class Weixin {
 
 	/**
 	 * 初始化配置
-	 * @param string $target, 目标平台，可选值：'','fxm','zfy'
+	 * @param string $target, 目标平台，可选值：'fxmgou' 等
 	 */
-	private function init($target = '')
+	private function init($target)
 	{
-	  $target = ''==$target ? 'fxm' : $target;
 	  if (!in_array($target, self::$allowAccount)) {
 	    throw new Exception("Weixin public account not allowed: {$target}");
 	  }
@@ -151,9 +150,9 @@ class Weixin {
 	
 	/**
 	 * 构造函数
-	 * @param string $target, 目标平台，可选值：'','fxm','zfy'
+	 * @param string $target, 目标平台，可选值：'fxmgou' 等
 	 */
-	public function __construct($target = '')
+	public function __construct($target)
 	{
 		$this->init($target); //该句必须出现在所有对外方法的最开始
 	}
@@ -163,12 +162,12 @@ class Weixin {
 	 */
 	public function valid()
 	{
-	  $echoStr = $_GET["echostr"];
+	  $echoStr = $_GET['echostr'];
     if($this->checkSignature()){
       echo $echoStr;
     }
     else {
-      echo "";
+      echo '';
     }
     exit;
 	}

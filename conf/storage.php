@@ -37,7 +37,7 @@ return [
   ],
   'memcache' => [
     'node' => [
-      ['host' => '192.168.1.102', 'port' => '11211', 'prefix' => 'M8_'],
+      ['host' => '127.0.0.1', 'port' => '11211', 'prefix' => 'FXM_'],
     ],
   ],
   'session' => [
@@ -58,20 +58,28 @@ return [
   ],
   'cookie' => [
     'default' => [
-      'domain'	  => 'fxm.xurl.cn',
+      'domain'	  => 'm.fxmgou.com',
       'path'		  => '/',
       'lifetime'  => 0,
       'secure'    => 0,
       'httponly'  => 0,
-      'prefix'    => 'ZF',
+      'prefix'    => 'FXM',
+    ],
+    'api' => [
+      'domain'	  => 'api.fxmgou.com',
+      'path'		  => '/',
+      'lifetime'  => 0,
+      'secure'    => 0,
+      'httponly'  => 0,
+      'prefix'    => 'FXM',
     ],
     'adm' => [
-      'domain'	  => 'adm.zhufuyu.cn',
+      'domain'	  => 'adm.fxmgou.com',
       'path'		  => '/',
       'lifetime'  => 0,
       'secure'    => 0,
       'httponly'  => 0,
-      'prefix'    => 'AM',
+      'prefix'    => 'ADM',
     ],
   ],
 ];

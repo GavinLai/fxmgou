@@ -7,7 +7,7 @@
 defined('IN_SIMPHP') or die('Access Denied');
 
 return [
-  'weixin_fxm' => [
+  'weixin_fxmgou' => [
     /*
     //production setting
     'appId'          => 'wx625c8f7d65c98fd3',

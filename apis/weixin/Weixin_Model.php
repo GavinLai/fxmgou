@@ -6,8 +6,8 @@
  */
 defined('IN_SIMPHP') or die('Access Denied');
 
-class Wxserver_Model extends Model {
+class Weixin_Model extends Model {
   
 }
 
-/*----- END FILE: Wxserver_Model.php -----*/
+/*----- END FILE: Weixin_Model.php -----*/

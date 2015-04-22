@@ -9,6 +9,7 @@ test*.html
 .project
 .cproject
 .settings/
+.externalToolBuilders/
 
 # Windows image file caches
 Thumbs.db
