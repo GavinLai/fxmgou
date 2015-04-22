@@ -212,21 +212,25 @@ class SimPHP {
   /**
    * Bootstrap Running Component
    *
-   * @param integer $rc, Running Component
+   * @param integer $rc, Running Component, 
+   *       optional value: RC_NONE,RC_DATABASE,RC_MEMCACHE,RC_SESSION,RC_ALL
+   *       or: RC_DATABASE | RC_MEMCACHE | RC_SESSION
+   *       or: RC_ALL ^ RC_MEMCACHE ^ RC_SESSION
+   *       or: RC_ALL & ~RC_MEMCACHE & ~RC_SESSION
    * @return SimPHP
    */
   public function boot($rc=RC_NONE) {
     
     if ($rc>0) {
       
-      //$rc_set = array(RC_NONE,RC_DATABASE,RC_MEMCACHE,RC_SESSION,RC_ALL);
-      if ($rc XOR RC_DATABASE < $rc) { //Bootstrap with db
+      //$rc_set = [RC_NONE,RC_DATABASE,RC_MEMCACHE,RC_SESSION,RC_ALL];
+      if ( (RC_DATABASE & $rc) === RC_DATABASE ) { //Bootstrap with db
         D();
       }
-      if ($rc XOR RC_MEMCACHE < $rc) { //Bootstrap with memcache
+      if ( (RC_MEMCACHE & $rc) === RC_MEMCACHE ) { //Bootstrap with memcache
         M();
       }
-      if ($rc XOR RC_SESSION < $rc) { //Bootstrap with session
+      if ( (RC_SESSION & $rc) === RC_SESSION ) { //Bootstrap with session
         $GLOBALS['user'] = new stdClass();
         $sessnode  = $this->sessnode;
         $sess_handler = Config::get("storage.session.{$sessnode}.handler",'file');
@@ -240,6 +244,7 @@ class SimPHP {
           session_start();
         }
       }
+      
     }
     
     return $this;

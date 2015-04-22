@@ -16,7 +16,7 @@ $response = new Response();
 
 try {
   SimPHP::I(['modroot'=>'apis'])
-  ->boot(RC_SESSION)
+  ->boot(RC_DATABASE)
   ->dispatch($request,$response);
 }
 catch (SimPHPException $me) {

@@ -19,7 +19,7 @@ $response = new Response();
 
 try {
   SimPHP::I(['modroot'=>'admins', 'sessnode'=>'adm'])
-  ->boot(RC_SESSION)
+  ->boot(RC_ALL ^ RC_MEMCACHE)
   ->dispatch($request,$response);
 }
 catch (SimPHPException $me) {
