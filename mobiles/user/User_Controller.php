@@ -279,7 +279,7 @@ class User_Controller extends Controller {
             $wx->authorizing('http://'.$request->host().'/user/oauth/'.$from, 'detail');
           }
           else { //成功！
-            $auth_method = 'native';//基本接口认证方式
+            $auth_method = 'oauth2_base';//基本接口认证方式
           }
                     
         }
@@ -290,7 +290,7 @@ class User_Controller extends Controller {
             User_Model::showInvalidLogin('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
           }
           else { //成功!
-            $auth_method = 'oauth2';//OAuth2认证方式
+            $auth_method = 'oauth2_detail';//OAuth2认证方式
           }
         }
         

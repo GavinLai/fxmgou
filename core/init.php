@@ -53,7 +53,7 @@ define('RC_ALL', 2047);
 /**
  * require constant configure
  */
-require (SIMPHP_ROOT.'/conf/CONSTANT.php');
+require (SIMPHP_ROOT.'/conf/const.php');
 
 /**
  * require global needed function files

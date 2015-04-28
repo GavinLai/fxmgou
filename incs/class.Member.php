@@ -195,12 +195,29 @@ class Member{
 	{
 	  if (empty($data)) return FALSE;
 	  $now  = simphp_time();
-	  $data = array_merge($data,['regip'=>Request::ip(), 'regtime'=>$now, 'posttime'=>$now, 'salt'=>gen_salt(), 'state'=>1, 'from'=>$from]);
+	  $salt = gen_salt();
+	  $data = array_merge($data,['regip'=>Request::ip(), 'regtime'=>$now, 'posttime'=>$now, 'salt'=>$salt, 'state'=>1, 'from'=>$from]);
 	  $uid  = D()->insert('member', $data);
 	  if($uid>0){
 	    if (empty($data['username'])) {
+	      $data['username'] = $uid;
 	      D()->update('member' , ['username'=>$uid] , ['uid'=>$uid]);
 	    }
+	    
+	    //~ 插入ecshop数据表users
+	    $ecdb  = ECDB;
+	    $ecpre = ECDB_PRE;
+	    
+	    $ec_email = isset($data['email']) ? $data['email'] : '';
+	    $ec_uname = $data['username'] . '@' . $from;
+	    $ec_pass  = isset($data['password']) ? $data['password'] : '';
+	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
+	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
+	    
+	    $sql   = "INSERT INTO {$ecdb}.`{$ecpre}users`(`member_id`,`email`,`user_name`,`password`,`sex`,`address_id`,`reg_time`,`ec_salt`) VALUES";
+	    $sql  .= "(%d,'%s','%s','%s',%d,%d,%d,'%s')";
+	    D()->raw_query($sql,$uid,$ec_email,$ec_uname,$ec_pass,$ec_sex,$ec_addr,$now,$salt);
+	    
 	    return $uid;
 	  }
 	  return FALSE;
@@ -220,18 +237,67 @@ class Member{
 	  $data = array_merge($data,['posttime'=>simphp_time()]);
 	  
 	  $where= [];
+	  $uid  = 0;
 	  if (is_numeric($openid) && $openid>0) {
 	    $where = ['uid'=>$openid];
+	    $uid   = $openid;
 	  }
 	  else {
 	    $where = ['openid'=>$openid, 'from'=>$from];
+	    $uid   = D()->result("SELECT `uid` FROM {member} WHERE `openid`='%s' AND `from`='%s'", $openid,$from);
 	  }
 	
 	  $effcnt=0;
 	  if (!empty($where)) {
 	    $effcnt = D()->update('member', $data, $where);
+	    
+	    //~ 更新ecshop数据表users
+	    $ecdb  = ECDB;
+	    $ecpre = ECDB_PRE;
+	    
+	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
+	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
+	     
+	    $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `sex`=%d,`address_id`=%d,`last_time`='%s' WHERE `member_id`=%d";
+	    D()->raw_query($sql,$ec_sex,$ec_addr,simphp_dtime(),$uid);
+	    
 	  }
 	  return $effcnt ? $effcnt : FALSE;
+	}
+	
+	/**
+	 * 获取ecshop数据表的region id
+	 * @param string $city
+	 * @param string $province
+	 * @param string $country
+	 * @return number
+	 */
+	public static function getECRegionId($city, $province = '', $country = '') {
+	  $theid = 0;
+	  
+	  if (!empty($city)) {
+	    $ecdb  = ECDB;
+	    $ecpre = ECDB_PRE;
+	    $sql = "SELECT `region_id` FROM {$ecdb}.`{$ecpre}region` WHERE `region_name`='%s' AND ";
+	    $row = D()->raw_query($sql."region_type=2",$city)->get_one();
+	    if (empty($row)) {
+	      $row = D()->raw_query($sql."region_type=1",$province)->get_one();
+	      if (empty($row)) {
+	        $row = D()->raw_query($sql."region_type=0",$country)->get_one();
+	        if (!empty($row)) {
+	          $theid = $row['region_id'];
+	        }
+	      }
+	      else {
+	        $theid = $row['region_id'];
+	      }
+	    }
+	    else {
+	      $theid = $row['region_id'];
+	    }
+	  }
+	  
+	  return $theid;
 	}
 	
 	/**

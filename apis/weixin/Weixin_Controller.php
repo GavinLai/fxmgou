@@ -45,9 +45,7 @@ class Weixin_Controller extends Controller {
       }
     }
     else { //接口验证
-      //trace_debug('weixin_valid', $_GET);
-      //$wx->valid();
-      echo "4807449074598354879";
+      $wx->valid();
     }
     exit;
   }

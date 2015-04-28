@@ -6,7 +6,9 @@
  */
 defined('IN_SIMPHP') or die('Access Denied');
 
-//define('SAMP_CONSTANT', 'Sample Constant');
+// ecshop数据库名称
+define('ECDB', 'fxmshop');
+define('ECDB_PRE', 'fxs_');
 
 
 
@@ -14,7 +16,4 @@ defined('IN_SIMPHP') or die('Access Denied');
 
 
 
-
-
-
-/*----- END FILE: CONSTANT.php -----*/
+/*----- END FILE: const.php -----*/

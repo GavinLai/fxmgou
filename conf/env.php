@@ -31,7 +31,7 @@ return [
   'tpldebug' => 1,
   //站点信息
   'site' => [
-  	'mobile' => 'fxm.xurl.cn',
+  	'mobile' => 'm.fxmgou.cn',
   ],
   //上传文件保存目录 
   'picsavedir'=>'/a/',

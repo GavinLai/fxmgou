@@ -264,112 +264,20 @@ class Weixin {
           case '100':
             break;
           case '201'://文字
-            $page_size = 5;
-            $data = $this->helper->getNode('word',$page_size);
-            //msgTpl
-            foreach($data as $val){
-              $contentText .= sprintf(self::$msgTpl['news_item'], "\n".$val['content'], $val['content'], '', $base_url."/node/{$val['nid']}/edit");
-            }
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data), $contentText);
-            return $responseText;
             break;
           case '202'://贺卡
-            $page_size = 5;
-            $data = $this->helper->getNode('card',$page_size);
-            //msgTpl
-            foreach($data as $val){
-              $title = $val['content']=='' ? $val['title']:$val['content'];
-              $picUrl = $val['cover_url'] ? $val['cover_url'] : $val['card_url'];
-              $picUrl = preg_match("!^(http|https):\/\/!i", $picUrl) ? $picUrl : $base_url.$picUrl;
-              $contentText .= sprintf(self::$msgTpl['news_item'], $title, $title, $picUrl, $base_url."/node/{$val['nid']}/edit");
-            }
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data),$contentText);
-            return $responseText;
             break;
           case '203'://音乐
-            $page_size = 5;
-            $data = $this->helper->getNode('music',$page_size);
-            //msgTpl
-            foreach($data as $val){
-              $picUrl = $val['icon_url'] ? $val['icon_url'] : $val['bg_url'];
-              $picUrl = preg_match("!^(http|https):\/\/!i", $picUrl) ? $picUrl : $base_url.$picUrl;
-              $contentText .= sprintf(self::$msgTpl['news_item'], $val['title'].' - '.$val['singer_name'], $val['title'].' - '.$val['singer_name'], $picUrl, $base_url."/node/{$val['nid']}/edit");
-            }
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data),$contentText);
-            return $responseText;
             break;
           case '204'://礼物
-            $page_size = 5;
-            $data = $this->helper->getNode('gift',$page_size);
-            //msgTpl
-          
-            foreach($data as $val){
-              $contentText .= sprintf(self::$msgTpl['news_item'], $val['title'], strip_tags($val['desc']), preg_match("!^(http|https):\/\/!i", $val['goods_url']) ? $val['goods_url'] : $base_url.$val['goods_url'], $base_url."/mall/detail/{$val['nid']}");
-            }
-          
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data),$contentText);
-            return $responseText;
             break;
-
           case '205'://随机
-            $page_size = 5;
-            $data = $this->helper->getNode('random',$page_size);
-            //msgTpl
-            foreach($data as $val){
-              switch ($val['type_id']) {
-                case 'word':
-                  $title = "\n".$val['content'];
-                  $desc = $val['content'];
-                  //$pic = $base_url.'/misc/images/napp/touch-icon-256.png';
-                  $pic = '';
-                  $link = $base_url."/node/{$val['nid']}/edit";
-                  break;
-                case 'card':
-                  $title = $val['content']=='' ? $val['title']:$val['content'];
-                  $desc = $val['content'];
-                  $pic  = preg_match("!^(http|https):\/\/!i", $val['cover_url']) ? $val['cover_url'] : $base_url.$val['cover_url'];
-                  $link = $base_url."/node/{$val['nid']}/edit";
-                  break;
-                case 'music':
-                  $title = $val['title'].' - '.$val['singer_name'];
-                  $desc = $val['title'].' - '.$val['singer_name'];
-                  $pic  = preg_match("!^(http|https):\/\/!i", $val['bg_url']) ? $val['bg_url'] : $base_url.$val['bg_url'];
-                  $link = $base_url."/node/{$val['nid']}/edit";
-                  break;
-                case 'gift':
-                  $title = $val['title'];
-                  $desc = $val['title'].' - '.strip_tags($val['desc']);
-                  $pic  = preg_match("!^(http|https):\/\/!i", $val['goods_url']) ? $val['goods_url'] : $base_url.$val['goods_url'];
-                  $link = $base_url."/mall/detail/{$val['nid']}";
-                  break;                                           
-                default:
-                  # code...
-                  break;
-              }
-              $contentText .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
-            }
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data),$contentText);
-            return $responseText;
             break;
-
           case '301'://活动
-            $page_size = 3;
-            $data = $this->helper->getActivity($page_size);
-            
-            foreach($data as $val){
-              $title = $val['title'];
-              $desc = strip_tags($val['content']);
-              $pic = preg_match("!^(http|https):\/\/!i", $val['img']) ? $val['img'] : $base_url.$val['img'];
-              $link = $base_url.'/activity/detail/'.$val['aid'];
-              $contentText .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
-            }
-            
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($data),$contentText);
-            return $responseText;
             break;
           case '302'://如何玩?  
-          $contentText = '如何玩?  ';
-          $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime,$contentText);
+            $contentText = '如何玩?  ';
+            $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime,$contentText);
           return $responseText;
         }
         break;
@@ -420,7 +328,6 @@ class Weixin {
           case 'word':
             $title = "\n".$val['content'];
             $desc = $val['content'];
-            //$pic = $base_url.'/misc/images/napp/touch-icon-256.png';
             $pic = '';
             $link = $base_url."/node/{$val['nid']}/edit";
             break;
@@ -667,6 +574,7 @@ class WeixinHelper {
    */
   public function onSubscribe($openid, $reqtime, $toUsername = '') {
     $uinfo = $this->wx->userInfo($openid);
+    trace_debug('weixin_user_info_base',print_r($uinfo,true));
     if (empty($uinfo['errcode'])) {
       $from  = $this->from;
       $udata = ['openid' => $openid, 'subscribe' => $uinfo['subscribe']];
@@ -680,7 +588,7 @@ class WeixinHelper {
         $udata['country']  = $uinfo['country'];
         $udata['province'] = $uinfo['province'];
         $udata['city']     = $uinfo['city'];
-        $udata['auth_method'] = 'native';
+        $udata['auth_method'] = 'base';
       }
       if (!Member::checkExistByOpenid($openid, $from)) { //用户不存在
         Member::createUser($udata, $from);
@@ -690,30 +598,9 @@ class WeixinHelper {
         Member::updateUser($udata, $openid, $from);
       }
     }
-    /*
-    $base_url    = 'http://'.Config::get('env.site.mobile');
-    $hds = $this->getActivity();
-    $contentText = '';
-    foreach($hds as $val){
-      $title = $val['title'];
-      $desc = strip_tags($val['content']);
-      $pic = preg_match("!^(http|https):\/\/!i", $val['img']) ? $val['img'] : $base_url.$val['img'];
-      $link = $base_url.'/activity/detail/'.$val['aid'];
-      $contentText .= sprintf(Weixin::$msgTpl['news_item'], $title, $desc, $pic, $link);
-    }
-    $restime = time();
-    $msg= sprintf(Weixin::$msgTpl['news'], $openid, $toUsername, $restime, count($hds),$contentText);
-    echo $msg;
-    exit;
-    */
+    
     $url = C('env.site.mobile');
-    $msg = "嗨！您好，欢迎您到来/:rose
-福小秘是祝福分享平台，
-我有文字音乐贺卡礼物，
-让您时刻体验祝福乐趣，
-将祝福准确传递给对方。
-· 指尖 · 心头 · 脑海中 ·
-念念不忘 -- 福小秘！\n<a href=\"http://{$url}/\">点击这里进入应用>></a>";
+    $msg = "你好，欢迎关注小蜜/:rose\n\n福小蜜海外购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。\n\n<a href=\"http://{$url}/\">点击这里查看>></a>";
     return $msg;
     
   }
@@ -857,91 +744,6 @@ class WeixinHelper {
     );
     $rid = D()->insert('access_token_weixin', $data);
     return $rid;
-  }
-
-  /**
-   * 获取
-   * @param  [type]  $type      word,card,music,gift,random
-   * @param  integer $page_size [description]
-   * @return [type]             [description]
-   */
-  public function getNode($type,$page_size=1){
-    if(!in_array($type, ['word','card','music','gift','random'])){
-      return '';
-    }
-
-    $records = [];
-    switch ($type) {
-      case 'word':
-        $sql = "SELECT * FROM {node} WHERE status='R' AND recommend<>0 AND type_id='word' ORDER BY recommend DESC LIMIT 0,{$page_size}";
-        $records = D()->query($sql)->fetch_array_all();
-        if(empty($records)){
-          $sql = "SELECT * FROM {node} WHERE status='R' AND type_id='word'  ORDER BY changed DESC LIMIT 0,{$page_size}";
-          $records = D()->query($sql)->fetch_array_all();
-        }
-        break;
-      case 'card':
-        $sql = "SELECT n.*,c.* FROM {node} n ,{node_card} c WHERE n.status='R'  AND n.recommend<>0 AND type_id='card'  AND n.nid=c.tnid ORDER BY n.recommend DESC LIMIT 0,{$page_size}";
-        $records = D()->query($sql)->fetch_array_all();
-        if(empty($records)){
-          $sql = "SELECT n.*,c.* FROM {node} n ,{node_card} c WHERE n.status='R' AND type_id='card'  AND n.nid=c.tnid ORDER BY n.changed DESC LIMIT 0,{$page_size}";
-          $records = D()->query($sql)->fetch_array_all();
-        }
-        break;
-      case 'music':
-        $sql = "SELECT n.*,m.* FROM {node} n ,{node_music} m WHERE n.status='R'  AND n.recommend<>0 AND type_id='music' AND n.nid=m.tnid ORDER BY n.recommend DESC LIMIT 0,{$page_size}";
-        $records = D()->query($sql)->fetch_array_all();
-        if(empty($records)){
-          $sql = "SELECT n.*,c.* FROM {node} n ,{node_card} m WHERE n.status='R' AND type_id='music'  AND n.nid=c.tnid ORDER BY n.changed DESC LIMIT 0,{$page_size}";
-          $records = D()->query($sql)->fetch_array_all();
-        }
-        break;
-      case 'gift':
-        $sql = "SELECT n.*,g.* FROM {node} n ,{node_gift} g WHERE n.status='R'  AND n.recommend<>0  AND type_id='gift' AND n.nid=g.tnid ORDER BY n.recommend DESC LIMIT 0,{$page_size}";
-        $records = D()->query($sql)->fetch_array_all();
-        if(empty($records)){
-          $sql = "SELECT n.*,g.* FROM {node} n ,{node_gift} g WHERE n.status='R' AND type_id='gift'  AND n.nid=g.tnid ORDER BY n.changed DESC LIMIT 0,{$page_size}";
-          $records = D()->query($sql)->fetch_array_all();
-        }
-        break;
-      case 'random':
-        //文字
-        $sql = "SELECT * FROM {node} WHERE status='R' AND recommend<>0 AND  type_id='word' ORDER BY rand() DESC LIMIT 1 ";
-        $record = D()->get_one($sql); 
-        if(!empty($record)){
-          $records[] = $record;
-        }
-        //贺卡
-        $sql = "SELECT n.*,ne.* FROM {node} n,{node_card} ne WHERE status='R' AND n.recommend<>0 AND type_id='card' AND n.nid=ne.tnid  ORDER BY rand() DESC LIMIT 1 ";
-        $record = D()->get_one($sql); 
-        if(!empty($record)){
-          $records[] = $record;
-        }
-        //音乐
-        $sql = "SELECT n.*,ne.* FROM {node} n,{node_music} ne WHERE status='R' AND n.recommend<>0 AND type_id='music' AND n.nid=ne.tnid  ORDER BY rand() DESC LIMIT 1 ";
-        $record = D()->get_one($sql); 
-        if(!empty($record)){
-          $records[] = $record;
-        }
-        //礼物
-        $sql = "SELECT n.*,ne.* FROM {node} n,{node_gift} ne WHERE status='R' AND n.recommend<>0 AND type_id='gift' AND n.nid=ne.tnid  ORDER BY rand() DESC LIMIT 1 ";
-        $record = D()->get_one($sql); 
-        if(!empty($record)){
-          $records[] = $record;
-        }
-        break;
-      default:
-        # code...
-        break;
-    }
-
-    return $records;
-  }
-  public function getActivity($page_size=1){
-    $now = simphp_time();
-    $sql = "SELECT * FROM {activity} WHERE `status`='R' AND (`end_time`>{$now} OR `end_time`=0) ORDER BY changed DESC LIMIT 0,{$page_size}";
-    $records = D()->query($sql)->fetch_array_all();
-    return $records;
   }
 
 }
