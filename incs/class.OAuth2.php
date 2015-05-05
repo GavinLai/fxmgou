@@ -54,9 +54,9 @@ class OAuth2 implements OAuth2Interface {
    * @return string
    */
   public function authorize_url() {
-    $ref = Request::refer();
+    $ref = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
     $redirect_uri = $this->redirect_uri;
-    if ($ref) {
+    if (strrpos($redirect_uri, 'refer=')===false && $ref) {
       $redirect_uri .= (strpos($redirect_uri, '?') === false ? '?' : '&') . 'refer='.$ref;
     }
     $redirect_uri = rawurlencode($redirect_uri);

@@ -33,7 +33,6 @@ class Common_Controller extends Controller {
       '!^item/(\d+)$!i'       => 'default/item/$1',
       '!^explore$!i'          => 'default/explore',
       '!^about$!i'            => 'default/about',
-      '!^guide$!i'            => 'default/guide',
     ];
   }
   
@@ -58,14 +57,13 @@ class Common_Controller extends Controller {
     }
     
     // 检查登录状态
-    /*
     if(!$loginIgnore && !Member::isLogined()){
       import('user/*');
       $user_Controller = new User_Controller();
       $user_Controller->login($request, $response);
       exit;
     }
-    */
+    
   }
   
   /**

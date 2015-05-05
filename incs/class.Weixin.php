@@ -152,7 +152,7 @@ class Weixin {
 	 * 构造函数
 	 * @param string $target, 目标平台，可选值：'fxmgou' 等
 	 */
-	public function __construct($target)
+	public function __construct($target = 'fxmgou')
 	{
 		$this->init($target); //该句必须出现在所有对外方法的最开始
 	}

@@ -180,7 +180,7 @@ class Member{
 	  if (''!=$prefix && strrpos($prefix, '.')===false) {
 	    $prefix .= '.';
 	  }
-	  return "{$prefix}`uid`,{$prefix}`openid`,{$prefix}`unionid`,{$prefix}`username`,{$prefix}`nickname`,{$prefix}`sex`,{$prefix}`logo`,{$prefix}`state`,{$prefix}`from`";
+	  return "{$prefix}`uid`,{$prefix}`openid`,{$prefix}`unionid`,{$prefix}`subscribe`,{$prefix}`subscribe_time`,{$prefix}`username`,{$prefix}`nickname`,{$prefix}`sex`,{$prefix}`logo`,{$prefix}`state`,{$prefix}`from`";
 	}
 	
 	/**

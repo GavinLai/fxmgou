@@ -1,8 +1,9 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <nav id="nav-1" class="nav no-bounce">
- <a href="" class="fl" rel="home"><em>首页</em></a>
- <a href="#/explore" class="fl" rel="explore"><em>所有宝贝</em></a>
- <a href="#/about" class="fl" rel="about"><em>我的</em></a>
+ <a href="<?=$contextpath?>" class="fl" rel="home"><em>首页</em></a>
+ <a href="#/explore" class="fl" rel="explore"><em>宝贝</em></a>
+ <a href="<?=$contextpath?>user" class="fl" rel="mine"><em>我的</em></a>
+ <a href="http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205641974&idx=1&sn=d21c0b265b021ce6e6f9b693551d83b1#rd" class="fl" rel="about"><em>关于</em></a>
 </nav>
 
 <!-- 商品详情页 -->

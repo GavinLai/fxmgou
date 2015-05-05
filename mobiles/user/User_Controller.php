@@ -44,7 +44,15 @@ class User_Controller extends Controller {
   {
     $this->v->set_tplname('mod_user_index');
     $userInfo = Member::getTinyInfoByUid($GLOBALS['user']->uid);
-    $this->v->assign('userInfo', $userInfo);
+    
+    if ($request->is_hashreq()) {
+      $this->v->assign('userInfo', $userInfo);
+    }
+    else {
+      //检查用户信息完成度，nickname或logo没有的话都重定向请求OAuth2详细认证获取资料
+      User_Model::checkUserInfoCompleteDegree($userInfo, '/user');
+    }
+    
     $response->send($this->v);
   }
 
@@ -202,7 +210,7 @@ class User_Controller extends Controller {
    */
   public function login(Request $request, Response $response)
   {
-    $_SESSION['refer'] = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $refer = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     if(!Member::isLogined()) {
       $token = $request->get('token','');
       if(''!=$token) { //token登录优先，便于测试
@@ -212,16 +220,11 @@ class User_Controller extends Controller {
         $this->tips($request, $response);
       }
       else { //先用base方式获取微信OAuth2授权，以便于取得openid
-        (new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin');
+        (new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin?dologin=1&refer='.$refer);
       }
     }
     else {
-      if('' != $_SESSION['refer']) {
-        $response->redirect($_SESSION['refer']);
-      }
-      else{
-        $response->redirect('http://'.Config::get('env.site.mobile'));
-      }
+      $response->redirect($refer);
     }
   }
   
@@ -233,13 +236,14 @@ class User_Controller extends Controller {
    */
   public function oauth(Request $request, Response $response)
   {
+    trace_debug('weixin_oauth2_callback_doing', $_GET);
     $code = $request->get('code', '');
     if (''!=$code) { //授权通过
       $state = $request->get('state', '');
       $refer = $request->get('refer', '/');
-      $refer = !empty($_SESSION['refer']) ? $_SESSION['refer'] : $refer;
       $from  = $request->arg(2);
       if (empty($from)) $from = 'weixin';
+      $dologin = $request->get('dologin',0);
       
       //授权出错
       if (!in_array($state, array('base','detail'))) {
@@ -250,7 +254,6 @@ class User_Controller extends Controller {
       
       //用code换取access token
       $code_ret = $wx->request_access_token($code);
-      //trace_debug('weixin_oauth_token_'.$state, $code_ret);
       if (!empty($code_ret['errcode'])) {
         User_Model::showInvalidLogin('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')');
       }
@@ -260,47 +263,22 @@ class User_Controller extends Controller {
       $uid    = 0;
       
       //查询本地是否存在对应openid的用户
-      $uinfo_bd = Member::getTinyInfoByOpenid($openid, $from);      
-      if (!empty($uinfo_bd)) { //用户已存在，则仅需设置登录状态
-        $uid = $uinfo_bd['uid'];
-      }
-      else { //用户不存在，则要尝试建立
-        $uinfo_wx    = [];
-        $auth_method = '';
-        if ('base'===$state) { //基本授权方式
+      $uinfo_bd = Member::getTinyInfoByOpenid($openid, $from);
+      if (!empty($uinfo_bd)) { //用户已存在，对state='base'，则仅需设置登录状态；而对state='detail'，需保存或更新用户数据
+        $uid = intval($uinfo_bd['uid']);
+        
+        if ('detail'===$state) { //detail认证模式，需更新用户数据
           
-          /*
-          //先用基本型接口获取用户信息，失败才考虑OAuth2 snsapi_userinfo方式(基本型接口存在 50000000次/日 调用限制，且必须是"关注"了公众号的用户才能调用成功)
-          $uinfo_wx = $wx->userInfo($openid);
-          //trace_debug('weixin_basic_userinfo', $uinfo_wx);
-          if (!empty($uinfo_wx['errcode'])) { //失败！转而用OAuth2 snsapi_userinfo方式
-            $wx->authorizing('http://'.$request->host().'/user/oauth/'.$from, 'detail');
-          }
-          else { //成功！
-            $auth_method = 'oauth2_base';//基本接口认证方式
-          }
-          */
+          $auth_method = 'oauth2_detail';//OAuth2详细认证方式
           
-          // 为了降低用户的购物体验门槛，默认所有链接只需OAuth2基本认证(以便获得openid)
-          $auth_method = 'oauth2_base';//OAuth2基本认证方式
-          $uinfo_wx = $code_ret;
-                    
-        }
-        else { //详细信息授权方式
           $uinfo_wx = $wx->userInfoByOAuth2($openid, $code_ret['access_token']);
-          //trace_debug('weixin_oauth_userinfo', $uinfo_wx);
           if (!empty($uinfo_wx['errcode'])) { //失败！则报错
             User_Model::showInvalidLogin('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
           }
-          else { //成功!
-            $auth_method = 'oauth2_detail';//OAuth2详细认证方式
-          }
-        }
-        
-        //保存微信用户信息到本地库
-        if (!empty($uinfo_wx)) {
+          
+          //保存微信用户信息到本地库
           $udata = [
-            'openid'   => $openid,
+            //'openid'   => $openid,
             'unionid'  => isset($uinfo_wx['unionid']) ? $uinfo_wx['unionid'] : '',
             'subscribe'=> isset($uinfo_wx['subscribe']) ? $uinfo_wx['subscribe'] : 0,
             'subscribe_time'=> isset($uinfo_wx['subscribe_time']) ? $uinfo_wx['subscribe_time'] : 0,
@@ -313,17 +291,38 @@ class User_Controller extends Controller {
             'city'     => isset($uinfo_wx['city']) ? $uinfo_wx['city'] : '',
             'auth_method'=> $auth_method
           ];
-          $uid = Member::createUser($udata, $from);          
+          Member::updateUser($udata,$openid,$from);
+          
+        } //End: if ('detail'===$state)
+        
+      }
+      else { //用户不存在，则要尝试建立
+        
+        if ('base'===$state) { //基本授权方式
+          
+          $auth_method = 'oauth2_base';//基本认证方式
+          
+          //保存微信用户信息到本地库
+          $udata = [
+            'openid'     => $openid,
+            'auth_method'=> $auth_method
+          ];
+          $uid = Member::createUser($udata, $from);
+          
         }
 
-      }
-      
-      if (empty($uid)) {
-        User_Model::showInvalidLogin('微信授权登录失败！');
-      }
+
+      } //End: if (!empty($uinfo_bd)) else
       
       //设置本地登录状态
-      Member::setLocalLogin($uid);
+      if ($dologin) {
+        
+        if (empty($uid)) {
+          User_Model::showInvalidLogin('微信授权登录失败！');
+        }
+        
+        Member::setLocalLogin($uid);
+      }
       
       //跳转
       $response->redirect($refer);
@@ -385,12 +384,9 @@ class User_Controller extends Controller {
     //设置本地登录状态
     Member::setLocalLogin($userInfo['uid']);
     
-    if(''!=$_SESSION['refer']){
-      $response->redirect($_SESSION['refer']);
-    }
-    else{
-      $response->redirect('/');
-    }
+    $refer = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $response->redirect($refer);
+    
     exit;
   }
   
