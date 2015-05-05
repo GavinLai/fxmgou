@@ -18,12 +18,12 @@ class Member{
 	 * 检测用户名合法性
 	 * @param string $name
 	 */
-	public static function checkUsername($name){
-		$rs = [false,''];
-		$msg = '用户名规则为4-15个字母数字或下划线(首字母不能为数字)';
-		$pattern = '/^[a-zA-Z_][a-zA-Z_\d]{3,14}$/';
-		$match = preg_match($pattern,$name);
-		if($match==0){
+	public static function checkUsername($name)
+	{
+		$rs  = [false,''];
+		$msg = '用户名规则为5-15个字母、数字或下划线(首字母不能为数字)';
+		$pattern = '/^[a-zA-Z_][a-zA-Z_\d]{4,14}$/';
+		if( preg_match($pattern,$name) ) {
 			$rs[1] = $msg;
 			return $rs;
 		}
@@ -38,6 +38,7 @@ class Member{
 			}
 		}
 		$rs[0] = true;
+		
 		return $rs;
 	}
 	
@@ -45,14 +46,17 @@ class Member{
 	 * 检测密码合法性
 	 * @param string $pwd
 	 */
-	public static function checkPwd($pwd){
-		$rs = [false,''];
+	public static function checkPwd($pwd)
+	{
+		$rs  = [false,''];
 		$msg = '密码应为6-20个字符';
 		$len = strlen($pwd);
-		if($len<5||$len>20){
+		if($len<6||$len>20) {
 			$rs[1] = $msg;
+			return $rs;
 		}
 		$rs[0] = true;
+		
 		return $rs;
 	}
 	
@@ -60,13 +64,15 @@ class Member{
 	 * 检测Email合法性
 	 * @param string $email
 	 */
-	public static function checkEmail($email) {
+	public static function checkEmail($email)
+	{
 		$rs = [false,''];
 		
 		if(strlen($email) > 6 && preg_match("/^[\w\-\.]+@[\w\-]+(\.\w+)+$/", $email)){
 			$rs[0] = true;
-		}else{
-			$rs[1] = '邮箱格式不正确'.$email;
+		}
+		else {
+			$rs[1] = '邮箱格式不正确：'.$email;
 		}
 		return $rs;
 	}
@@ -75,14 +81,17 @@ class Member{
 	 * 检测moblie合法性
 	 * @param string $mobile
 	 */
-	public static function checkMobile($mobile) {
+	public static function checkMobile($mobile)
+	{
 		$rs = [false,''];
 		
 		if(preg_match("/^[0-9]{11}$/", $mobile)){
 			$rs[0] = true;
-		}else{
+		}
+		else{
 			$rs[1] = '手机号格式不正确';
 		}
+		
 		return $rs;
 	}
 
@@ -90,10 +99,13 @@ class Member{
 	 * 用户是否登录
 	 * @return boolean
 	 */
-	public static function isLogined(){
-		if(isset($_SESSION['uid']) && $_SESSION['uid']>0){
+	public static function isLogined()
+	{
+		//if(isset($_SESSION['uid']) && $_SESSION['uid']>0){
+		if( $GLOBALS['user']->uid ){
 			return true;
-		}else{
+		}
+		else{
 		  /*
 			$openid = Cookie::get('auth_id');
 			if(FALSE===$openid){
@@ -116,22 +128,28 @@ class Member{
 	/**
 	 * 检查uid是否关注公众号
 	 * 
+	 * @param $uid
+	 * @param $platform
 	 * @return boolean
 	 */
-	public static function isSubscribe($uid) {
-	  $b = D()->result("SELECT `subscribe` FROM `{member}` WHERE `uid`=%d",$uid);
+	public static function isSubscribe($uid, $platform = 'weixin')
+	{
+	  $b = D()->result("SELECT `subscribe` FROM `{member}` WHERE `uid`=%d AND `from`='%s'",$uid,$platform);
 	  return $b ? true : false;
 	}
 	
-	public static function getUser(){
+	public static function getUser()
+	{
 		$user = ['uid'=>0];
 		if(self::isLogined()){
-			$user['uid'] = $_SESSION['uid'];
+			//$user['uid'] = $_SESSION['uid'];
+			$user['uid'] = $GLOBALS['user']->uid;
 		}
 		return $user;
 	}
 
-	public static function autoLogin($openid){
+	public static function autoLogin($openid)
+	{
 		//$openid = zf_authcode($openid, 'ENCODE' , Config::get('env.au_key'));
 		//Cookie::set('auth_id', $openid, PHP_INT_MAX);
 	}
@@ -157,9 +175,12 @@ class Member{
 	 *
 	 * @return string
 	 */
-	private static function tinyFields()
+	private static function tinyFields($prefix = '')
 	{
-	  return "`uid`,`openid`,`unionid`,`username`,`nickname`,`sex`,`logo`,`state`,`from`";
+	  if (''!=$prefix && strrpos($prefix, '.')===false) {
+	    $prefix .= '.';
+	  }
+	  return "{$prefix}`uid`,{$prefix}`openid`,{$prefix}`unionid`,{$prefix}`username`,{$prefix}`nickname`,{$prefix}`sex`,{$prefix}`logo`,{$prefix}`state`,{$prefix}`from`";
 	}
 	
 	/**
@@ -194,11 +215,13 @@ class Member{
 	public static function createUser(Array $data, $from = 'weixin')
 	{
 	  if (empty($data)) return FALSE;
+	  
 	  $now  = simphp_time();
 	  $salt = gen_salt();
 	  $data = array_merge($data,['regip'=>Request::ip(), 'regtime'=>$now, 'posttime'=>$now, 'salt'=>$salt, 'state'=>1, 'from'=>$from]);
 	  $uid  = D()->insert('member', $data);
 	  if($uid>0){
+	    
 	    if (empty($data['username'])) {
 	      $data['username'] = $uid;
 	      D()->update('member' , ['username'=>$uid] , ['uid'=>$uid]);
@@ -207,6 +230,7 @@ class Member{
 	    //~ 插入ecshop数据表users
 	    $ecdb  = ECDB;
 	    $ecpre = ECDB_PRE;
+	    $plat  = APP_PLATFORM;
 	    
 	    $ec_email = isset($data['email']) ? $data['email'] : '';
 	    $ec_uname = $data['username'] . '@' . $from;
@@ -214,9 +238,9 @@ class Member{
 	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
 	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
 	    
-	    $sql   = "INSERT INTO {$ecdb}.`{$ecpre}users`(`member_id`,`email`,`user_name`,`password`,`sex`,`address_id`,`reg_time`,`ec_salt`) VALUES";
-	    $sql  .= "(%d,'%s','%s','%s',%d,%d,%d,'%s')";
-	    D()->raw_query($sql,$uid,$ec_email,$ec_uname,$ec_pass,$ec_sex,$ec_addr,$now,$salt);
+	    $sql   = "INSERT INTO {$ecdb}.`{$ecpre}users`(`member_platform`,`member_id`,`email`,`user_name`,`password`,`sex`,`address_id`,`reg_time`,`ec_salt`) VALUES";
+	    $sql  .= "('%s',%d,'%s','%s','%s',%d,%d,%d,'%s')";
+	    D()->raw_query($sql,$plat,$uid,$ec_email,$ec_uname,$ec_pass,$ec_sex,$ec_addr,$now,$salt);
 	    
 	    return $uid;
 	  }
@@ -254,12 +278,13 @@ class Member{
 	    //~ 更新ecshop数据表users
 	    $ecdb  = ECDB;
 	    $ecpre = ECDB_PRE;
+	    $plat  = APP_PLATFORM;
 	    
 	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
 	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
 	     
-	    $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `sex`=%d,`address_id`=%d,`last_time`='%s' WHERE `member_id`=%d";
-	    D()->raw_query($sql,$ec_sex,$ec_addr,simphp_dtime(),$uid);
+	    $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `sex`=%d,`address_id`=%d,`last_time`='%s' WHERE `member_platform`='%s' AND `member_id`=%d";
+	    D()->raw_query($sql,$ec_sex,$ec_addr,simphp_dtime(),$plat,$uid);
 	    
 	  }
 	  return $effcnt ? $effcnt : FALSE;
@@ -310,10 +335,19 @@ class Member{
 	  if (!$uid) return;
 	  
 	  //设置登录session uid
-	  $_SESSION['uid'] = $uid;
+	  //$_SESSION['uid'] = $uid;
+	  $GLOBALS['user']->uid = $uid;
 	  
 	  //更新登录记录
 	  self::updateUser(['lastip'=>Request::ip(), 'lasttime'=>simphp_time()], $uid);
+	  
+	  //~ 更新ecshop数据表users
+	  $ecdb  = ECDB;
+	  $ecpre = ECDB_PRE;
+	  $plat  = APP_PLATFORM;
+	  
+	  $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `last_login`=%d,`last_ip`='%s' WHERE `member_platform`='%s' AND `member_id`=%d";
+	  D()->raw_query($sql,simphp_time(),Request::ip(),$plat,$uid);
 	}
 	
 }

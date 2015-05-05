@@ -261,24 +261,12 @@ class Weixin {
       case 'CLICK':
         $base_url = 'http://'.Config::get('env.site.mobile');
         switch ($postObj->EventKey) {
-          case '100':
+          case '100': //最新文章
+            $contentText = $this->helper->latestArticles();
             break;
-          case '201'://文字
+          case '101': //关于小蜜
+            $contentText = $this->helper->about();
             break;
-          case '202'://贺卡
-            break;
-          case '203'://音乐
-            break;
-          case '204'://礼物
-            break;
-          case '205'://随机
-            break;
-          case '301'://活动
-            break;
-          case '302'://如何玩?  
-            $contentText = '如何玩?  ';
-            $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime,$contentText);
-          return $responseText;
         }
         break;
       case 'LOCATION':
@@ -315,11 +303,13 @@ class Weixin {
     $openid       = $fromUsername;
     $reqtime      = intval($postObj->CreateTime);
     $restime      = time();
+    trace_debug('weixin_reply_text',$keyword);
     $contentText  = $this->helper->onTextQuery($keyword, $openid, $reqtime);
     $responseText = '';
     if (!empty($contentText)&&!is_array($contentText)) {
       $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
-    }elseif(!empty($contentText)&&is_array($contentText)){
+    }
+    elseif(!empty($contentText)&&is_array($contentText)){
       //msgTpl
       $text = '';
       $base_url = 'http://'.Config::get('env.site.mobile');
@@ -356,8 +346,10 @@ class Weixin {
         $text .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
       }
       $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($contentText),$text);
-    }else{
-      $contentText = '很抱歉，没有找到您想要的东西！';
+    }
+    else{
+      $baidu_sou = "https://www.baidu.com/s?wd={$keyword}";
+      $contentText = "抱歉，没有找到你想要的东西！小蜜帮你<a href=\"{$baidu_sou}\">度娘一下</a>吧/::P";
       $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
     }
     return $responseText;
@@ -372,15 +364,27 @@ class Weixin {
   private function dealVoiceMsg($postObj)
   {
     $keyword      = trim($postObj->Recognition);
-    if (''==$keyword) return '';
+    trace_debug('weixin_reply_voice',$keyword);
     $fromUsername = $postObj->FromUserName;
     $toUsername   = $postObj->ToUserName;
     $openid       = $fromUsername;
     $reqtime      = intval($postObj->CreateTime);
     $restime      = time();
+    
+    if (''==$keyword) {
+      $contentText = "抱歉，没听清你说什么，请重试？";
+      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
+      return $responseText;
+    }
+    
     $contentText  = $this->helper->onVoiceQuery($keyword, $openid, $reqtime);
     $responseText = '';
     if (!empty($contentText)) {
+      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
+    }
+    else {
+      $baidu_sou = "https://www.baidu.com/s?wd={$keyword}";
+      $contentText = "抱歉，没找到你说的：\n“{$keyword}”\n小蜜帮你<a href=\"{$baidu_sou}\">度娘一下</a>吧/::P";
       $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
     }
     return $responseText;
@@ -533,6 +537,31 @@ class Weixin {
   }
   
   
+  //~ the following is some util functions
+  
+  /**
+   * 是否微信浏览器
+   * 
+   * @return boolean
+   */
+  public static function isWeixinBrowser() {
+    $b = strrpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') === false;
+    return !$b;
+  }
+  
+  /**
+   * 获取微信浏览器版本号
+   * 
+   * @return int|string
+   */
+  public static function WeixinBrowserVer() {
+    $ver = 0;
+    if (preg_match('/.*?(MicroMessenger\/([0-9.]+))\s*/', $_SERVER['HTTP_USER_AGENT'], $matches)) {
+      $ver = $matches[2];
+    }
+    return $ver;
+  }
+  
 }
 
 
@@ -574,7 +603,7 @@ class WeixinHelper {
    */
   public function onSubscribe($openid, $reqtime, $toUsername = '') {
     $uinfo = $this->wx->userInfo($openid);
-    trace_debug('weixin_user_info_base',print_r($uinfo,true));
+    //trace_debug('weixin_user_info_base',print_r($uinfo,true));
     if (empty($uinfo['errcode'])) {
       $from  = $this->from;
       $udata = ['openid' => $openid, 'subscribe' => $uinfo['subscribe']];
@@ -599,8 +628,7 @@ class WeixinHelper {
       }
     }
     
-    $url = C('env.site.mobile');
-    $msg = "你好，欢迎关注小蜜/:rose\n\n福小蜜海外购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。\n\n<a href=\"http://{$url}/\">点击这里查看>></a>";
+    $msg = $this->about(1);
     return $msg;
     
   }
@@ -641,13 +669,53 @@ class WeixinHelper {
    */
   public function onTextQuery($keyword, $openid, $reqtime) {
     $result = '';
-    if(in_array($keyword, array('?','？','阿','啊','在','在?','在？'))
+    
+    if (in_array($keyword, array('小蜜','关于小蜜','关于','福小蜜'))) {
+      $result = $this->about();
+    }
+    elseif ( preg_match('/你|您/', $keyword) && preg_match('/是谁|干什么|做什么/', $keyword) ) {
+      $result = $this->about(2);
+    }
+    elseif (preg_match('/我/', $keyword) && preg_match('/是谁|干什么|做什么/', $keyword)) {
+      $result = '你懂的！';
+    }
+    elseif (in_array($keyword, array('最新文章','最新资讯','文章','资讯'))) {
+      $result = $this->latestArticles();
+    }
+    elseif (preg_match('/百度|度娘/', $keyword)) {
+      $result = '这是她的地址：<a href="http://www.baidu.com">www.baidu.com</a>';
+    }
+    elseif (preg_match('/错了|不喜欢|不感兴趣|不爱|无用|干扰|骚扰/', $keyword)) {
+      $result = '不好意思/::~';
+    }
+    elseif (preg_match('/喜欢|很好|感兴趣|大爱|太棒|真棒|棒极|哇塞|不错|太酷|忒酷|真酷/', $keyword)) {
+      $result = '谢谢/::$';
+    }
+    elseif (preg_match('/无聊|干什么|什么干|做什么|什么做|什么好做|什么好干/', $keyword)) {
+      $poems = [
+        "终日昏昏醉梦间，\n忽闻春尽强登山。\n因过竹院逢僧话，\n偷得浮生半日闲。",
+        "黄梅时节家家雨，\n青草池塘处处蛙。\n有约不来过夜半，\n闲敲棋子落灯花。",
+        "无聊夜里无聊梦，\n心语无聊冷若冰。\n叹写无聊抒郁事，\n无聊目送月零丁。",
+        "一别之后，\n两地相悬，\n只说是三四月，\n又谁知五六年。\n七弦琴无心弹，\n八行书不可传，\n九连环从中折断，\n十里长亭望眼欲穿，\n百思想，千系念，万般无奈把郎怨。\n万语千言说不完，百无聊赖十倚栏，\n重九登高看孤雁，\n八月中秋月圆人不圆，\n七月半烧香秉烛问苍天，\n 六月伏天人人摇扇我心寒，\n 五月石榴如火，偏遇阵阵冷雨浇花端；\n四月枇杷未黄，我欲对镜心意乱。\n急匆匆，三月桃花随水转；\n飘零零，二月风筝线儿断。",
+        "智者乐山山如画，\n仁者乐水水无涯。\n从从容容一杯酒，\n平平淡淡一杯茶。\n\n细雨朦胧小石桥，\n春风荡漾小竹筏。\n夜无明月花独舞，\n腹有诗书气自华。",
+        "浮名浮利，虚苦劳神。\n叹隙中驹，石中火，梦中身。\n几时归去，作个闲人。\n\n网事已成空，还如一梦中。\n相见争如不见，有情还是无情。\n今朝有酒今朝醉，管他对错是与非。",
+      ];
+      $idx = mt_rand(0, count($poems)-1);
+      $result = $poems[$idx];
+      $result.= "\n\n还不解聊？去调戏度娘吧：“度娘，<a http=\"https://www.baidu.com/s?wd={$keyword}\">{$keyword}</a>”";
+    }
+    elseif (preg_match('/有什么/', $keyword)) {
+      $result = '你好，非常感谢你对小蜜的关注，我们近期将会上线产品模块，敬请留意！';
+    }
+    elseif(in_array($keyword, array('?','？','阿','啊','在','在?','在？','哈哈','呵呵','哈','呵','哼'))
       || is_numeric($keyword)
       || preg_match("!^/:!", $keyword) //表情
-      || preg_match("/(hi|hello|在吗|你好|您好)/i", $keyword)
+      || preg_match("/(在吗|你好|您好|哈哈|呵呵|哈|呵|哼|hi|hello|hallo)/i", $keyword)
     ){
       $result = $this->defaultHello();
-    }else{
+    }
+    else { //查询数据库
+      /*
       import('node/Node_Model','mobiles');
       $page_size = 10;
       $recordes = Node_Model::searchNode($keyword,$page_size);
@@ -661,6 +729,7 @@ class WeixinHelper {
         $nodes[] = $record;
       }
       $result = $nodes;
+      */
     }
     return $result;
   }
@@ -698,6 +767,49 @@ class WeixinHelper {
       $hello = '晚上好';
     }
     return $hello.'！请问有什么可以帮到您？';
+  }
+  
+  /**
+   * "关于小蜜" 的返回文字
+   * 
+   * @param int $type
+   * @return string
+   */
+  public function about($type = 0) {
+    $ext = $ext2 = '';
+    if (1==$type) {
+      $ext = "祝你五一好心情，玩得开心哟，参加滦河马拉松赛事的话预祝你取得好成绩！/:,@-D\n\n";
+      $ext2= "，小蜜还会定期为你发布一些可能会对你有用的资讯文章";
+    }
+    elseif (2==$type) {
+      $text = "你好，我是福小蜜/::)\n\n福小蜜海外购，专注于海外商品的代购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。\n\n觉得小蜜还行的话就帮忙向好友推荐一下吧，这是小蜜的公众号：fxmgou，\n谢谢/::*";
+      return $text;
+    }
+    $text = "你好，欢迎关注小蜜/:rose\n\n{$ext}你可以将底部菜单切换到回复模式跟小蜜文字或语音对话，希望能给你带来点小惊喜/::$\n\n福小蜜海外购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品{$ext2}。\n\n觉得小蜜还行的话就帮忙向好友推荐一下吧，这是小蜜的公众号：fxmgou，\n谢谢/::*";
+    return $text;
+  }
+  
+  /**
+   * "最新文章" 的返回文字
+   * @return string
+   */
+  public function latestArticles() {
+    $article_set = [
+      ['title'=>'防晒 | BananaBoat香蕉船', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=1&sn=c9fa26f2bf102a92312bcdc7492ccca0#rd'],
+      ['title'=>'Banana Boat 香蕉船运动型防晒霜 SPF50+ 200g', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=2&sn=59dfe537e6b981939c654b754cf8b438#rd'],
+      ['title'=>'Swisse护肝排毒片120片', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204971042&idx=1&sn=45609e9aeef25644ff2e798ab0c67c8c#rd'],
+      ['title'=>'女神养成三部曲', 'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204970269&idx=1&sn=de7a6eaba3e87891bc66858af6cb9cbe#rd'],
+      ['title'=>'澳大利亚保健品市场本土三大品牌Blackmores、Swisse、Bio island', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204965844&idx=1&sn=4158ba58d80ada011707fa4e28c27079#rd']
+    ];
+    
+    $text = "最新文章";
+    $i = 1;
+    foreach($article_set AS $_url) {
+      $text.= "\n\n{$i}、<a href=\"{$_url['url']}\">{$_url['title']}</a>";
+      $i++;
+    }
+    
+    return $text;
   }
 
   /**

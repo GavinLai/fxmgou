@@ -28,71 +28,25 @@ class User_Model extends Model {
 
 		return $records;
 	}
-
-	public static function getUserTinyInfoByOpenid($open_id){
-		$sql = "SELECT uid,openid,nickname,sex,logo FROM {member} WHERE openid='%s' ";
-		$userInfo = D()->get_one($sql, $open_id);
-		return $userInfo;
-	}
-
-	public static function getUserTinyInfoByUid($uid){
-		$sql = "SELECT uid,openid,nickname,sex,logo FROM {member} WHERE uid=%d ";
-		$userInfo = D()->get_one($sql, $uid);
-		return $userInfo;
-	}
-
-	public static function saveUser($data){
-		$uid = D()->insert('member', $data);
-		return $uid;
-	}
 	
-	public static function createUser($data){
-		$uid = self::saveUser($data);
-		if($uid>0){
-			$affected = self::updateUserByUid($uid, ['username'=>$uid]);
-			if($affected){
-				return $uid;
-			}else{
-				return false;
-			}
-		}else{
-			return false;
-		}
-	}
 	public static function checkAccessToken($token){
 		$record = D()->get_one("SELECT * FROM {access_token} WHERE token='%s' ", $token);
 		if(empty($record)){
 			return FALSE;
-		}else{
+		}
+		else{
 			$timestamp = time();
 			if($timestamp>$record['lifetime']){
 				return FALSE;
-			}else{
+			}
+			else{
 				//D()->update('access_token', ['lifetime'=>0], ['openid'=>$record['openid']]);
 				return $record['openid'];
 			}
 		}
 	}
-
-	public static function updateUserByOpenid($openid, $data){
-		$affected = D()->update('member' , $data , ['openid'=>$openid]);
-		if($affected>0){
-			return true;
-		}else{
-			return false;
-		}
-	}
-
-	public static function updateUserByUid($uid, $data){
-		$affected = D()->update('member' , $data , ['uid'=>$uid]);
-		if($affected>0){
-			return true;
-		}else{
-			return false;
-		}
-	}
 	
-	public static function showInvalidLogin($msg='非法访问！',$title='错误发生 - 福小秘') {
+	public static function showInvalidLogin($msg='非法访问！',$title='错误发生 - 福小蜜') {
     $str = '<!DOCTYPE html>';
     $str.= '<html>';
     $str.= '<head>';

@@ -43,8 +43,7 @@ class User_Controller extends Controller {
   public function index(Request $request, Response $response)
   {
     $this->v->set_tplname('mod_user_index');
-    $user = Member::getUser();
-    $userInfo = User_Model::getUserTinyInfoByUid($user['uid']);
+    $userInfo = Member::getTinyInfoByUid($GLOBALS['user']->uid);
     $this->v->assign('userInfo', $userInfo);
     $response->send($this->v);
   }
@@ -55,11 +54,11 @@ class User_Controller extends Controller {
    * @param  Response $response [description]
    * @return [type]             [description]
    */
-  public function find(Request $request, Response $response){
+  public function find(Request $request, Response $response)
+  {
     $this->v->set_tplname('mod_user_find');
     if ($request->is_hashreq()) {
-      $user = Member::getUser();
-      $uid = $user['uid'];
+      $uid = $GLOBALS['user']->uid;
       //随机获取10条记录
       import('node/Node_Model');
       $recordes = Node_Model::getRandNode(8);
@@ -72,12 +71,6 @@ class User_Controller extends Controller {
       }
       $this->v->assign('nodes', $nodes);
     }
-    $response->send($this->v);
-  }
-
-  public function find2(Request $request, Response $response){
-    $this->v->set_tplname('mod_user_find2');
-    
     $response->send($this->v);
   }
   
@@ -128,10 +121,9 @@ class User_Controller extends Controller {
     $this->v->set_tplname('mod_user_notice');
     if ($request->is_hashreq()) {
       //获取最近分享的10条记录
-      $user = Member::getUser();
       import('node/Node_Model');
       $page_size = 5;
-      $shareHistory = Node_Model::getShareHistory($user['uid'],$page_size);
+      $shareHistory = Node_Model::getShareHistory($GLOBALS['user']->uid,$page_size);
 
       $next_page = $GLOBALS['pager_currpage_arr'][0]+1;
       $total_page = $GLOBALS['pager_totalpage_arr'][0];
@@ -158,15 +150,14 @@ class User_Controller extends Controller {
   public function setup(Request $request, Response $response){
     $this->v->set_tplname('mod_user_setup');
     if ($request->is_hashreq()) {
-      $uid = $_SESSION['uid'];
-      $userInfo = User_Model::getUserTinyInfoByUid($uid);
+      $userInfo = Member::getTinyInfoByUid($GLOBALS['user']->uid);
       $this->v->assign('user', $userInfo);
     }
     $response->send($this->v);
   }
   
   public function collect(Request $request, Response $response){
-    $uid = intval($_SESSION['uid']);
+    $uid  = $GLOBALS['user']->uid;
     $type = $request->arg(2);
     if(empty($type)||!in_array($type, ['word', 'card', 'music', 'gift'])){
       $type = 'word';
@@ -193,7 +184,7 @@ class User_Controller extends Controller {
   public function cancleCollect(Request $request, Response $response){
     $res = ['flag'=>'FAIL','data'=>[],'msg'=>''];
     $nid = (int)$request->post('nid', 0);
-    $uid = $_SESSION['uid'];
+    $uid = $GLOBALS['user']->uid;
     import('node/Node_Model');
     if(Node_Model::cancleCollect($nid, $uid)){
       $res['flag'] = 'SUC';
@@ -203,15 +194,21 @@ class User_Controller extends Controller {
     $response->sendJSON($res);
   }
 
+  /**
+   * 登录
+   * 
+   * @param Request $request
+   * @param Response $response
+   */
   public function login(Request $request, Response $response)
   {
     $_SESSION['refer'] = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
     if(!Member::isLogined()) {
       $token = $request->get('token','');
-      if(''!=$token) {
+      if(''!=$token) { //token登录优先，便于测试
         $this->tokenLogin($request, $response);
       }
-      elseif(strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') === false) { //不是微信内置浏览器
+      elseif(!Weixin::isWeixinBrowser()) { //不是微信内置浏览器
         $this->tips($request, $response);
       }
       else { //先用base方式获取微信OAuth2授权，以便于取得openid
@@ -267,12 +264,13 @@ class User_Controller extends Controller {
       if (!empty($uinfo_bd)) { //用户已存在，则仅需设置登录状态
         $uid = $uinfo_bd['uid'];
       }
-      else {
+      else { //用户不存在，则要尝试建立
         $uinfo_wx    = [];
         $auth_method = '';
         if ('base'===$state) { //基本授权方式
           
-          //先用基本型接口获取用户信息，失败才考虑OAuth2 snsapi_userinfo方式(基本型接口存在 500000/次 调用限制)
+          /*
+          //先用基本型接口获取用户信息，失败才考虑OAuth2 snsapi_userinfo方式(基本型接口存在 50000000次/日 调用限制，且必须是"关注"了公众号的用户才能调用成功)
           $uinfo_wx = $wx->userInfo($openid);
           //trace_debug('weixin_basic_userinfo', $uinfo_wx);
           if (!empty($uinfo_wx['errcode'])) { //失败！转而用OAuth2 snsapi_userinfo方式
@@ -281,6 +279,11 @@ class User_Controller extends Controller {
           else { //成功！
             $auth_method = 'oauth2_base';//基本接口认证方式
           }
+          */
+          
+          // 为了降低用户的购物体验门槛，默认所有链接只需OAuth2基本认证(以便获得openid)
+          $auth_method = 'oauth2_base';//OAuth2基本认证方式
+          $uinfo_wx = $code_ret;
                     
         }
         else { //详细信息授权方式
@@ -290,26 +293,29 @@ class User_Controller extends Controller {
             User_Model::showInvalidLogin('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
           }
           else { //成功!
-            $auth_method = 'oauth2_detail';//OAuth2认证方式
+            $auth_method = 'oauth2_detail';//OAuth2详细认证方式
           }
         }
         
         //保存微信用户信息到本地库
-        $udata = [
-          'openid'   => $openid,
-          'unionid'  => isset($uinfo_wx['unionid']) ? $uinfo_wx['unionid'] : '',
-          'subscribe'=> isset($uinfo_wx['subscribe']) ? $uinfo_wx['subscribe'] : 0,
-          'subscribe_time'=> isset($uinfo_wx['subscribe_time']) ? $uinfo_wx['subscribe_time'] : 0,
-          'nickname' => $uinfo_wx['nickname'],
-          'logo'     => $uinfo_wx['headimgurl'],
-          'sex'      => $uinfo_wx['sex'],
-          'lang'     => isset($uinfo_wx['language']) ? $uinfo_wx['language'] : '',
-          'country'  => $uinfo_wx['country'],
-          'province' => $uinfo_wx['province'],
-          'city'     => $uinfo_wx['city'],
-          'auth_method'=> $auth_method
-        ];
-        $uid = Member::createUser($udata, $from);
+        if (!empty($uinfo_wx)) {
+          $udata = [
+            'openid'   => $openid,
+            'unionid'  => isset($uinfo_wx['unionid']) ? $uinfo_wx['unionid'] : '',
+            'subscribe'=> isset($uinfo_wx['subscribe']) ? $uinfo_wx['subscribe'] : 0,
+            'subscribe_time'=> isset($uinfo_wx['subscribe_time']) ? $uinfo_wx['subscribe_time'] : 0,
+            'nickname' => isset($uinfo_wx['nickname']) ? $uinfo_wx['nickname'] : '',
+            'logo'     => isset($uinfo_wx['headimgurl']) ? $uinfo_wx['headimgurl'] : '',
+            'sex'      => isset($uinfo_wx['sex']) ? $uinfo_wx['sex'] : 0,
+            'lang'     => isset($uinfo_wx['language']) ? $uinfo_wx['language'] : '',
+            'country'  => isset($uinfo_wx['country']) ? $uinfo_wx['country'] : '',
+            'province' => isset($uinfo_wx['province']) ? $uinfo_wx['province'] : '',
+            'city'     => isset($uinfo_wx['city']) ? $uinfo_wx['city'] : '',
+            'auth_method'=> $auth_method
+          ];
+          $uid = Member::createUser($udata, $from);          
+        }
+
       }
       
       if (empty($uid)) {
@@ -328,6 +334,12 @@ class User_Controller extends Controller {
     }
   }
 
+  /**
+   * 退出登录
+   * 
+   * @param Request $request
+   * @param Response $response
+   */
   public function logout(Request $request, Response $response){
     // Unset all of the session variables.
     session_destroy();
@@ -346,7 +358,12 @@ class User_Controller extends Controller {
     $response->reload();
   }
 
-  //token登录
+  /**
+   * token登录
+   * 
+   * @param Request $request
+   * @param Response $response
+   */
   public function tokenLogin(Request $request, Response $response){
     
     //1.简单openId登录
@@ -370,77 +387,23 @@ class User_Controller extends Controller {
     
     if(''!=$_SESSION['refer']){
       $response->redirect($_SESSION['refer']);
-    }else{
+    }
+    else{
       $response->redirect('/');
     }
     exit;
   }
-/*
-  //网页认证登录
-  public function baseLogin(Request $request, Response $response){
-    
-    //网页认证登录
-    $code = $request->get('code', '');
-    if($code==''){
-      User_Model::showInvalidLogin();
-    }
-    WxApi::init();
-    $res = WxApi::getToken($code);
-    $openid = $res['openid'];
-    $userInfo = User_Model::getUserTinyInfoByOpenid($openid);
-    if(empty($userInfo)){
-      header('location:'.WxApi::userinfoUrl('http://'.Config::get('env.site.mobile').'/user/firstLogin'));
-      exit();
-    }else{
-      //更新登录记录
-      User_Model::updateUserByOpenid($openid, ['lastip'=>$request->ip(), 'lasttime'=>simphp_time()]);
-      
-      $_SESSION['uid'] = $userInfo['uid'];
-      Member::autoLogin($openid);
-      if($_SESSION['refer']!=''){
-        header('location:'.$_SESSION['refer']);
-      }else{
-        header('location:http://'.Config::get('env.site.mobile'));
-      }
-      exit();
-    }
-  }
-
-  public function firstLogin(Request $request, Response $response){
-    
-    //网页认证登录
-    
-    $code = $request->get('code', '');
-    WxApi::init();
-    $res = WxApi::getToken($code);
-    $userInfo = WxApi::getUserInfo($res['access_token'], $res['openid']);
-
-    //uid,openid,nickname,sex,logo,regip,regtime
-    //
-    $user_data = ['openid'=>$userInfo['openid'], 'nickname'=>$userInfo['nickname'], 'sex'=>$userInfo['sex'], 'logo'=>$userInfo['headimgurl'], 'regtime'=>time()];
-
-    $uid = User_Model::createUser($user_data);
-    if($uid<1){
-      User_Model::showInvalidLogin('系统繁忙，请稍后再试！');
-      exit();
-    }
-
-    $_SESSION['uid'] = $uid;
-    Member::autoLogin($userInfo['openid']);
-    if($_SESSION['refer']!=''){
-      header('location:'.$_SESSION['refer']);
-    }else{
-      header('location:http://'.Config::get('env.site.mobile'));
-    }
-    exit();
-  }
-*/
-
+  
+  /**
+   * tips页显示
+   * @param Request $request
+   * @param Response $response
+   */
   public function tips(Request $request, Response $response){
     $this->v = new PageView('','tips');
     $response->send($this->v);
-    exit;
   }
+  
 }
 
 /*----- END FILE: User_Controller.php -----*/

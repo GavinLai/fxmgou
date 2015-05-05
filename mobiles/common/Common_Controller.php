@@ -30,7 +30,9 @@ class Common_Controller extends Controller {
       '!^cate/(\d+)$!i'       => 'default/cate/$1',
       '!^cate/(\d+)/(\d+)$!i' => 'node/cate/$1/$2',
       '!^edit/(\d+)$!i'       => 'node/edit/$1',
-      '!^explore$!i'          => 'user',
+      '!^item/(\d+)$!i'       => 'default/item/$1',
+      '!^explore$!i'          => 'default/explore',
+      '!^about$!i'            => 'default/about',
       '!^guide$!i'            => 'default/guide',
     ];
   }
@@ -56,12 +58,14 @@ class Common_Controller extends Controller {
     }
     
     // 检查登录状态
+    /*
     if(!$loginIgnore && !Member::isLogined()){
       import('user/*');
       $user_Controller = new User_Controller();
       $user_Controller->login($request, $response);
       exit;
     }
+    */
   }
   
   /**

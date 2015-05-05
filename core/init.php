@@ -232,6 +232,8 @@ class SimPHP {
       }
       if ( (RC_SESSION & $rc) === RC_SESSION ) { //Bootstrap with session
         $GLOBALS['user'] = new stdClass();
+        SessionBase::anonymous_user($GLOBALS['user']);
+        
         $sessnode  = $this->sessnode;
         $sess_handler = Config::get("storage.session.{$sessnode}.handler",'file');
         if ('mm' == $sess_handler) {

@@ -1,6 +1,5 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>
-var wxData = {}, gData = {referURI:''};
+<script>var wxData = {}, gData = {referURI:''};
 function setWxShareData(data) {
 	wxData = $.extend({
 		imgUrl    : 'http://'+location.host+'/misc/images/napp/touch-icon-256.png',
@@ -26,16 +25,8 @@ function hashBackward(obj) {
 	return F.hashGo(gData.referURI);
 }
 </script>
+<!-- 
 <header class="header no-bounce" id="header">
-
-  <!-- 首页 -->
-  <!-- 
-  <div class="headit head-tj- head-cur">
-	  <a href="javascript:void(0);" class="sidebtn ltbtn topleftbtn" onclick="return hashBackward(this);" id="topleftbtn"><span class="txt bgposition1"></span></a>
-	  <a href="#/" class="midbtn homebtn"><span class="txt bgposition2"></span></a>
-	  <a href="#/user/notice" class="sidebtn rtbtn notibtn"><span class="txt bgposition3"></span></a>
-  </div>
-  -->
   <div class="headit">
     <ul class="catelist clearfix" id="topCateList">
       <li class="cur" data-cateid="0"><a href="#/"><em>推荐</em></a></li>
@@ -52,16 +43,17 @@ function hashBackward(obj) {
       <li data-cateid="11"><a href="#/cate/11"><em>晚辈</em></a></li>
     </ul>
   </div>
-  
 </header>
-
+ -->
 <script>
 function header_show(cate_id){
+	return;
 	if(''!==cate_id) {
   	$('#topCateList li').removeClass('cur');
   	$('#topCateList li[data-cateid='+cate_id+']').addClass('cur');
 	}
 }
+/*
 $(function(){
 	setTimeout(function(){
 		if(typeof(F.oIScrollHead)!='object') {
@@ -71,6 +63,7 @@ $(function(){
 		}
 	},500);	
 });
+*/
 function shareFriend() {
 	if (typeof WeixinJSBridge == "undefined") return;
   WeixinJSBridge.invoke('sendAppMessage',{
@@ -151,7 +144,7 @@ function onBridgeReady(){
 	  shareWeibo();
   });
 }
-
+/*
 if (typeof WeixinJSBridge == "undefined") {
 	if( document.addEventListener ) {
 		document.addEventListener('WeixinJSBridgeReady', onBridgeReady, false);
@@ -162,4 +155,5 @@ if (typeof WeixinJSBridge == "undefined") {
 } else {
 	onBridgeReady();
 }
+*/
 </script>

@@ -91,8 +91,8 @@
 					hwaccel: false, // Whether to use hardware acceleration
 					className: 'spinner', // The CSS class to assign to the spinner
 					zIndex: 2e9, // The z-index (defaults to 2000000000)
-					top: 'auto', // Top position relative to parent in px
-					left: 'auto' // Left position relative to parent in px
+					top: '50%', // Top position relative to parent in px
+					left: '50%' // Left position relative to parent in px
 				};
 			F.loading_icons[effect] = new Spinner(opts);
 			F.loading_icons[effect].spin(F.loading_canvas.get(0));
@@ -244,9 +244,9 @@
 		
 		F.hashLoad(hash,data,function(ret){
 			var _ct = F.scrollarea;
+			var toPreClass = 'ui-page-pre-in';
+			var toClass = 'slide in';
 			if (_effect=='slide_right_in') {
-				var toPreClass = 'ui-page-pre-in';
-				var toClass = 'slide in';
 				_ct.addClass(toPreClass);
 				_ct.animationComplete(function(){
 					_ct.removeClass(toClass);
@@ -282,7 +282,7 @@
 		else {$(w).hashchange();}
 		
 		// Prevent default scroll action
-		w.document.addEventListener('touchmove', function (e) { e.preventDefault(); }, false);
+		w.document.addEventListener('touchmove', function (e) { /*e.preventDefault();*/ }, false);
 	});
 })(jQuery, FUI, this);
 

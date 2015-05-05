@@ -1,35 +1,15 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <nav id="nav-1" class="nav no-bounce">
- <a href="#/" class="fl" rel="home"><i class="nav2"></i><em>首页</em></a>
- <a href="#/activity" class="fl" rel="activity"><i class="nav1"></i><em>活动</em></a>
- <a href="#/mall" class="fl" rel="mall"><i class="nav3"></i><em>商城</em></a>
- <a href="#/explore" class="fl" rel="user"><i class="nav4"></i><em>我的</em></a>
-</nav>
-
-<nav id="nav-2" class="nav no-bounce hide">
- <a href="#/cate/0?t=word" class="fl" rel="word"><i class="nav5"></i><em>文字</em></a>
- <a href="#/cate/0?t=card" class="fl" rel="card"><i class="nav6"></i><em>贺卡</em></a>
- <a href="#/cate/0?t=music" class="fl" rel="music"><i class="nav7"></i><em>音乐</em></a>
- <a href="#/cate/0?t=gift" class="fl" rel="gift"><i class="nav8"></i><em>礼物</em></a>
-</nav>
-
-<!-- 编辑贺卡  -->
-<nav id="nav-3" class="nav no-bounce hide">
- <a href="javascript:void(0);" class="fl nav13" onclick="return toEditText('nodetxt');" style="border-right:1px solid #fff;">编辑</a>
- <a href="javascript:void(0);" class="fl last nav14" onclick="return toSendNode(this,true);" id="tosendnode">分享</a>
-</nav>
-
-<!-- 活动详情页 -->
-<nav id="nav-4" class="nav no-bounce hide">
-    <a href="javascript:void(0);" id="join" class="abtn">我来参与</a>
-    <a href="javascript:void(0);" id="vote" class="azan"><i></i></a>
+ <a href="" class="fl" rel="home"><em>首页</em></a>
+ <a href="#/explore" class="fl" rel="explore"><em>所有宝贝</em></a>
+ <a href="#/about" class="fl" rel="about"><em>我的</em></a>
 </nav>
 
 <!-- 商品详情页 -->
 <nav id="nav-5" class="nav no-bounce hide">
 	<div>
 		<a href="javascript:void(0);" class="abtn collectbtn">收藏</a>
-	    <a href="javascript:void(0);" class="abtn buybtn">购买</a>    
+		<a href="javascript:void(0);" class="abtn buybtn">购买</a>    
 	</div>
 </nav>
 
@@ -41,6 +21,15 @@
 
 <!-- 微信操作提示 -->
 <div id="cover-wxtips" class="cover"><img alt="" src="<?=$contextpath;?>themes/mobiles/img/guide.png"/></div>
+
+<script>
+$(function() {
+  $('a').click(function() {
+    document.location = $(this).attr('href');
+    return false;
+  });
+});
+</script>
 
 <script>
 function nav_show(nav_no, nav, nav_second) {
@@ -136,6 +125,7 @@ function toWXShequ(obj) {
 	$(obj).find('i').addClass('cur');
 	return true;
 }
+/*
 $(function(){
 	toSendNode(null,false);
 	if (typeof window.ontouchstart != 'undefined') {
@@ -144,4 +134,5 @@ $(function(){
 		toSendNode.target.bind('click',toSendNode);
 	}
 });
+*/
 </script>

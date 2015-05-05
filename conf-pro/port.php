@@ -1,12 +1,13 @@
 <?php
 /**
- * SimPHP 简体中文语言包
+ * 第三方接口配置
  *
  * @author Gavin<laigw.vip@gmail.com>
  */
 defined('IN_SIMPHP') or die('Access Denied');
 
-return array(
-  'appname' => '福小蜜海外购',
-);
+return [
 
+];
+
+/*----- END FILE: port.php -----*/

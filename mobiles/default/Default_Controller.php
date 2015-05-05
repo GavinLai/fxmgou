@@ -59,8 +59,21 @@ class Default_Controller extends Controller {
       $ad_name = 'default_index';
       $ad = Default_Model::getAd($ad_name);
       
-      import('node/Node_Model');
-      $feedlist = Node_Model::getFeedList(['cate_id'=>$cate_id],$page, $limit, $hasmore);
+      //获取最新上架
+      $goods_latest = Default_Model::getGoodsList('latest',0,6);
+      $this->v->assign('goods_latest',$goods_latest);
+      
+      //获取一级显示分类
+      $category_top = Default_Model::getCategory(0, FALSE);
+      foreach ($category_top AS &$top) {
+        $child_ids = Default_Model::getChildCategoryIds($top['cat_id']);
+        $cat_ids   = array_merge([$top['cat_id']], $child_ids);
+        $goods_cate = Default_Model::getGoodsList('category',0,6,['cat_ids'=>$cat_ids]);
+        $top['goods_set'] = $goods_cate;
+      }
+      $this->v->assign('category_top',$category_top);
+      
+      $feedlist = [];
       $this->v->assign('feedlist', $feedlist)
               ->assign('top_cate_id', $cate_id)
               ->assign('nextpage', $page+1)
@@ -72,6 +85,69 @@ class Default_Controller extends Controller {
     }
     else{
       
+    }
+    $response->send($this->v);
+  }
+  
+  public function explore(Request $request, Response $response) {
+    $this->v->set_tplname('mod_default_explore');
+  
+    if ($request->is_hashreq()) {
+      
+      //获取最新上架
+      $goods_latest = Default_Model::getGoodsList('latest',0,20);
+      $this->v->assign('goods_latest',$goods_latest);
+      
+    }
+    else {
+  
+    }
+    $response->send($this->v);
+  }
+  
+  public function item(Request $request, Response $response) {
+    $this->v->set_tplname('mod_default_item');
+    
+    if ($request->is_hashreq()) {
+    
+      $goods_id = $request->arg(2);
+      $errmsg   = '';
+      
+      //获取商品信息
+      $goods_info = Default_Model::getGoodsInfo($goods_id);
+      if (empty($goods_info)) {
+        $errmsg = '查询商品不存在: goods_id: '.$goods_id;
+      }
+      else {
+        $purl = 'http://'.C('env.site.shop');
+        $goods_info['goods_thumb']  = $purl . '/' . $goods_info['goods_thumb'];
+        $goods_info['goods_img']    = $purl . '/' . $goods_info['goods_img'];
+        $goods_info['original_img'] = $purl . '/' . $goods_info['original_img'];
+        //$goods_info['goods_desc']   = htmlspecialchars($goods_info['goods_desc']);
+        include (SIMPHP_CORE.'/libs/htmlparser/simple_html_dom.php');
+        $dom = str_get_html($goods_info['goods_desc']);
+        $imgs= $dom->find('img');
+        $imgs_src = [];
+        if (!empty($imgs)) {
+          foreach ($imgs AS $img) {
+            $imgs_src[] = $img->getAttribute('src');
+          }
+          
+          foreach($imgs_src as $psrc) {
+            if(preg_match('!^/!', $psrc)) {
+              $goods_info['goods_desc'] = str_replace('src="'.$psrc.'"', 'src="'.$purl . $psrc.'"', $goods_info['goods_desc']);
+            }
+          }
+        }
+      }
+      
+      $this->v->assign('errmsg', $errmsg)
+              ->assign('goods_info', $goods_info);
+      
+    
+    }
+    else {
+    
     }
     $response->send($this->v);
   }
@@ -94,6 +170,18 @@ class Default_Controller extends Controller {
     $response->send($this->v);
   }
 
+  public function about(Request $request, Response $response) {
+    $this->v->set_tplname('mod_default_about');
+    
+    if ($request->is_hashreq()) {
+      
+    }
+    else {
+      
+    }
+    $response->send($this->v);
+  }
+  
 }
  
 /*----- END FILE: Default_Controller.php -----*/
