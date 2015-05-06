@@ -1,11 +1,11 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>var wxData = {}, gData = {referURI:''};
+<script>
 function setWxShareData(data) {
 	wxData = $.extend({
-		imgUrl    : 'http://'+location.host+'/misc/images/napp/touch-icon-256.png',
+		imgUrl    : 'http://'+location.host+'/misc/images/napp/touch-icon-144.png',
 		imgWidth  : '',
 		imgHeight : '',
-		link      : 'http://'+location.host,
+		link      : 'http://'+location.host+'/',
 		desc      : '',
 		title     : '<?php echo L('appname')?>',
 		appId     : '',/*
@@ -25,45 +25,8 @@ function hashBackward(obj) {
 	return F.hashGo(gData.referURI);
 }
 </script>
-<!-- 
-<header class="header no-bounce" id="header">
-  <div class="headit">
-    <ul class="catelist clearfix" id="topCateList">
-      <li class="cur" data-cateid="0"><a href="#/"><em>推荐</em></a></li>
-      <li data-cateid="1"><a href="#/cate/1"><em>节日</em></a></li>
-      <li data-cateid="2"><a href="#/cate/2"><em>生日</em></a></li>
-      <li data-cateid="3"><a href="#/cate/3"><em>节气</em></a></li>
-      <li data-cateid="4"><a href="#/cate/4"><em>贺词</em></a></li>
-      <li data-cateid="5"><a href="#/cate/5"><em>健康</em></a></li>
-      <li data-cateid="6"><a href="#/cate/6"><em>问候</em></a></li>
-      <li data-cateid="7"><a href="#/cate/7"><em>爱人</em></a></li>
-      <li data-cateid="8"><a href="#/cate/8"><em>朋友</em></a></li>
-      <li data-cateid="9"><a href="#/cate/9"><em>客户</em></a></li>
-      <li data-cateid="10"><a href="#/cate/10"><em>长辈</em></a></li>
-      <li data-cateid="11"><a href="#/cate/11"><em>晚辈</em></a></li>
-    </ul>
-  </div>
-</header>
- -->
+
 <script>
-function header_show(cate_id){
-	return;
-	if(''!==cate_id) {
-  	$('#topCateList li').removeClass('cur');
-  	$('#topCateList li[data-cateid='+cate_id+']').addClass('cur');
-	}
-}
-/*
-$(function(){
-	setTimeout(function(){
-		if(typeof(F.oIScrollHead)!='object') {
-			F.oIScrollHead = new IScroll('#header', { scrollX: true, scrollY: false, mouseWheel: true });
-		}else{
-			F.oIScrollHead.refresh();
-		}
-	},500);	
-});
-*/
 function shareFriend() {
 	if (typeof WeixinJSBridge == "undefined") return;
   WeixinJSBridge.invoke('sendAppMessage',{

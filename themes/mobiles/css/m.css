@@ -25,7 +25,7 @@ a, input, button { -ms-touch-action: none !important; }
 
 /*----- project relative css -----*/
 #rtWrap { width: 100%;height: 100%;margin: 0 auto;position: relative;background: #f1f1f1;overflow: hidden; }
-#activePage,#loadingCanvas { position: absolute;top: 0;bottom: 44px;width: 100%;/*overflow-x: hidden;overflow-y: scroll;*/-webkit-overflow-scrolling: touch;overflow: hidden; }
+#activePage,#loadingCanvas { position: absolute;top: 0;bottom: 45px;width: 100%;/*overflow-x: hidden;overflow-y: scroll;*/-webkit-overflow-scrolling: touch;overflow: hidden; }
 #loadingCanvas { display:none;background:#fff;z-index:10000; }
 #activePage > .scrollArea {
 	position: absolute;
@@ -56,8 +56,9 @@ a, input, button { -ms-touch-action: none !important; }
 
 /*底部主导航*/
 .nav { height: 44px;background: #f8f8f8;width: 100%;border-top: 1px solid #ddd;position: absolute;bottom: 0;left: 0; }
-.nav a { display: block;width: 25%;height: 100%;line-height: 44px; text-align: center; border-right: 1px solid #ddd; color: #5f646e;font-size: 18px;font-size: 1.8rem;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box; }
+.nav a { display: block;float: left;width: 25%;height: 100%;line-height: 44px; text-align: center; border-right: 1px solid #ddd; color: #5f646e;font-size: 18px;font-size: 1.8rem;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box; }
 .nav a:nth-child(4){ border-right: none; }
+.nav a.cur { color: #ff7700; font-weight: bold; }
 
 /*顶部导航*/
 .micon { background:url(../img/micon.png) no-repeat;background-size: 250px; }

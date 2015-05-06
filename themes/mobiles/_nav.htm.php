@@ -1,9 +1,9 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <nav id="nav-1" class="nav no-bounce">
- <a href="<?=$contextpath?>" class="fl" rel="home"><em>首页</em></a>
- <a href="#/explore" class="fl" rel="explore"><em>宝贝</em></a>
- <a href="http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205641974&idx=1&sn=d21c0b265b021ce6e6f9b693551d83b1#rd" class="fl" rel="about"><em>关于</em></a>
- <a href="<?=$contextpath?>user" class="fl" rel="mine"><em>我的</em></a>
+ <a href="<?=$contextpath?>" class="cur" rel="home"><em>首页</em></a>
+ <a href="#/explore" class="" rel="explore"><em>宝贝</em></a>
+ <a href="<?=$contextpath?>user" class="" rel="user"><em>我的</em></a>
+ <a href="http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205641974&idx=1&sn=d21c0b265b021ce6e6f9b693551d83b1#rd" class="" rel="about"><em>关于</em></a>
 </nav>
 
 <!-- 商品详情页 -->
@@ -23,51 +23,28 @@
 <!-- 微信操作提示 -->
 <div id="cover-wxtips" class="cover"><img alt="" src="<?=$contextpath;?>themes/mobiles/img/guide.png"/></div>
 
-<script>
-$(function() {
-  $('a').click(function() {
-    document.location = $(this).attr('href');
-    return false;
-  });
-});
-</script>
-
-<script>
-function nav_show(nav_no, nav, nav_second) {
+<script>function nav_show(nav_no, nav, nav_second) {
 	if (nav_no===undefined) nav_no = 1;
-	nav_no = parseInt(nav_no);
 	
-	$('.nav').hide();
 	var $thenav = $('#nav-'+nav_no);
+	$('a', $thenav).removeClass('cur');
+	$('a[rel='+nav+']', $thenav).addClass('cur');
+	$('.nav').hide();
 	$thenav.show();
+
+	nav_no = parseInt(nav_no);
 	F.pagenav_height = $thenav.height();
+	F.log('nav_show: F.pagenav_height='+F.pagenav_height);
 	
-	if(nav_no==0){
-		$('#activePage').css('bottom','0px');
-	}else{
-		$('#activePage').css('bottom',''+(F.pagenav_height+1)+'px');
-	}
-
-	var $tlbtn = $('#topleftbtn');
-	if (!$tlbtn.hasClass('backbtn')) {
-		$tlbtn.removeClass('topleftbtn').addClass('backbtn');
-	}
-
 	switch (nav_no) {
 	case 1:
-		$('a > i',$thenav).removeClass('cur');
-		if (''!=nav) {
-		  $('a[rel='+nav+'] > i',$thenav).addClass('cur');
-		}
-
-		if (nav=='') {
-			$tlbtn.removeClass('backbtn').addClass('topleftbtn');
+		if (''==gUser.nickname || ''==gUser.logo) {
+			$('a[rel=user]', $thenav).attr('href','/user');
+		}else{
+			$('a[rel=user]', $thenav).attr('href','#/user');
 		}
 		break;
 	case 2:
-		$('a',$thenav).each(function(){$(this).attr('href','#/cate/'+nav_second+',t='+$(this).attr('rel'));});
-		$('a > i',$thenav).removeClass('cur');
-		$('a[rel='+nav+'] > i',$thenav).addClass('cur');
 		break;
 	case 3:
 		break;
@@ -88,52 +65,4 @@ function toEditText(id) {
 	F.placeCaretAtEnd(document.getElementById(id));
 	return false;
 }
-function toSendNode(obj, show) {
-	if (typeof toSendNode.target == 'undefined') {
-		toSendNode.target = $('#cover-wxtips');
-	}
-	if(show===true) {
-		if(typeof $(obj).attr('callback') != 'undefined'){
-			var res;
-			var jscode = 'res='+$(obj).attr('callback')+"(obj)";
-			eval(jscode);
-			if(res==false){
-				return;
-			}
-		}
-		
-		if (wxData.ntype=='word') {
-			//setWxShareData({title:"<?php echo L('appname')?> - 祝福语",desc:$('#nodetxt').text(), callback:res.callback, 'link':res.url});
-		}
-		else if (wxData.ntype=='card') {
-			//setWxShareData({title:"<?php echo L('appname')?> - 贺卡",desc:res.content, 'imgUrl':res.img, 'link':res.url, callback:res.callback});	
-		}
-		else if (wxData.ntype=='music') {
-			
-		}
-		else if (wxData.ntype=='gift') {
-			//gift_share
-			//setWxShareData({title:'<?php echo L('appname')?> - 礼物',desc:gift_share.title+"\n"+gift_share.desc.replace(/<[^>]+>/g,""), 'imgUrl':gift_share.img, 'link':gift_share.link, callback:res.callback});
-		}
-	}
-	else {
-		toSendNode.target.hide();
-	}
-	return false;
-}
-function toWXShequ(obj) {
-	$(obj).parent().find('a>i').removeClass('cur');
-	$(obj).find('i').addClass('cur');
-	return true;
-}
-/*
-$(function(){
-	toSendNode(null,false);
-	if (typeof window.ontouchstart != 'undefined') {
-		toSendNode.target.bind('touchstart',toSendNode);
-	} else {
-		toSendNode.target.bind('click',toSendNode);
-	}
-});
-*/
 </script>

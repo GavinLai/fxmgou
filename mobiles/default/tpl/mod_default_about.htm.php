@@ -12,3 +12,4 @@
     <dd>联系邮箱：<a href="mailto:fxmgou@163.com">fxmgou@163.com</a></dd>
   </dl>
 </div>
+<?php include T($tpl_footer);?>

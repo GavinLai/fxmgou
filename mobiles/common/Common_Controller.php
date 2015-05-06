@@ -64,6 +64,17 @@ class Common_Controller extends Controller {
       exit;
     }
     
+    //读取最新用户信息以客户端缓存
+    global $user;
+    $uinfo = Member::getTinyInfoByUid($user->uid);
+    $user->openid    = $uinfo['openid'];
+    $user->unionid   = $uinfo['unionid'];
+    $user->subscribe = $uinfo['subscribe'];
+    $user->username  = $uinfo['username'];
+    $user->nickname  = $uinfo['nickname'];
+    $user->sex       = $uinfo['sex'];
+    $user->logo      = $uinfo['logo'];
+    
   }
   
   /**

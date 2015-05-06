@@ -101,7 +101,6 @@ class Member{
 	 */
 	public static function isLogined()
 	{
-		//if(isset($_SESSION['uid']) && $_SESSION['uid']>0){
 		if( $GLOBALS['user']->uid ){
 			return true;
 		}
@@ -116,7 +115,7 @@ class Member{
 				if(empty($userinfo)){
 					return false;
 				}else{
-					$_SESSION['uid'] = $userinfo['uid'];
+					$GLOBALS['user']->uid = $userinfo['uid'];
 					return true;
 				}
 			}
@@ -142,7 +141,6 @@ class Member{
 	{
 		$user = ['uid'=>0];
 		if(self::isLogined()){
-			//$user['uid'] = $_SESSION['uid'];
 			$user['uid'] = $GLOBALS['user']->uid;
 		}
 		return $user;
@@ -346,17 +344,19 @@ class Member{
 	{
 	  if (!$uid) return;
 	  
+	  global $user;
+	  
 	  //设置登录session uid
-	  //$_SESSION['uid'] = $uid;
-	  $GLOBALS['user']->uid = $uid;
+	  $user->uid = $uid;
 	  
 	  //更新登录记录
 	  self::updateUser(['lastip'=>Request::ip(), 'lasttime'=>simphp_time()], $uid);
 	  
-	  //~ 更新ecshop数据表users
+	  //更新ecshop数据表users
 	  $ecdata  = ['last_login' => simphp_time(), 'last_ip' => Request::ip()];
 	  $ecwhere = ['member_platform' => APP_PLATFORM, 'member_id' => $uid];
 	  D()->update(ectable('users'), $ecdata, $ecwhere, TRUE);
+
 	}
 	
 }

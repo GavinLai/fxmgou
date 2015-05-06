@@ -20,6 +20,7 @@
 <script>var APPNAME='<?php echo L('appname')?>';</script>
 <?php tplholder('HEAD_CSS');?>
 <?php tplholder('HEAD_JS');?>
+<?php headscript();?>
 </head>
 <body>
 <div id="rtWrap">

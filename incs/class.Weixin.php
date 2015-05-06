@@ -554,7 +554,7 @@ class Weixin {
    * 
    * @return int|string
    */
-  public static function WeixinBrowserVer() {
+  public static function browserVer() {
     $ver = 0;
     if (preg_match('/.*?(MicroMessenger\/([0-9.]+))\s*/', $_SERVER['HTTP_USER_AGENT'], $matches)) {
       $ver = $matches[2];

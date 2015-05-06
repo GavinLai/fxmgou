@@ -374,7 +374,7 @@ class User_Controller extends Controller {
   }
 
   /**
-   * token登录
+   * token登录(用于测试)
    * 
    * @param Request $request
    * @param Response $response

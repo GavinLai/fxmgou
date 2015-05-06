@@ -91,7 +91,8 @@ class Default_Controller extends Controller {
   
   public function explore(Request $request, Response $response) {
     $this->v->set_tplname('mod_default_explore');
-  
+    $this->_nav = 'explore';
+    $this->v->assign('nav', $this->_nav);
     if ($request->is_hashreq()) {
       
       //获取最新上架
@@ -107,6 +108,8 @@ class Default_Controller extends Controller {
   
   public function item(Request $request, Response $response) {
     $this->v->set_tplname('mod_default_item');
+    $this->_nav = 'item';
+    $this->v->assign('nav', $this->_nav);
     
     if ($request->is_hashreq()) {
     
@@ -172,6 +175,8 @@ class Default_Controller extends Controller {
 
   public function about(Request $request, Response $response) {
     $this->v->set_tplname('mod_default_about');
+    $this->_nav = 'about';
+    $this->v->assign('nav', $this->_nav);
     
     if ($request->is_hashreq()) {
       

@@ -40,8 +40,7 @@
   </ul>
 </div>
 
-<script>
-function change_list_style(obj) {
+<script>function change_list_style(obj) {
 	if ($(obj).hasClass('ls2')) {
 		$(obj).removeClass('ls2');
 		$('#listyle-2').hide();
@@ -53,3 +52,4 @@ function change_list_style(obj) {
 	}
 }
 </script>
+<?php include T($tpl_footer);?>

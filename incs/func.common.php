@@ -611,4 +611,36 @@ function ectable( $tbname ) {
   return ECDB . '.`' . ECDB_PRE . $tbname . '`';
 }
 
+/**
+ * 显示在html head 里的全局js
+ */
+function headscript() {
+  global $user;
+  $wxVer   = Weixin::browserVer();
+  $script  = '<script type="text/javascript">';
+  $script .= 'var wxData = {browserVer:\''.$wxVer.'\'}, gData = {referURI:\'\'}, gUser = {};';
+  foreach (((array)$user) AS $k => $v) {
+    if (in_array($k, ['cached','session'])) continue;
+    $script .= ' gUser.'.$k." = '{$v}';";
+  }
+  $script .= '</script>';
+  echo $script;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*----- END FILE: func.common.php -----*/
