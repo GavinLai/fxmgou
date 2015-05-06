@@ -58,7 +58,7 @@ return [
   ],
   'cookie' => [
     'default' => [
-      'domain'	  => 'm.fxmgou.com',
+      'domain'	  => 'fxm.8558.com',
       'path'		  => '/',
       'lifetime'  => 0,
       'secure'    => 0,
