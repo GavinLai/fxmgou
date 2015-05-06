@@ -55,8 +55,8 @@ class User_Model extends Model {
 	  if (empty($uinfo['nickname']) || empty($uinfo['logo'])) { //只要两个其中一个为空，都请求OAuth2详细认证
 	    if ( !isset($_SESSION['wxoauth_reqcnt']) ) $_SESSION['wxoauth_reqcnt'] = 0;
 	    $_SESSION['wxoauth_reqcnt']++;
-	    if ($_SESSION['wxoauth_reqcnt'] < 3) { //最多尝试2次，避免死循环
-	      (new Weixin())->authorizing('http://'.Request::host().'/user/oauth/weixin?refer='.$refer,  'detail');
+	    if ($_SESSION['wxoauth_reqcnt'] < 4) { //最多尝试2次，避免死循环
+	      (new Weixin())->authorizing('http://'.Request::host().'/user/oauth/weixin?refer='.$refer, 'detail');
 	    }
 	  }
 	  return true;

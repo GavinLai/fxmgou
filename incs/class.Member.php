@@ -228,19 +228,27 @@ class Member{
 	    }
 	    
 	    //~ 插入ecshop数据表users
-	    $ecdb  = ECDB;
-	    $ecpre = ECDB_PRE;
-	    $plat  = APP_PLATFORM;
-	    
-	    $ec_email = isset($data['email']) ? $data['email'] : '';
-	    $ec_uname = $data['username'] . '@' . $from;
-	    $ec_pass  = isset($data['password']) ? $data['password'] : '';
-	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
-	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
-	    
-	    $sql   = "INSERT INTO {$ecdb}.`{$ecpre}users`(`member_platform`,`member_id`,`email`,`user_name`,`password`,`sex`,`address_id`,`reg_time`,`ec_salt`) VALUES";
-	    $sql  .= "('%s',%d,'%s','%s','%s',%d,%d,%d,'%s')";
-	    D()->raw_query($sql,$plat,$uid,$ec_email,$ec_uname,$ec_pass,$ec_sex,$ec_addr,$now,$salt);
+	    $ecdata  = [];
+	    $ecdata['member_platform'] = APP_PLATFORM;
+	    $ecdata['member_id']       = $uid;
+	    $ecdata['user_name']       = $data['username'] . '@' . $from;
+	    if (isset($data['email'])) {
+	      $ecdata['email'] = $data['email'];
+	    }
+	    if (isset($data['password'])) {
+	      $ecdata['password'] = $data['password'];
+	    }
+	    if (isset($data['sex'])) {
+	      $ecdata['sex'] = $data['sex'];
+	    }
+	    if (isset($data['city']) || isset($data['province']) || isset($data['country'])) {
+	      $ecdata['address_id'] = self::getECRegionId($data['city'],$data['province'],$data['country']);
+	    }
+	    $ecdata['reg_time'] = simphp_time();
+	    $ecdata['ec_salt']  = $salt;
+	    if (!empty($ecdata)) {
+	      D()->insert(ectable('users'), $ecdata, 1, TRUE);
+	    }
 	    
 	    return $uid;
 	  }
@@ -276,15 +284,20 @@ class Member{
 	    $effcnt = D()->update('member', $data, $where);
 	    
 	    //~ 更新ecshop数据表users
-	    $ecdb  = ECDB;
-	    $ecpre = ECDB_PRE;
-	    $plat  = APP_PLATFORM;
-	    
-	    $ec_sex   = isset($data['sex']) ? $data['sex'] : 0;
-	    $ec_addr  = self::getECRegionId($data['city'],$data['province'],$data['country']);
-	     
-	    $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `sex`=%d,`address_id`=%d,`last_time`='%s' WHERE `member_platform`='%s' AND `member_id`=%d";
-	    D()->raw_query($sql,$ec_sex,$ec_addr,simphp_dtime(),$plat,$uid);
+	    $ecdata  = [];
+	    $ecwhere = ['member_platform' => APP_PLATFORM, 'member_id' => $uid];
+	    if (isset($data['sex'])) {
+	      $ecdata['sex'] = $data['sex'];
+	    }
+	    if (isset($data['city']) || isset($data['province']) || isset($data['country'])) {
+	      $ecdata['address_id'] = self::getECRegionId($data['city'],$data['province'],$data['country']);
+	    }
+	    if (!empty($ecdata)) {
+	      $ecdata['last_time'] = simphp_dtime();
+	    }
+	    if (!empty($ecdata)) {
+	      D()->update(ectable('users'), $ecdata, $ecwhere, TRUE);
+	    }
 	    
 	  }
 	  return $effcnt ? $effcnt : FALSE;
@@ -301,14 +314,13 @@ class Member{
 	  $theid = 0;
 	  
 	  if (!empty($city)) {
-	    $ecdb  = ECDB;
-	    $ecpre = ECDB_PRE;
-	    $sql = "SELECT `region_id` FROM {$ecdb}.`{$ecpre}region` WHERE `region_name`='%s' AND ";
-	    $row = D()->raw_query($sql."region_type=2",$city)->get_one();
+	    $ectb= ectable('region');
+	    $sql = "SELECT `region_id` FROM {$ectb} WHERE `region_name`='%s' AND ";
+	    $row = D()->raw_query($sql."`region_type`=2",$city)->get_one();
 	    if (empty($row)) {
-	      $row = D()->raw_query($sql."region_type=1",$province)->get_one();
+	      $row = D()->raw_query($sql."`region_type`=1",$province)->get_one();
 	      if (empty($row)) {
-	        $row = D()->raw_query($sql."region_type=0",$country)->get_one();
+	        $row = D()->raw_query($sql."`region_type`=0",$country)->get_one();
 	        if (!empty($row)) {
 	          $theid = $row['region_id'];
 	        }
@@ -342,12 +354,9 @@ class Member{
 	  self::updateUser(['lastip'=>Request::ip(), 'lasttime'=>simphp_time()], $uid);
 	  
 	  //~ 更新ecshop数据表users
-	  $ecdb  = ECDB;
-	  $ecpre = ECDB_PRE;
-	  $plat  = APP_PLATFORM;
-	  
-	  $sql   = "UPDATE {$ecdb}.`{$ecpre}users` SET `last_login`=%d,`last_ip`='%s' WHERE `member_platform`='%s' AND `member_id`=%d";
-	  D()->raw_query($sql,simphp_time(),Request::ip(),$plat,$uid);
+	  $ecdata  = ['last_login' => simphp_time(), 'last_ip' => Request::ip()];
+	  $ecwhere = ['member_platform' => APP_PLATFORM, 'member_id' => $uid];
+	  D()->update(ectable('users'), $ecdata, $ecwhere, TRUE);
 	}
 	
 }

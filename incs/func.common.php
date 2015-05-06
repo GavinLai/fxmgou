@@ -113,8 +113,14 @@ function config_set($key, $val = '', $encode = 'R')
  * 返回一个空图片路径(用于占位)
  * @return string
  */
-function emptyimg() {
+function emptyimg()
+{
   return '/misc/images/b.gif';
+}
+
+function ploadingimg()
+{
+  return '/misc/images/bloading.gif';
 }
 
 /**
@@ -122,7 +128,8 @@ function emptyimg() {
  * @param string $key
  * @param mixed $val
  */
-function trace_debug($key, $val='') {
+function trace_debug($key, $val='')
+{
   if (!empty($key)) {
     $val = is_string($val) ? $val : print_r($val, TRUE);
     $dtime = simphp_dtime();
@@ -137,19 +144,21 @@ function trace_debug($key, $val='') {
  * @param unknown_type $is_strip_tags	是否处理html,php标签
  * @return multitype:NULL
  */
-function treat_input_str($str,$is_strip_tags=true){
-	if(is_array($str)){
+function treat_input_str($str,$is_strip_tags=true)
+{
+	if(is_array($str)) {
 		$a = array();
-		foreach($str as $key=>$val){
+		foreach($str as $key=>$val) {
 			$a[$key] = trim($val);
-			if($is_strip_tags){
+			if($is_strip_tags) {
 				$a[$key] = strip_tags($a[$key]);
 			}
 		}
 		$str = $a;
-	}else{
+	}
+	else {
 		$str = trim($str);
-		if($is_strip_tags){
+		if($is_strip_tags) {
 			$str = strip_tags($str);
 		}
 	}
@@ -162,31 +171,36 @@ function treat_input_str($str,$is_strip_tags=true){
  * @param unknown_type $len
  * @param char $type 类型	both(混合),number(数字)
  */
-function create_randcode($len=10,$type='both'){
-	switch ($type){
+function create_randcode($len=10,$type='both')
+{
+	switch ($type) {
 		case 'number': $chars = '0123456789';break;
 		case 'both': $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';break;
 	}
 
 	mt_srand((double)microtime()*1000000*getmypid());
 	$code="";
-	while(strlen($code)<$len){
+	while(strlen($code)<$len) {
 		$code.=substr($chars,(mt_rand()%strlen($chars)),1);
 	}
 	return $code;
 }
+
 /**
  * 默认头像
  */
-function default_logo(){
+function default_logo()
+{
 	return '/misc/images/avatar/default_ulogo.png';
 }
+
 /**
  * 检测用户是否登录
  */
-function checkLogin_ajax(){
+function checkLogin_ajax()
+{
 	$res = ['flag'=>'FAIL','msg'=>'请先登录'];
-	if(!Member::isLogined()){
+	if(!Member::isLogined()) {
 		Response::sendJSON($res);
 	}
 }
@@ -326,7 +340,8 @@ function parse_video_code($attrs)
   return $vcode;
 }
 
-function gen_signtail() {
+function gen_signtail()
+{
   $html =<<<SHTML
 <div class="signtail">
 <p><span><br></span></p>
@@ -353,7 +368,8 @@ SHTML;
  * 生成指定类型的id
  * @param unknown_type $idname
  */
-function idmaker($idname){
+function idmaker($idname)
+{
 	if(!in_array($idname, ['serial_no','order_no'])){
 		return '';
 	}
@@ -394,7 +410,8 @@ function idmaker($idname){
 /**
  * 生成站内流水号
  */
-function gen_serial_no(){
+function gen_serial_no()
+{
 	//站内流水号为16位数字,年月日(8)+8位自增长
 	$pre = date('Ymd');
 	$id = idmaker('serial_no');
@@ -408,7 +425,8 @@ function gen_serial_no(){
 /**
  * 生成订单号
  */
-function gen_order_no(){
+function gen_order_no()
+{
 	//站内流水号为15位数字,年月日(8)+7位自增长
 	$pre = date('Ymd');
 	$id = idmaker('order_no');
@@ -419,8 +437,8 @@ function gen_order_no(){
 	return $pre.$id;
 }
 
-function zf_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0) {
-
+function zf_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0)
+{
   $ckey_length = 4;
 
   $key = md5($key ? $key : ZF_KEY);
@@ -468,7 +486,9 @@ function zf_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0) {
     return $keyc.str_replace('=', '', base64_encode($result));
   }
 }
-function getOrderState($state=''){
+
+function getOrderState($state='')
+{
   //0:已下单，-1:表示发货失败,-2:已取消，1：已扣款，2:已发货,3:交易完成
   $state_array = [
     '0' => '已下单',
@@ -478,22 +498,27 @@ function getOrderState($state=''){
     '-1'=> '发货失败',
     '-2'=> '已取消'
   ];
-  if(isset($state_array[$state])){
+  
+  if(isset($state_array[$state])) {
     return $state_array[$state];
-  }else{
+  }
+  else {
     return $state_array;
   }
 }
-function getSendState($state=''){
-//发货状态,0:不发货,1:待发货，2:已发货,3:已收货
+
+function getSendState($state='')
+{
+  //发货状态,0:不发货,1:待发货，2:已发货,3:已收货
   $state_array = [
     '0' => '不发货',
     '1' => '待发货',
     '3' => '已发货'
   ];
-  if(isset($state_array[$state])){
+  if(isset($state_array[$state])) {
     return $state_array[$state];
-  }else{
+  }
+  else {
     return $state_array;
   }
 }
@@ -503,7 +528,8 @@ function getSendState($state=''){
  * Enter description here ...
  * @param unknown_type $type
  */
-function get_send_type($type=NULL){
+function get_send_type($type=NULL)
+{
   //发货发式,0:未知,1:EMS,2:顺丰,3:圆通,4:申通,5:汇通,6:中通,7:韵达,8:天天
   $send_type = array(
     '0'=>array('name'=>'未知','site'=>''),
@@ -516,11 +542,14 @@ function get_send_type($type=NULL){
     '7'=>array('name'=>'韵达','site'=>'http://www.yundaex.com/'),
     '8'=>array('name'=>'天天','site'=>'http://www.ttkdex.com/')   
   );
-  if($type==NULL){
+  
+  if($type==NULL) {
     return $send_type;
-  }elseif($send_type[$type]){
+  }
+  elseif($send_type[$type]) {
     return $send_type[$type];
-  }else{
+  }
+  else {
     return $send_type[0];
   }
 }
@@ -533,7 +562,8 @@ function get_send_type($type=NULL){
  * @param unknown_type $append
  * @return string
  */
-function truncate($string,$length,$append = true){
+function truncate($string,$length,$append = true)
+{
     $string = trim($string);
     $strlength = strlen($string);
     if ($length == 0 || $length >= $strlength){
@@ -569,6 +599,16 @@ function truncate($string,$length,$append = true){
         $newstr .= '...';
     }
     return $newstr;
+}
+
+/**
+ * 返回ecshop相对于本程序的数据表前缀
+ * 
+ * @param string $tbname
+ * @return string
+ */
+function ectable( $tbname ) {
+  return ECDB . '.`' . ECDB_PRE . $tbname . '`';
 }
 
 /*----- END FILE: func.common.php -----*/

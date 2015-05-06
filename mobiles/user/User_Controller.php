@@ -293,6 +293,22 @@ class User_Controller extends Controller {
           ];
           Member::updateUser($udata,$openid,$from);
           
+          //尝试用基本型接口获取用户信息，以便确认用户是否已经关注(基本型接口存在 50000000次/日 调用限制，且仅对关注者有效)
+          if (!$uinfo_bd['subscribe'] && !$udata['subscribe']) {
+            $uinfo_wx = $wx->userInfo($openid);
+            //trace_debug('weixin_basic_userinfo', $uinfo_wx);
+            if (!empty($uinfo_wx['errcode'])) { //失败！说明很可能没关注，维持现状不处理
+              
+            }
+            else { //成功！说明之前已经关注，得更新关注标记
+              $udata = [
+                'subscribe'=> isset($uinfo_wx['subscribe']) ? $uinfo_wx['subscribe'] : 0,
+                'subscribe_time'=> isset($uinfo_wx['subscribe_time']) ? $uinfo_wx['subscribe_time'] : 0,
+              ];
+              Member::updateUser($udata,$openid,$from);
+            }
+          }
+          
         } //End: if ('detail'===$state)
         
       }

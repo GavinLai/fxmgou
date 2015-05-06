@@ -58,7 +58,7 @@ $(function(){
     <?php foreach($goods_latest AS $it):?>
       <li class="liit">
         <a href="#/item/<?=$it['goods_id']?>">
-          <img src="<?php echo emptyimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
+          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>
         </a>
@@ -76,7 +76,7 @@ $(function(){
     <?php foreach($top['goods_set'] AS $it):?>
       <li class="liit">
         <a href="#/item/<?=$it['goods_id']?>">
-          <img src="<?php echo emptyimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
+          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>
         </a>

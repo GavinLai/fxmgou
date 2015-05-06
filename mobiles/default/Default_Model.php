@@ -21,9 +21,8 @@ class Default_Model extends Model {
   }
 
   public static function getCategory($parent_id = 0, $just_id = FALSE) {
-    $ecdb  = ECDB;
-    $ecpre = ECDB_PRE;
-    $sql   = "SELECT `cat_id`,`cat_name` FROM {$ecdb}.`{$ecpre}category` WHERE `is_show`=1 AND `parent_id`=%d ORDER BY `sort_order` ASC";
+    $ectb  = ectable('category');
+    $sql   = "SELECT `cat_id`,`cat_name` FROM {$ectb} WHERE `is_show`=1 AND `parent_id`=%d ORDER BY `sort_order` ASC";
     $ret   = D()->raw_query($sql, $parent_id)->fetch_array_all();
     if ($just_id && !empty($ret)) {
       foreach ($ret AS &$it) {
@@ -45,11 +44,11 @@ class Default_Model extends Model {
   }
   
   public static function getGoodsList($type, $start = 0, $limit = 10, Array $extra = array()) {
-    $ecdb  = ECDB;
-    $ecpre = ECDB_PRE;
+    
+    $ectb = ectable('goods');
     
     $fields = "`goods_id`,`cat_id`,`goods_sn`,`goods_name`,`click_count`,`brand_id`,`goods_number`,`market_price`,`shop_price`,`goods_thumb`,`goods_img`,`add_time`,`last_update`";
-    $sqlpre = "SELECT {$fields} FROM {$ecdb}.`{$ecpre}goods` WHERE `is_on_sale`=1 AND `goods_img`<>''";
+    $sqlpre = "SELECT {$fields} FROM {$ectb} WHERE `is_on_sale`=1 AND `goods_img`<>''";
     $ret    = [];
     
     if ('latest'==$type) {
@@ -80,9 +79,8 @@ class Default_Model extends Model {
     if (empty($goods_id) || !is_numeric($goods_id)) {
       return FALSE;
     }
-    $ecdb  = ECDB;
-    $ecpre = ECDB_PRE;
-    $sql   = "SELECT * FROM {$ecdb}.`{$ecpre}goods` WHERE `goods_id`=%d AND `is_on_sale`=1 AND `goods_img`<>''";
+    $ectb  = ectable('goods');
+    $sql   = "SELECT * FROM {$ectb} WHERE `goods_id`=%d AND `is_on_sale`=1 AND `goods_img`<>''";
     $ret   = D()->raw_query($sql,$goods_id)->get_one();
     return $ret;
   }
