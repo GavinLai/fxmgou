@@ -616,9 +616,14 @@ function ectable( $tbname ) {
  */
 function headscript() {
   global $user;
+  
+  // Global data
   $wxVer   = Weixin::browserVer();
+  $wxConf  = Config::get('api.weixin_fxmgou');
+  $wxAppId = $wxConf['appId'];
+  
   $script  = '<script type="text/javascript">';
-  $script .= 'var wxData = {browserVer:\''.$wxVer.'\'}, gData = {referURI:\'\'}, gUser = {};';
+  $script .= 'var wxData = {browserVer:\''.$wxVer.'\',appId:\''.$wxAppId.'\'}, gData = {referURI:\'\'}, gUser = {};';
   foreach (((array)$user) AS $k => $v) {
     if (in_array($k, ['cached','session'])) continue;
     $script .= ' gUser.'.$k." = '{$v}';";
