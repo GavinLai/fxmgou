@@ -621,17 +621,133 @@ function headscript() {
   $wxVer   = Weixin::browserVer();
   $wxConf  = Config::get('api.weixin_fxmgou');
   $wxAppId = $wxConf['appId'];
+  $appName = L('appname');
+  $currUri = Request::uri();
   
   $script  = '<script type="text/javascript">';
-  $script .= 'var wxData = {browserVer:\''.$wxVer.'\',appId:\''.$wxAppId.'\'}, gData = {referURI:\'\'}, gUser = {};';
+  $script .= "var wxData = {browserVer:'{$wxVer}',appId:'{$wxAppId}',isReady:false},gData = {appName:'{$appName}',currURI:'{$currUri}',referURI:''}, gUser = {};";
   foreach (((array)$user) AS $k => $v) {
     if (in_array($k, ['cached','session'])) continue;
     $script .= ' gUser.'.$k." = '{$v}';";
   }
   $script .= '</script>';
+  
   echo $script;
 }
+/**
+ * 显示在html foot后的js，如微信JS-SDK
+ */
+function footscript() {
+  $q = Request::q();
+  if (!$q) $q = '/';
+  
+  $resjs = '';
+  $wx = new Weixin();
+  $base_url = 'http://'.C('env.site.mobile').'/';
+  $shop_url = 'http://'.C('env.site.shop').'/';
+  
+  $wxjs_init = '';
+  $wxjs_api  = '';
+  $wxapi_init= ['onMenuShareTimeline','onMenuShareAppMessage','onMenuShareQQ','onMenuShareWeibo'];
+  
+  if (preg_match('!item/(\d+)!i', $q, $match)) { //分享商品详情页
+    $goods_id = $match[1];
+    //$ectable  = ectable('goods');
+    //$goods_info = D()->get_one("SELECT * FROM {$ectable} WHERE `goods_id`=%d AND `goods_thumb`<>''", $goods_id);
+    $goods_info = Goods::getGoodsInfo($goods_id, ['is_on_sale'=>0,'goods_img'=>1]);
+    if (!empty($goods_info)) {
+      
+      $cat_chain= Goods::getParentCatesChain($goods_info['cat_id']);
+      $fx_title = '';
+      foreach ($cat_chain AS $c) {
+        $fx_title .= $c['cat_name'] . '//';
+      }
+      if (''!=$fx_title) {
+        $fx_title  = rtrim($fx_title,'/');
+        $fx_title .= ' - 福小蜜';
+      }
+      $fx_desc  = str_replace("'", "\\'", $goods_info['goods_name']);
+      $fx_link  = $base_url.'item/'.$goods_info['goods_id'];
+      $fx_pic   = $shop_url.$goods_info['goods_thumb'];
+      
+      $wxjs_init = $wx->js($wxapi_init);
+      
+    }
 
+  }
+  else { //其他页都只分享首页
+    
+    $fx_title = "福小蜜";
+    $fx_desc  = '福小蜜海外购，专注于海外商品的代购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。q='.$q;
+    $fx_link  = $base_url;
+    $fx_pic   = $base_url.'misc/images/napp/touch-icon-144.png';
+    
+    $wxjs_init = $wx->js($wxapi_init);
+  }
+  
+  //API接口
+  $wxjs_api  =<<<HEREDOC
+wx.ready(function(){
+  //分享给微信好友
+  wx.onMenuShareAppMessage({
+    title: '{$fx_title}',
+    desc: '{$fx_desc}',
+    link: '{$fx_link}',
+    imgUrl: '{$fx_pic}',
+    success: function (res) {
+        alert('谢谢分享！');
+    },
+    cancel: function (res) {
+        //alert('已取消');
+    }
+  });
+  //分享到朋友圈
+  wx.onMenuShareTimeline({
+    title: '{$fx_title}',
+    link: '{$fx_link}',
+    imgUrl: '{$fx_pic}',
+    success: function (res) {
+      alert('谢谢分享！');
+    },
+    cancel: function (res) {
+      //alert('已取消');
+    }
+  });
+  //分享到QQ
+  wx.onMenuShareQQ({
+    title: '{$fx_title}',
+    desc: '{$fx_desc}',
+    link: '{$fx_link}',
+    imgUrl: '{$fx_pic}',
+    success: function (res) {
+      alert('谢谢分享！');
+    },
+    cancel: function (res) {
+      //alert('已取消');
+    }
+  });
+  //分享到微博
+  wx.onMenuShareWeibo({
+    title: '{$fx_title}',
+    desc: '{$fx_desc}',
+    link: '{$fx_link}',
+    imgUrl: '{$fx_pic}',
+    success: function (res) {
+      alert('谢谢分享！');
+    },
+    cancel: function (res) {
+      //alert('已取消');
+    }
+  });
+});
+HEREDOC;
+  
+  if (''!=$wxjs_init) {
+    $resjs = "{$wxjs_init}\n<script>if (typeof(wx)=='object') {\n{$wxjs_api}\n}</script>";
+  }
+  
+  echo $resjs;
+}
 
 
 

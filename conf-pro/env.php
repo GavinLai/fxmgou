@@ -31,7 +31,7 @@ return [
   'tpldebug' => 1,
   //站点信息
   'site' => [
-  	'mobile' => 'www.fxmgou.com',
+  	'mobile' => 'fxm.8558.com',
   	'shop' => 'pc.fxmgou.com',
   ],
   //上传文件保存目录 

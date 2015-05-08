@@ -187,6 +187,49 @@ module.exports.FastClick=e):window.FastClick=e})();
 		this.topmainboxid  = 'mainMsgBox';	// top main msg box id
 		this.topmainboxobj = null;			// top main msg box dom jQuery object
 		
+		//~ event handling
+		this.event = {
+			flag: {downpull: false},
+			_events: {},
+			on: function (type, fn) {
+				if ( !this._events[type] ) {
+					this._events[type] = [];
+				}
+				this._events[type].push(fn);
+			},
+			off: function (type, fn) {
+				if ( !this._events[type] ) {
+					return;
+				}
+				
+				var index = this._events[type].indexOf(fn);
+				
+				if ( index > -1 ) {
+					this._events[type].splice(index, 1);
+				}
+			},
+			execEvent: function (type) {
+				if ( !this._events[type] ) {
+					return;
+				}
+				
+				var i = 0,
+					l = this._events[type].length;
+
+				if ( !l ) {
+					return;
+				}
+
+				for ( ; i < l; i++ ) {
+					this._events[type][i].apply(this, [].slice.call(arguments, 1));
+				}
+			},
+			reset: function() {
+				this._events = {};
+				this.flag.downpull = false;
+			}
+		};
+		
 		//~ initialize queue
 		this.createQueue(this.hashHist, this.hashHistSize);
 	};
@@ -695,5 +738,49 @@ module.exports.FastClick=e):window.FastClick=e})();
 	w._gWaitSucc = 1;	 // 1 second while success
 	w._gWaitWarn = 2;	 // 2 second while warning
 	w._gWaitFail = 3;	 // 3 seconds while fail
+	
+	/*
+	 * 传递函数给whenReady()
+	 * 当文档解析完毕且为操作准备就绪时，函数作为document的方法调用
+	 */
+	var whenReady = (function() {               //这个函数返回whenReady()函数
+	    var funcs = [];             //当获得事件时，要运行的函数
+	    var ready = false;          //当触发事件处理程序时,切换为true
+	    
+	    //当文档就绪时,调用事件处理程序
+	    function handler(e) {
+	        if(ready) return;       //确保事件处理程序只完整运行一次
+	        
+	        //如果发生onreadystatechange事件，但其状态不是complete的话,那么文档尚未准备好
+	        if(e.type === 'onreadystatechange' && document.readyState !== 'complete') {
+	            return;
+	        }
+	        
+	        //运行所有注册函数
+	        //注意每次都要计算funcs.length
+	        //以防这些函数的调用可能会导致注册更多的函数
+	        for(var i=0; i<funcs.length; i++) {
+	            funcs[i].call(document);
+	        }
+	        //事件处理函数完整执行,切换ready状态, 并移除所有函数
+	        ready = true;
+	        funcs = null;
+	    }
+	    //为接收到的任何事件注册处理程序
+	    if(document.addEventListener) {
+	        document.addEventListener('DOMContentLoaded', handler, false);
+	        document.addEventListener('readystatechange', handler, false);            //IE9+
+	        window.addEventListener('load', handler, false);
+	    }else if(document.attachEvent) {
+	        document.attachEvent('onreadystatechange', handler);
+	        window.attachEvent('onload', handler);
+	    }
+	    //返回whenReady()函数
+	    return function whenReady(fn) {
+	        if(ready) { fn.call(document); }
+	        else { funcs.push(fn); }
+	    }
+	})();
+	F.onDocReady = whenReady;
 	
 })(jQuery, window);

@@ -1,5 +1,7 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>$(function(){
+<!-- 
+<script>
+$(function(){
 	nav_show('<?=$nav_no?>','<?=$nav?>','<?=$nav_second?>');
 	//$('.withclickbg').bind('click',function(){$(this).addClass("clickbg");});
 
@@ -10,3 +12,4 @@
 });
 </script>
 <script>FST.start();</script>
+-->

@@ -57,8 +57,8 @@ $(function(){
     <ul class="liset">
     <?php foreach($goods_latest AS $it):?>
       <li class="liit">
-        <a href="#/item/<?=$it['goods_id']?>">
-          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
+        <a href="<?=$contextpath?>item/<?=$it['goods_id']?>">
+          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic"  onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>
         </a>
@@ -75,8 +75,8 @@ $(function(){
     <ul class="liset">
     <?php foreach($top['goods_set'] AS $it):?>
       <li class="liit">
-        <a href="#/item/<?=$it['goods_id']?>">
-          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" data-loaded="0" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
+        <a href="<?=$contextpath?>item/<?=$it['goods_id']?>">
+          <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>
         </a>
@@ -96,23 +96,6 @@ $(function(){
 	});
 });
 //-->
-</script>
-
-
-<script>
-/*
-$(function(){
-	var $wimg = $('#feedList a.wtload');
-	var _timer = null;
-	_timer = setInterval(function(){
-    if($wimg.find('img[data-loaded=0]').size()==0) {
-  	  clearInterval(_timer);
-  	  _timer = null;
-  	  F.set_scroller();
-    }
-  },1000);
-});
-*/
 </script>
 
 <?php include T($tpl_footer);?>

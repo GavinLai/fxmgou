@@ -37,6 +37,12 @@ class Weixin {
 	 * @var OAuth2
 	 */
 	public $oauth;
+
+	/**
+	 * WeixinJSSDK instance
+	 * @var WeixinJSSDK
+	 */
+	public $jssdk;
 	
 	/**
 	 * API address url prefix
@@ -46,6 +52,7 @@ class Weixin {
 	  'api_cgi'   => 'https://api.weixin.qq.com/cgi-bin',
 	  'api_sns'   => 'https://api.weixin.qq.com/sns',
 	  'open_conn' => 'https://open.weixin.qq.com/connect',
+	  'qyapi_cgi' => 'https://qyapi.weixin.qq.com/cgi-bin',
 	);
 	
 	/**
@@ -146,6 +153,7 @@ class Weixin {
 		
 		$this->helper    = new WeixinHelper($this);
 		$this->oauth     = new OAuth2(array('client_id'=>$this->appId,'secret_key'=>$this->appSecret,'response_type'=>'code','scope'=>'snsapi_base','state'=>'base'),'weixin');
+		$this->jssdk     = new WeixinJSSDK($this->appId, $this->appSecret, $this);
 	}
 	
 	/**
@@ -410,7 +418,7 @@ class Weixin {
    * @param string $type API地址类型，对应self::$apiUrlPrefix的key部分：api_cgi,api_sns,open_conn
    * @return mixed JSON Array or string
    */
-  private function apiCall($uri_path, $params=array(), $method='get', $type='api_cgi')
+  public function apiCall($uri_path, $params=array(), $method='get', $type='api_cgi')
   {
     if (!in_array($type, array_keys(self::$apiUrlPrefix))) {
       return false;
@@ -536,6 +544,60 @@ class Weixin {
     return $this->oauth->request_access_token($code);
   }
   
+  /**
+   * 获取前端html Weinxin JS-SDK引入代码及初始配置
+   *
+   * @param array $jsApiList
+   * @param boolean $debug
+   * @return string
+   */
+  public function js(Array $jsApiList = array(), $debug = true) {
+    if (empty($jsApiList)) {
+      $jsApiList = [
+        'onMenuShareTimeline',
+        'onMenuShareAppMessage',
+        'onMenuShareQQ',
+        'onMenuShareWeibo',
+        'chooseImage',
+        'previewImage',
+        'uploadImage',
+        'downloadImage',
+        'getNetworkType',
+        'openLocation',
+        'getLocation',
+        'hideOptionMenu',
+        'showOptionMenu',
+        'closeWindow',
+        'scanQRCode',
+        'chooseWXPay',
+      ];
+    }
+    
+    $signPackage = $this->jssdk->getSignPackage();
+    $jsApiStr    = "'" . implode("','", $jsApiList) . "'";
+    $debugStr    = $debug ? 'true' : 'false';
+    $now         = time();
+    
+    $jsfile = '<script src="'.$this->jssdk->getSdkFile().'"></script>';
+    $jsconf =<<<HEREDOC
+<script>
+if (typeof(wx)=='object') {
+  wx.config({
+    debug: {$debugStr},
+    appId: '{$signPackage["appId"]}',
+    timestamp: {$signPackage["timestamp"]},
+    nonceStr: '{$signPackage["nonceStr"]}',
+    signature: '{$signPackage["signature"]}',
+    jsApiList: [{$jsApiStr}]
+  });
+  wx.ready(function(){wxData.isReady=true});
+}
+</script>
+HEREDOC;
+    
+    return $jsfile . $jsconf;
+    
+  }
   
   //~ the following is some util functions
   
@@ -562,8 +624,152 @@ class Weixin {
     return $ver;
   }
   
+  /**
+   * 创建随机 nonce 字符串
+   * @param string $length
+   * @return string
+   */
+  public static function createNonceStr($length = 16) {
+    return WeixinJSSDK::createNonceStr($length);
+  }
+  
+  /**
+   * 返回JS-SDK文件路径
+   * @return string
+   */
+  public static function getJsSdkFile() {
+    return WeixinJSSDK::getSdkFile();
+  }
+  
 }
 
+/**
+ * Weixin JS-SDK 类
+ *
+ * @author Gavin<laigw.vip@gmail.com>
+ */
+class WeixinJSSDK {
+  
+  /**
+   * App Id
+   * 
+   * @var string
+   */
+  private $appId;
+  
+  /**
+   * App Secret
+   * 
+   * @var string
+   */
+  private $appSecret;
+  
+  /**
+   * js sdk file path
+   * 
+   * @var string
+   */
+  private static $sdkFile = 'http://res.wx.qq.com/open/js/jweixin-1.0.0.js';
+  
+  /**
+   * Weixin Object
+   * @var Weixin
+   */
+  private $wx;
+  
+  public function __construct($appId, $appSecret, Weixin $wx = NULL) {
+    $this->appId = $appId;
+    $this->appSecret = $appSecret;
+    $this->wx = $wx;
+  }
+  
+  /**
+   * 获取前端JS-SDK需要的签名包数据
+   * 
+   * @return array
+   */
+  public function getSignPackage() {
+    
+    $jsapiTicket = $this->getJsApiTicket();
+
+    // 注意 URL 一定要动态获取，不能 hardcode.
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    $url = "{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+  
+    $timestamp = time();
+    $nonceStr = $this->createNonceStr();
+  
+    // 这里参数的顺序要按照 key 值 ASCII 码升序排序
+    $string = "jsapi_ticket={$jsapiTicket}&noncestr={$nonceStr}&timestamp={$timestamp}&url={$url}";
+  
+    $signature = sha1($string);
+  
+    $signPackage = array(
+      "appId"     => $this->appId,
+      "nonceStr"  => $nonceStr,
+      "timestamp" => $timestamp,
+      "url"       => $url,
+      "signature" => $signature,
+      "rawString" => $string
+    );
+    return $signPackage;
+  }
+  
+  /**
+   * 创建随机 nonce 字符串
+   * @param string $length
+   * @return string
+   */
+  public static function createNonceStr($length = 16) {
+    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    $str = "";
+    for ($i = 0; $i < $length; $i++) {
+      $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+    }
+    return $str;
+  }
+  
+  /**
+   * 返回JS-SDK文件路径
+   * @return string
+   */
+  public static function getSdkFile() {
+    return self::$sdkFile;
+  }
+  
+  /**
+   * 获取jsapi_ticket
+   * 
+   * @return string
+   */
+  private function getJsApiTicket() {
+    
+    $type   = 'jsapi';
+    $result = $this->wx->helper->onFetchAccessTokenBefore($type, $this->appId);
+    if (!empty($result)) {
+      return $result;
+    }
+    
+    $accessToken = $this->wx->fecthAccessToken();
+    
+    $ret    = array();
+    $params = array(
+      'type'         => 'jsapi',
+      'access_token' => $accessToken
+    );
+    $ret = $this->wx->apiCall('/ticket/getticket', $params);
+    if (!empty($ret['errcode'])) {
+      return false;
+    }
+    $result = $ret['ticket'];
+    
+    if (!empty($result)) {
+      $this->wx->helper->onFetchAccessTokenSuccess($type, $this->appId, '', $ret);
+    }
+    return $result;
+  }
+  
+}
 
 /**
  * Weixin帮助类
@@ -815,7 +1021,7 @@ class WeixinHelper {
   /**
    * 获取access token之前的检查事件
    *
-   * @param string $type, optional value: 'basic':基本型; 'oauth':OAuth2型
+   * @param string $type, optional value: 'basic':基本型; 'oauth':OAuth2型; 'jsapi': jsapi ticket
    * @param string $appId,
    * @param string $openId,
    * @return string
@@ -829,6 +1035,9 @@ class WeixinHelper {
     elseif ('oauth'==$type) {
       $token = D()->result("SELECT `access_token` FROM `{access_token_weixin}` WHERE `type`='oauth' AND `appid`='%s' AND `openid`='%s' AND `expires_at`>{$now} ORDER BY `rid` DESC LIMIT 1", $appId, $openId);
     }
+    elseif ('jsapi'==$type) {
+      $token = D()->result("SELECT `access_token` FROM `{access_token_weixin}` WHERE `type`='jsapi' AND `appid`='%s' AND `expires_at`>{$now} ORDER BY `rid` DESC LIMIT 1", $appId);
+    }
     return $token;
   }
 
@@ -837,7 +1046,7 @@ class WeixinHelper {
    *
    * @param string $access_token
    * @param integer $expires_in
-   * @param string $type, optional value: 'basic':基本型; 'oauth':OAuth2型
+   * @param string $type, optional value: 'basic':基本型; 'oauth':OAuth2型; 'jsapi': jsapi ticket
    * @param string $appId,
    * @param string $openid,
    * @param array $retdata, 微信服务器返回的数据
@@ -846,7 +1055,7 @@ class WeixinHelper {
     $now  = time();
     $data = array(
       'type'         => $type,
-      'access_token' => $retdata['access_token'],
+      'access_token' => 'jsapi'==$type ? $retdata['ticket'] : $retdata['access_token'],
       'expires_at'   => $now + $retdata['expires_in'] - 10, //减10是为了避免网络误差时间
       'appid'        => $appId,
       'openid'       => isset($retdata['openid']) ? $retdata['openid'] : $openid,
