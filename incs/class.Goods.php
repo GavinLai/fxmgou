@@ -30,7 +30,7 @@ class Goods {
     return $output;
   }
   
-  public static function getGoodsInfo($goods_id, Array $ctrl = array('is_on_sale'=>1,'goods_img'=>1)) {
+  public static function getGoodsInfo($goods_id, Array $ctrl = array()) {
     if (empty($goods_id) || !is_numeric($goods_id)) {
       return FALSE;
     }
@@ -51,4 +51,4 @@ class Goods {
   
 }
  
-/*----- END FILE: class.goods.php -----*/
+/*----- END FILE: class.Goods.php -----*/

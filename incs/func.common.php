@@ -652,9 +652,8 @@ function footscript() {
   
   if (preg_match('!item/(\d+)!i', $q, $match)) { //分享商品详情页
     $goods_id = $match[1];
-    //$ectable  = ectable('goods');
-    //$goods_info = D()->get_one("SELECT * FROM {$ectable} WHERE `goods_id`=%d AND `goods_thumb`<>''", $goods_id);
-    $goods_info = Goods::getGoodsInfo($goods_id, ['is_on_sale'=>0,'goods_img'=>1]);
+    //$goods_info = Goods::getGoodsInfo($goods_id, ['is_on_sale'=>0,'goods_img'=>1]);
+    $goods_info = Goods::getGoodsInfo($goods_id, array('is_on_sale'=>0,'goods_img'=>1));
     if (!empty($goods_info)) {
       
       $cat_chain= Goods::getParentCatesChain($goods_info['cat_id']);

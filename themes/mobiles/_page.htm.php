@@ -1,5 +1,5 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?><!DOCTYPE html>
-<html lang="zh-CN" manifest="mobile.manifest">
+<html lang="zh-CN">
 <head>
 <meta charset="utf-8">
 <title><?php echo L('appname')?></title>
