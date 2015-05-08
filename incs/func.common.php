@@ -648,6 +648,7 @@ function footscript() {
   
   $wxjs_init = '';
   $wxjs_api  = '';
+  $wxjs_api_extra = '';
   $wxapi_init= ['onMenuShareTimeline','onMenuShareAppMessage','onMenuShareQQ','onMenuShareWeibo'];
   
   if (preg_match('!item/(\d+)!i', $q, $match)) { //分享商品详情页
@@ -669,7 +670,24 @@ function footscript() {
       $fx_link  = $base_url.'item/'.$goods_info['goods_id'];
       $fx_pic   = $shop_url.$goods_info['goods_thumb'];
       
-      $wxjs_init = $wx->js($wxapi_init);
+      $goods_gallery = Goods::getGoodsGallery($goods_id);
+      $fx_picset= [];
+      if (!empty($goods_gallery)) {
+        foreach ($goods_gallery AS $ga) {
+          $fx_picset[] = $shop_url.$ga['img_url'];
+        }
+        $fx_picset_str = implode("','", $fx_picset);
+        $wxjs_api_extra =<<<HREDOC_0
+$('.gpic img').click(function(){
+  wx.previewImage({
+    current: '{$fx_picset[0]}',
+    urls: ['{$fx_picset_str}']
+  });
+});
+HREDOC_0;
+      }
+      
+      $wxjs_init = $wx->js($wxapi_init+['previewImage']);
       
     }
 
@@ -677,7 +695,7 @@ function footscript() {
   else { //其他页都只分享首页
     
     $fx_title = "福小蜜";
-    $fx_desc  = '福小蜜海外购，专注于海外商品的代购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。q='.$q;
+    $fx_desc  = '福小蜜海外购，专注于海外商品的代购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品。';
     $fx_link  = $base_url;
     $fx_pic   = $base_url.'misc/images/napp/touch-icon-144.png';
     
@@ -685,7 +703,7 @@ function footscript() {
   }
   
   //API接口
-  $wxjs_api  =<<<HEREDOC
+  $wxjs_api  =<<<HEREDOC_1
 wx.ready(function(){
   //分享给微信好友
   wx.onMenuShareAppMessage({
@@ -738,8 +756,9 @@ wx.ready(function(){
       //alert('已取消');
     }
   });
+  {$wxjs_api_extra}
 });
-HEREDOC;
+HEREDOC_1;
   
   if (''!=$wxjs_init) {
     $resjs = "{$wxjs_init}\n<script>if (typeof(wx)=='object') {\n{$wxjs_api}\n}</script>";

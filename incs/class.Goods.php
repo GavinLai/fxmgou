@@ -49,6 +49,16 @@ class Goods {
     return $ret;
   }
   
+  public static function getGoodsGallery($goods_id) {
+    if (empty($goods_id) || !is_numeric($goods_id)) {
+      return FALSE;
+    }
+    $ectb = ectable('goods_gallery');
+    $sql  = "SELECT * FROM {$ectb} WHERE `goods_id`=%d ORDER BY `img_id` ASC";
+    $ret  = D()->raw_query($sql,$goods_id)->fetch_array_all();
+    return $ret;
+  }
+  
 }
  
 /*----- END FILE: class.Goods.php -----*/
