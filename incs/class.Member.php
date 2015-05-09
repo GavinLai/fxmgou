@@ -230,6 +230,9 @@ class Member{
 	    $ecdata['member_platform'] = APP_PLATFORM;
 	    $ecdata['member_id']       = $uid;
 	    $ecdata['user_name']       = $data['username'] . '@' . $from;
+	    if (isset($data['nickname'])) {
+	      $ecdata['nick_name'] = $data['nickname'];
+	    }
 	    if (isset($data['email'])) {
 	      $ecdata['email'] = $data['email'];
 	    }
@@ -284,6 +287,9 @@ class Member{
 	    //~ 更新ecshop数据表users
 	    $ecdata  = [];
 	    $ecwhere = ['member_platform' => APP_PLATFORM, 'member_id' => $uid];
+	    if (isset($data['nickname'])) {
+	      $ecdata['nick_name'] = $data['nickname'];
+	    }
 	    if (isset($data['sex'])) {
 	      $ecdata['sex'] = $data['sex'];
 	    }
