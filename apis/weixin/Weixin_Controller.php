@@ -35,7 +35,7 @@ class Weixin_Controller extends Controller {
   public function index(Request $request, Response $response)
   {
     $t = $request->arg(1);
-    $wx= new Weixin($t);
+    $wx= new Weixin([],$t);
     if (!isset($_GET['echostr'])) {
       if($wx->checkSignature()){//签名检测
         $wx->responseMsg();

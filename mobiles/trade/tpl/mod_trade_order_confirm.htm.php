@@ -53,7 +53,7 @@
   </div>
 <?php endif;?>
 
-  <ul class="list-body" id="cart-list-body">
+  <ul class="list-body" id="cart-list-body" data-cart_rids="<?=$cart_rids_str?>">
   
   <?php foreach($order_goods AS $g):?>
     <li class="it clearfix" data-url="<?=$g['goods_url']?>" data-rid="<?=$g['rec_id']?>">
@@ -68,14 +68,14 @@
     </li>
   <?php endforeach;?>
     <li class="it">
-      <div><textarea name="remark" placeholder="有话跟商家说..." class="order-message"></textarea></div>
+      <div><textarea name="remark" placeholder="有话跟商家说..." class="order-message" id="order-message"></textarea></div>
       <div class="order-total-price clearfix">总价<span class="fr">￥<?=$total_price?></span></div>     
     </li>
   </ul>
 </div>
 
 <div class="order-topay">
-  <div class="row"><button class="btn btn-block btn-green">微信安全支付</button></div>
+  <div class="row"><button class="btn btn-block btn-green" id="btn-wxpay" data-payid="2">微信安全支付</button></div>
   <div class="row"><a class="btn btn-block btn-white" href="<?=$contextpath?>trade/cart/list">返回购物车修改</a></div>
   <div class="row row-last">支付完成后，如需退换货请及时联系商家</div>
 </div>
@@ -134,7 +134,7 @@ function wxEditAddressCallback(res) {
     }
     
   }else{ //空，用户取消
-    //alert('empty');
+	  
   }
 }
 
@@ -145,6 +145,33 @@ $(function(){
 	});
 	$('#cart-list-body .withclickurl').click(function(){
 		window.location.href = $(this).parent().attr('data-url');
+		return false;
+	});
+	$('#btn-wxpay').click(function(){
+		if (typeof(window.dopaying)=='undefined') window.dopaying = 0;
+		if (window.dopaying) return false;
+
+		var pay_id   = parseInt($(this).attr('data-payid'));
+		var addr_id  = parseInt($('#express-it').attr('data-addrid'));
+		var order_msg= $('#order-message').val();
+		var cart_rids= $('#cart-list-body').attr('data-cart_rids');
+		if (!addr_id) {
+			alert();
+			return false;
+		}
+
+		window.dopaying = 1;
+		F.post(gData.contextpath+'trade/order/submit',{"address_id":addr_id,"cart_rids":cart_rids,"order_msg":order_msg,"pay_id":pay_id},function(ret){
+			  window.dopaying = undefined;
+  			if (ret.flag=='SUC') {
+  	  		//window.location.href = ret.payurl;
+  	  	  alert(ret.msg+"\n"+ret.true_amount);
+  			}
+  			else{
+  				alert(ret.msg);
+  			}
+	  });
+		
 		return false;
 	});
 });

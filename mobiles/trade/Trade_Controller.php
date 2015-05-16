@@ -250,6 +250,7 @@ class Trade_Controller extends Controller {
       $this->v->assign('order_goods', $order_goods);
       $this->v->assign('order_goods_num', count($order_goods));
       $this->v->assign('total_price', $total_price);
+      $this->v->assign('cart_rids_str', implode(',',$cart_rids));
       
       //搜索地址
       $ec_user_id = $GLOBALS['user']->ec_user_id;
@@ -302,17 +303,200 @@ class Trade_Controller extends Controller {
    */
   public function order_submit(Request $request, Response $response)
   {
-    $this->v->set_tplname('mod_trade_order_submit');
-    $this->nav_flag1 = 'order';
-    $this->nav_flag2 = 'order_submit';
-    $this->nav_no    = 0;
-    if ($request->is_hashreq()) {
+    if ($request->is_post()) {
+      
+      $ret = ['flag'=>'FAIL','msg'=>'订单提交失败'];
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ret['msg'] = '未登录, 请登录';
+        $response->sendJSON($ret);
+      }
+      trace_debug('order_submit_post', $_POST);
+      $address_id    = $request->post('address_id', 0);
+      $cart_rids_str = $request->post('cart_rids', '');
+      $order_msg     = $request->post('order_msg', '');
+      $pay_id        = $request->post('pay_id', 2); //2是微信支付，见ec payment表
+      $pay_id = intval($pay_id);
+      
+      // 检查数据
+      $address_id = intval($address_id);
+      if (!$address_id) {
+        $ret['msg'] = '请填写收货地址';
+        $response->sendJSON($ret);
+      }
+      if (''==$cart_rids_str || !preg_match('/^(\d)+[,\d]*$/', $cart_rids_str)) { //要严格匹配类似格式"1,2,3",连空格也不能存在(因为自家合法的数据是不会有空格的)
+        $ret['msg'] = '该订单无商品，请返回购物车添加';
+        $response->sendJSON($ret);
+      }
+      
+      // 收货地址
+      $addr_info = Goods::getAddressInfo($address_id);
+      if (empty($addr_info)) {
+        $ret['msg'] = '收货地址无效，请重新填写';
+        $response->sendJSON($ret);
+      }
+      
+      // 支付信息
+      $pay_info = Goods::getPaymentInfo($pay_id);
+      if (empty($pay_info)) {
+        $ret['msg'] = '该支付方式暂不可用，请重新选择';
+        $response->sendJSON($ret);
+      }
+      
+      // 配送信息
+      $shipping_id = 1; //TODO 先不管配送方式，默认1先
+      $shipping_info = Goods::getShippingInfo($shipping_id);
+      if (empty($shipping_info)) {
+        $ret['msg'] = '该配送方式暂不可用，请重新选择';
+        $response->sendJSON($ret);
+      }
+      
+      // 购物车商品列表
+      $cart_rids_arr = explode(',', $cart_rids_str);
+      $total_price = 0;
+      $order_goods = Goods::getOrderGoods($cart_rids_arr, $ec_user_id, $total_price);
+      if (count($order_goods)!=count($cart_rids_arr)) {
+        $ret['msg'] = '该订单商品无效，请返回购物车重新添加';
+        $response->sendJSON($ret);
+      }
+      
+      $order_sn = Fn::gen_order_no();
+      
+      // 缺货处理方式
+      $oos = [];
+      $oos[OOS_WAIT]    = '等待所有商品备齐后再发';
+      $oos[OOS_CANCEL]  = '取消订单';
+      $oos[OOS_CONSULT] = '与店主协商';
+      
+      $ectb_order = ectable('order_info');
+      $order = [
+        'order_sn'         => $order_sn,
+        'user_id'          => $ec_user_id,
+        'order_status'     => OS_UNCONFIRMED,
+        'shipping_status'  => SS_UNSHIPPED,
+        'pay_status'       => PS_UNPAYED,
+        'consignee'        => $addr_info['consignee'],
+        'country'          => $addr_info['country'],
+        'province'         => $addr_info['province'],
+        'city'             => $addr_info['city'],
+        'district'         => $addr_info['district'],
+        'address'          => $addr_info['address'],
+        'zipcode'          => $addr_info['zipcode'],
+        'tel'              => $addr_info['tel'],
+        'mobile'           => $addr_info['mobile'],
+        'email'            => $addr_info['email'],
+        'best_time'        => $addr_info['best_time'],
+        'sign_building'    => $addr_info['sign_building'],
+        'postscript'       => $order_msg,
+        'shipping_id'      => $shipping_info['shipping_id'],
+        'shipping_name'    => $shipping_info['shipping_name'],
+        'pay_id'           => $pay_info['pay_id'],
+        'pay_name'         => $pay_info['pay_name'],
+        'how_oos'          => $oos[OOS_WAIT],
+        'how_surplus'      => '',
+        //...
+        'goods_amount'     => $total_price,
+        'shipping_fee'     => 0,
+        'order_amount'     => $total_price,
+        //...
+        'referer'          => '本站',
+        'add_time'         => simphp_time(),
+        //...
+      ];
+      $order['order_amount'] = $order['goods_amount'] + $order['shipping_fee'];
+      
+      $order_id = D()->insert($ectb_order, $order, true, true);
+      if ($order_id) { //订单表生成成功
+        
+        // 处理表 order_goods
+        $order_update = []; //存储一些可能需要更新的字段数据
+        $succ_goods   = []; //存储成功购买了的商品
+        $true_amount  = 0;  //因为有可能存在失败商品，该字段存储真正产生的费用，而不是$total_price
+        foreach ($order_goods AS $cg) {
+          $curr_goods_id = $cg['goods_id'];
+          $ginfo = Goods::getGoodsInfo($curr_goods_id, ['is_on_sale'=>1]);
+          if (empty($ginfo) || $ginfo['goods_number']==0) { //商品下架或者库存为0，都不能购买
+            continue;
+          }
+          
+          //TODO 并发？
+          $true_goods_number = $cg['goods_number']>$ginfo['goods_number'] ? $ginfo['goods_number']: $cg['goods_number'];
+          Goods::changeGoodsStock($curr_goods_id, -$true_goods_number); //立即冻结商品对应数量的库存
+          
+          $rel_goods = [
+            'order_id'     => $order_id,
+            'goods_id'     => $curr_goods_id,
+            'goods_name'   => $cg['goods_name'],
+            'goods_sn'     => $cg['goods_sn'],
+            'product_id'   => $cg['product_id'],
+            'goods_number' => $true_goods_number,
+            'market_price' => $cg['market_price'],
+            'goods_price'  => $cg['goods_price'],
+            'goods_attr'   => $cg['goods_attr'],
+            'send_number'  => 0,
+            'is_real'      => $cg['is_real'],
+            'extension_code' => $cg['extension_code'],
+            'parent_id'    => $cg['parent_id'],
+            'is_gift'      => $cg['is_gift'],
+            'goods_attr_id'=> $cg['goods_attr_id']
+          ];
+          $rec_id = D()->insert(ectable('order_goods'), $rel_goods, true, true);
+          if ($rec_id) {
+            $succ_goods[] = $cg;
+            $true_amount += $cg['goods_price']*$true_goods_number;
+          }
+          else {
+            Goods::changeGoodsStock($curr_goods_id, $true_goods_number); //立即恢复刚才冻结的商品库存
+          }
+        }
+        
+        //检测订单变化
+        if ($true_amount!=$order['goods_amount']) {
+          $order_update['goods_amount'] = $true_amount;
+          $order_update['order_amount'] = $order_update['goods_amount'] + $order['shipping_fee'];
+        }
+        if (empty($succ_goods)) { //如果一个商品都没有购买成功，则需要更改此订单状态为"无效"OS_INVALID
+          $order_update['order_status'] = OS_INVALID;
+        }
+        if (!empty($order_update)) {
+          D()->update($ectb_order, $order_update, ['order_id'=>$order_id], true);
+        }
+        
+        // 处理表 pay_log
+        Goods::insertPayLog($order_id, $true_amount, PAY_ORDER);
+        
+        // 没有成功购买的商品，则返回错误告诉用户重新添加
+        if (empty($succ_goods)) {
+          $ret['msg'] = '订单生成失败，请返回购物车更改数量后重新添加';
+          $response->sendJSON($ret);
+        }
+        
+        // 清除购物车
+        Goods::deleteCartGoods($cart_rids_arr, $ec_user_id);
+        
+        $ret = ['flag'=>'SUC','msg'=>'订单提交成功','true_amount'=>$true_amount];
+        $response->sendJSON($ret);
+      }
+      else {
+        $ret['msg'] = '订单生成失败，请返回购物车重新添加';
+        $response->sendJSON($ret);
+      }
       
     }
     else {
+      $this->v->set_tplname('mod_trade_order_submit');
+      $this->nav_flag1 = 'order';
+      $this->nav_flag2 = 'order_submit';
+      $this->nav_no    = 0;
+      if ($request->is_hashreq()) {
       
+      }
+      else {
+      
+      }
+      $response->send($this->v);
     }
-    $response->send($this->v);
   }
   
 
@@ -326,7 +510,6 @@ class Trade_Controller extends Controller {
   {
     if ($request->is_post()) {
       $ret = ['flag'=>'FAIL','msg'=>'更新失败'];
-      trace_debug('order_upaddress', $_POST);
       
       $ec_user_id = $GLOBALS['user']->ec_user_id;
       if (!$ec_user_id) {

@@ -30,7 +30,7 @@ config_set('wxmenu', $menuConfig, 'J');
 
 header('Content-Type: text/plain;charset=utf-8');
 $msg = '菜单更新失败';
-if((new Weixin('fxmgou'))->createMenu($menuConfig)){
+if((new Weixin([],'fxmgou'))->createMenu($menuConfig)){
   $msg = '菜单更新成功';
 }
 

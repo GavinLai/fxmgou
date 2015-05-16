@@ -241,14 +241,19 @@ class Goods {
     if (empty($rec_ids)) {
       return $ret;
     }
-    if (!is_array($rec_ids)) {
+    if (!is_array($rec_ids) && $rec_ids!=='all') {//单条记录方式
       $rec_ids = [$rec_ids];
     }
     
     $ectb = ectable('cart');
     $where_user = self::getCartOwnerSql($user_id);
-    $where_ids  = "'".implode("','", $rec_ids)."'";
-    $sql  = "DELETE FROM {$ectb} WHERE `rec_id` IN({$where_ids}) AND {$where_user}";
+    if (is_string($rec_ids) && $rec_ids=='all') {
+      $where_ids = "1";
+    }
+    else {
+      $where_ids  = "`rec_id` IN(".implode(",", $rec_ids).")";
+    }
+    $sql  = "DELETE FROM {$ectb} WHERE {$where_ids} AND {$where_user}";
     D()->raw_query($sql,$user_id);
     $effrows = D()->affected_rows();
     if ($effrows) {
@@ -326,6 +331,12 @@ class Goods {
     return 0;
   }
   
+  /**
+   * 获取用户收货地址列表
+   * 
+   * @param integer $ec_user_id
+   * @return array
+   */
   public static function getUserAddress($ec_user_id) {
     $ectb = ectable('user_address');
     $sql  = "SELECT * FROM {$ectb} WHERE `user_id`=%d ORDER BY `address_id` DESC";
@@ -365,6 +376,19 @@ class Goods {
   }
   
   /**
+   * 获取指定地址id的地址信息
+   * 
+   * @param integer $address_id
+   * @return array
+   */
+  public static function getAddressInfo($address_id) {
+    $ectb = ectable('user_address');
+    $sql  = "SELECT * FROM {$ectb} WHERE `address_id`=%d";
+    $row  = D()->raw_query($sql,$address_id)->get_one();
+    return !empty($row) ? $row : [];
+  }
+  
+  /**
    * 保存用户收货地址
    * 
    * @param array $data 要保存的字段数据
@@ -397,11 +421,71 @@ class Goods {
     return $address_id;
   }
   
+  /**
+   * 获取支付方式信息
+   * 
+   * @param integer $pay_id
+   * @return array
+   */
+  public static function getPaymentInfo($pay_id) {
+    $ectb = ectable('payment');
+    $sql  = "SELECT * FROM {$ectb} WHERE `pay_id`=%d AND `enabled`=1";
+    $row  = D()->raw_query($sql,$pay_id)->get_one();
+    return !empty($row) ? $row : [];
+  }
   
+  /**
+   * 获取配送方式信息
+   * 
+   * @param integer $shipping_id
+   * @return array
+   */
+  public static function getShippingInfo($shipping_id) {
+    $ectb = ectable('shipping');
+    $sql  = "SELECT * FROM {$ectb} WHERE `shipping_id`=%d AND `enabled`=1";
+    $row  = D()->raw_query($sql,$shipping_id)->get_one();
+    return !empty($row) ? $row : [];
+  }
   
+  /**
+   * 改变商品表库存
+   * 
+   * @param integer $goods_id
+   * @param integer $chnum, 大于0时增加库存，小于0时减少库存
+   * @return boolean
+   */
+  public static function changeGoodsStock($goods_id, $chnum = 1) {
+    $ectb_goods = ectable('goods');
+    $chnum = intval($chnum);
+    D()->raw_query("UPDATE {$ectb_goods} SET `goods_number`=`goods_number`+%d WHERE `goods_id`=%d", $chnum, $goods_id);
+    if (D()->affected_rows()) {
+      return true;
+    }
+    return false;
+  }
   
-  
-  
+  /**
+   * 将支付LOG插入数据表
+   *
+   * @access  public
+   * @param   integer     $order_id   订单编号
+   * @param   float       $amount     订单金额
+   * @param   integer     $type       支付类型
+   * @param   integer     $is_paid    是否已支付
+   *
+   * @return  int
+   */
+  public static function insertPayLog($order_id, $amount, $type = PAY_SURPLUS, $is_paid = 0) {
+    $ectb = ectable('pay_log');
+    $insert = [
+      'order_id'    => $order_id,
+      'order_amount'=> $amount,
+      'order_type'  => $type,
+      'is_paid'     => $is_paid,
+    ];
+    $log_id = D()->insert(ectable('pay_log'), $insert, true, true);
+    return $log_id;
+  }
   
   
   
