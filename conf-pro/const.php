@@ -13,7 +13,8 @@ define('APP_PLATFORM', 'fxmgou');
 define('ECDB', 'fxmshop');
 define('ECDB_PRE', 'fxs_');
 
-
+// 服务器内部对外通信加密key
+define('INTERNAL_ENC_KEY', 'w$zc8kH&cRJ&sVaG74A%DVQuetGpb$6CGYCWLeyz');
 
 
 

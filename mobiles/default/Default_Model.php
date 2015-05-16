@@ -65,7 +65,7 @@ class Default_Model extends Model {
     }
     
     if (!empty($ret)) {
-      $purl = 'http://'.C('env.site.shop').'/';
+      $purl = C('env.site.shop').'/';
       foreach ($ret AS &$it) {
         $it['goods_thumb'] = $purl . $it['goods_thumb'];
         $it['goods_img']   = $purl . $it['goods_img'];

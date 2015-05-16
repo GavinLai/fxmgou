@@ -619,21 +619,27 @@ function headscript() {
   
   // Global data
   $wxVer   = Weixin::browserVer();
-  $wxConf  = Config::get('api.weixin_fxmgou');
+  $wxVer   = $wxVer ? "'".$wxVer."'" : 0;
+  $isWxBro = $wxVer ? 'true' : 'false';
+  $wxConf  = C('api.weixin_fxmgou');
   $wxAppId = $wxConf['appId'];
   $appName = L('appname');
   $currUri = Request::uri();
+  $ctxpath = C('env.contextpath');
   
   $script  = '<script type="text/javascript">';
-  $script .= "var wxData = {browserVer:'{$wxVer}',appId:'{$wxAppId}',isReady:false},gData = {appName:'{$appName}',currURI:'{$currUri}',referURI:''}, gUser = {};";
+  $script .= "var wxData={isWxBrowser:{$isWxBro},browserVer:{$wxVer},isReady:false,appId:'{$wxAppId}'},gData={appName:'{$appName}',currURI:'{$currUri}',referURI:'',contextpath:'{$ctxpath}'},gUser={};";
   foreach (((array)$user) AS $k => $v) {
-    if (in_array($k, ['cached','session'])) continue;
-    $script .= ' gUser.'.$k." = '{$v}';";
+    if (in_array($k, ['openid','unionid','subscribe','username','nickname','sex','logo','ec_user_id'])) {
+      $v = (is_numeric($v)&&$k!='username') ? $v : "'".$v."'";
+      $script .= 'gUser.'.$k."={$v};";
+    }
   }
   $script .= '</script>';
   
   echo $script;
 }
+
 /**
  * 显示在html foot后的js，如微信JS-SDK
  */
@@ -642,9 +648,9 @@ function footscript() {
   if (!$q) $q = '/';
   
   $resjs = '';
-  $wx = new Weixin();
-  $base_url = 'http://'.C('env.site.mobile').'/';
-  $shop_url = 'http://'.C('env.site.shop').'/';
+  $wx = new Weixin(['jssdk']);
+  $base_url = C('env.site.mobile').'/';
+  $shop_url = C('env.site.shop').'/';
   
   $wxjs_init = '';
   $wxjs_api  = '';
@@ -653,7 +659,6 @@ function footscript() {
   
   if (preg_match('!item/(\d+)!i', $q, $match)) { //分享商品详情页
     $goods_id = $match[1];
-    //$goods_info = Goods::getGoodsInfo($goods_id, ['is_on_sale'=>0,'goods_img'=>1]);
     $goods_info = Goods::getGoodsInfo($goods_id, array('is_on_sale'=>0,'goods_img'=>1));
     if (!empty($goods_info)) {
       
@@ -687,7 +692,7 @@ $('.gpic img').click(function(){
 HREDOC_0;
       }
       
-      $wxjs_init = $wx->js($wxapi_init+['previewImage']);
+      $wxjs_init = $wx->jssdk->js($wxapi_init+['previewImage']);
       
     }
 
@@ -699,7 +704,7 @@ HREDOC_0;
     $fx_link  = $base_url;
     $fx_pic   = $base_url.'misc/images/napp/touch-icon-144.png';
     
-    $wxjs_init = $wx->js($wxapi_init);
+    $wxjs_init = $wx->jssdk->js($wxapi_init);
   }
   
   //API接口

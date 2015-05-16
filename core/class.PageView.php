@@ -33,6 +33,30 @@ class PageView extends View {
   protected $tpl_content = '';
   
   /**
+   * string appending to <!--#HEAD_CSS#-->
+   * @var string
+   */
+  public $append_to_head_css = '';
+  
+  /**
+   * string appending to <!--#HEAD_JS#-->
+   * @var string
+   */
+  public $append_to_head_js  = '';
+  
+  /**
+   * string appending to <!--#FOOT_CSS#-->
+   * @var string
+   */
+  public $append_to_foot_css = '';
+  
+  /**
+   * string appending to <!--#FOOT_JS#-->
+   * @var string
+   */
+  public $append_to_foot_js = '';
+  
+  /**
    * Constructor
    * 
    * @param string $tpl_name, Name of Template for rendering
@@ -100,15 +124,40 @@ class PageView extends View {
    */
   public function filter_output($content) {
     
+    $this->apply_filter('append_head_css');
+    $this->apply_filter('append_head_js');
+    $this->apply_filter('append_foot_css');
+    $this->apply_filter('append_foot_js');
+    
     $head_css = implode("\n", isset($GLOBALS['_CSSPATHS']['head']) ? $GLOBALS['_CSSPATHS']['head']: array());
     $head_js  = implode("\n", isset($GLOBALS['_JSPATHS']['head'])  ? $GLOBALS['_JSPATHS']['head'] : array());
     $foot_js  = implode("\n", isset($GLOBALS['_JSPATHS']['foot'])  ? $GLOBALS['_JSPATHS']['foot'] : array());
     $foot_css = implode("\n", isset($GLOBALS['_CSSPATHS']['foot']) ? $GLOBALS['_CSSPATHS']['foot']: array());
     
+    // Appending
+    $head_css.= $this->append_to_head_css;
+    $head_js .= $this->append_to_head_js;
+    $foot_css.= $this->append_to_foot_css;
+    $foot_js .= $this->append_to_foot_js;
+    
     $content  = str_replace(array('<!--#HEAD_CSS#-->','<!--#HEAD_JS#-->','<!--#FOOT_JS#-->','<!--#FOOT_CSS#-->'), 
                             array($head_css,$head_js,$foot_js,$foot_css), $content);
     
     return $content;
+  }
+  
+  /**
+   * add append filter
+   * @param callback $func_to_add
+   * @param string $position all values are ['head','foot']
+   * @param string $type all values are ['js','css']
+   * @return PageView
+   */
+  public function add_append_filter($func_to_add, $position='foot', $type='js') {
+    if (!in_array($position, ['foot','head'])) $position = 'foot';
+    if (!in_array($type, ['js','css'])) $type = 'js';
+    $this->add_filter('append_'.$position.'_'.$type, $func_to_add);
+    return $this;
   }
 }
 

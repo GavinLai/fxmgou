@@ -56,39 +56,10 @@ class User_Model extends Model {
 	    if ( !isset($_SESSION['wxoauth_reqcnt']) ) $_SESSION['wxoauth_reqcnt'] = 0;
 	    $_SESSION['wxoauth_reqcnt']++;
 	    if ($_SESSION['wxoauth_reqcnt'] < 4) { //最多尝试2次，避免死循环
-	      (new Weixin())->authorizing('http://'.Request::host().'/user/oauth/weixin?refer='.$refer, 'detail');
+	      (new Weixin())->authorizing('http://'.Request::host().'/user/oauth/weixin?act=&refer='.$refer, 'detail');
 	    }
 	  }
 	  return true;
 	}
-	
-	/**
-	 * 显示错误消息
-	 * 
-	 * @param string $msg
-	 * @param string $title
-	 */
-	public static function showInvalidLogin($msg='非法访问！',$title='错误发生 - 福小蜜') {
-    $str = '<!DOCTYPE html>';
-    $str.= '<html>';
-    $str.= '<head>';
-    $str.= '<meta http-equiv="Content-Type" Content="text/html;charset=utf-8" />';
-    $str.= '<title>'.$title.'</title>';
-    $str.= '<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">';
-    $str.= '<style type="text/css">html,body,table,tr,td,a{margin:0;padding:0;border:0;font-size:100%;font:inherit;vertical-align:baseline;} html {font-size: 62.5%;} body {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;text-rendering: optimizeLegibility;} html,body{display:block;width:100%;height:100%;} table{width:100%;height:100%;border-top:4px solid #44b549;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box;} table td{text-align:center;vertical-align:middle;font-size:22px;font-size:2.2rem;font-weight:bold;} table td a{font-size:18px;font-size:1.8rem;font-weight:normal;}</style>';
-    $str.= '</head>';
-    $str.= '<body>';
-    $str.= '<table><tr><td>'.$msg.'<br/><br/><a href="javascript:;" id="closeWindow">关&nbsp;闭</a></td></tr></table>';
-    $str.= '<script>var readyFunc = function(){document.querySelector("#closeWindow").addEventListener("click", function(e){if(typeof WeixinJSBridge === "undefined") window.close();else WeixinJSBridge.invoke("closeWindow",{},function(res){});return false;});};if (typeof WeixinJSBridge === "undefined") {document.addEventListener("WeixinJSBridgeReady", readyFunc, false);} else {readyFunc();}</script>';
-    $str.= '</body>';
-    $str.= '</html>';
-    echo $str;
-    exit;
-	}
-	
-	
-	
-	
-	
 	
 }

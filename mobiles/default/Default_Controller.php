@@ -8,9 +8,11 @@ defined('IN_SIMPHP') or die('Access Denied');
 
 class Default_Controller extends Controller {
 
-  private $_nav_no     = 1;
-  private $_nav        = 'home';
-  private $_nav_second = '';
+  private $nav_no     = 1;       //主导航id
+  private $topnav_no  = 0;       //顶部导航id
+  private $nav_flag1  = 'home';  //导航标识1
+  private $nav_flag2  = '';      //导航标识2
+  private $nav_flag3  = '';      //导航标识3
   
   /**
    * hook init
@@ -19,20 +21,26 @@ class Default_Controller extends Controller {
    * @param Request $request
    * @param Response $response
    */
-  public function init($action, Request $request, Response $response) {
+  public function init($action, Request $request, Response $response)
+  {
     $this->v = new PageView();
-    $this->v->assign('nav_no',     $this->_nav_no)
-            ->assign('nav',        $this->_nav)
-            ->assign('nav_second', $this->_nav_second);
+    $this->v->add_render_filter(function(View $v){
+      $v->assign('nav_no',  $this->nav_no)
+        ->assign('topnav_no',  $this->topnav_no)
+        ->assign('nav_flag1',  $this->nav_flag1)
+        ->assign('nav_flag2',  $this->nav_flag2)
+        ->assign('nav_flag3',  $this->nav_flag3);
+    });
   }
   
   /**
    * hook menu
    * @see Controller::menu()
    */
-  public function menu() {
+  public function menu()
+  {
     return [
-      'default/cate/%d' => 'index',
+      
     ];
   }
   
@@ -89,14 +97,22 @@ class Default_Controller extends Controller {
     $response->send($this->v);
   }
   
-  public function explore(Request $request, Response $response) {
+  /**
+   * default action 'explore'
+   *
+   * @param Request $request
+   * @param Response $response
+   */
+  public function explore(Request $request, Response $response)
+  {
     $this->v->set_tplname('mod_default_explore');
-    $this->_nav = 'explore';
-    $this->v->assign('nav', $this->_nav);
+    $this->nav_flag1 = 'explore';
+    $this->topnav_no = 1; // >0: 表示有topnav bar，具体值标识哪个topnav bar(有多个的情况下)
+    
     if ($request->is_hashreq()) {
       
       //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('latest',0,20);
+      $goods_latest = Default_Model::getGoodsList('latest',0,50);
       $this->v->assign('goods_latest',$goods_latest);
       
     }
@@ -106,14 +122,17 @@ class Default_Controller extends Controller {
     $response->send($this->v);
   }
   
-  public function item(Request $request, Response $response) {
+  public function item(Request $request, Response $response)
+  {
     $this->v->set_tplname('mod_default_item');
-    $this->_nav = 'item';
-    $this->v->assign('nav', $this->_nav);
+    $this->nav_no   = 2;
+    $this->nav_flag1= 'item';
+    
+    $goods_id = $request->arg(2);
+    $this->v->assign('the_goods_id', $goods_id);
     
     if ($request->is_hashreq()) {
     
-      $goods_id = $request->arg(2);
       $errmsg   = '';
       
       //获取商品信息
@@ -122,7 +141,7 @@ class Default_Controller extends Controller {
         $errmsg = '查询商品不存在: goods_id: '.$goods_id;
       }
       else {
-        $purl = 'http://'.C('env.site.shop');
+        $purl = C('env.site.shop');
         $goods_info['goods_thumb']  = $purl . '/' . $goods_info['goods_thumb'];
         $goods_info['goods_img']    = $purl . '/' . $goods_info['goods_img'];
         $goods_info['original_img'] = $purl . '/' . $goods_info['original_img'];
@@ -154,29 +173,11 @@ class Default_Controller extends Controller {
     }
     $response->send($this->v);
   }
-  
-  /**
-   * action 'guide'
-   *
-   * @param Request $request
-   * @param Response $response
-   */
-  public function guide(Request $request, Response $response) {
-    $this->v = new PageView('mod_default_guide', '_page_public');
-    
-    //$ua = 'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0) ';
-    //$ua = 'Mozilla/5.0 (iPhone; CPU iPhone OS 7_1_2 like Mac OS X) AppleWebKit/537.51.2 (KHTML, like Gecko) Mobile/11D257 MicroMessenger/5.4 NetType/WIFI';
-    $ieVer= Request::ieVer();
-    $testval = "is IE: ".($ieVer ? 'YES' : 'NO').", Ver: {$ieVer}";
-    $this->v->assign('testval', $testval);
-    
-    $response->send($this->v);
-  }
 
-  public function about(Request $request, Response $response) {
+  public function about(Request $request, Response $response)
+  {
     $this->v->set_tplname('mod_default_about');
-    $this->_nav = 'about';
-    $this->v->assign('nav', $this->_nav);
+    $this->nav_flag1 = 'about';
     
     if ($request->is_hashreq()) {
       

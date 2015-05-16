@@ -175,6 +175,9 @@ class User_Controller extends Controller {
     $this->v->assign('type', $type);
 
     if ($request->is_hashreq()) {
+      $list = [];
+      $cate = [];
+      /*
       $list = User_Model::getCollectByType($uid, $type);
       import('node/Node_Model');
       $category = Node_Model::getCategoryList();
@@ -182,7 +185,7 @@ class User_Controller extends Controller {
       foreach($category as $v){
         $cate[$v['cate_id']] = $v['cate_name'];
       }
-
+      */
       $this->v->assign('list', $list)->assign('cate', $cate);
     }
 
@@ -210,7 +213,7 @@ class User_Controller extends Controller {
    */
   public function login(Request $request, Response $response)
   {
-    $refer = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
+    $refer = $request->url();
     if(!Member::isLogined()) {
       $token = $request->get('token','');
       if(''!=$token) { //token登录优先，便于测试
@@ -220,7 +223,7 @@ class User_Controller extends Controller {
         $this->tips($request, $response);
       }
       else { //先用base方式获取微信OAuth2授权，以便于取得openid
-        (new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin?dologin=1&refer='.$refer);
+        (new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin?act=login&refer='.$refer);
       }
     }
     else {
@@ -243,19 +246,24 @@ class User_Controller extends Controller {
       $refer = $request->get('refer', '/');
       $from  = $request->arg(2);
       if (empty($from)) $from = 'weixin';
-      $dologin = $request->get('dologin',0);
+      $auth_action = $request->get('act','');
+      
+      //收获地址base oauth回调
+      if ('jsapi_address'==$auth_action) {
+        $response->redirect($refer.'&code='.$code.'&state='.$state);
+      }
       
       //授权出错
       if (!in_array($state, array('base','detail'))) {
-        User_Model::showInvalidLogin('授权出错，不能访问应用！');
+        Fn::showErrorMessage('授权出错，不能访问应用！');
       }
-
+      
       $wx = new Weixin();
       
       //用code换取access token
       $code_ret = $wx->request_access_token($code);
       if (!empty($code_ret['errcode'])) {
-        User_Model::showInvalidLogin('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')');
+        Fn::showErrorMessage('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')');
       }
       
       //获取到openid
@@ -273,7 +281,7 @@ class User_Controller extends Controller {
           
           $uinfo_wx = $wx->userInfoByOAuth2($openid, $code_ret['access_token']);
           if (!empty($uinfo_wx['errcode'])) { //失败！则报错
-            User_Model::showInvalidLogin('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
+            Fn::showErrorMessage('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
           }
           
           //保存微信用户信息到本地库
@@ -331,10 +339,10 @@ class User_Controller extends Controller {
       } //End: if (!empty($uinfo_bd)) else
       
       //设置本地登录状态
-      if ($dologin) {
+      if ('login'==$auth_action) {
         
         if (empty($uid)) {
-          User_Model::showInvalidLogin('微信授权登录失败！');
+          Fn::showErrorMessage('微信授权登录失败！');
         }
         
         Member::setLocalLogin($uid);
@@ -345,7 +353,7 @@ class User_Controller extends Controller {
     }
     else {
       //授权未通过
-      User_Model::showInvalidLogin('未授权，不能访问应用！');
+      Fn::showErrorMessage('未授权，不能访问应用！');
     }
   }
 
@@ -394,7 +402,7 @@ class User_Controller extends Controller {
     
     $userInfo = Member::getTinyInfoByOpenid($openid);
     if(empty($userInfo)){
-      User_Model::showInvalidLogin();
+      Fn::showErrorMessage();
     }
     
     //设置本地登录状态

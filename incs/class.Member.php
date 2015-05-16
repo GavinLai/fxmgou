@@ -168,6 +168,13 @@ class Member{
 	  return $uid ? TRUE : FALSE;
 	}
 	
+	public static function checkECUserExist($ec_user_id)
+	{
+	  $ectb = ectable('users');
+	  $user_id = D()->result("SELECT `user_id` FROM {$ectb} WHERE `user_id`=%d", $ec_user_id);
+	  return $user_id ? TRUE : FALSE;
+	}
+	
 	/**
 	 * 返回最小用户信息字段
 	 *
@@ -185,11 +192,18 @@ class Member{
 	 * 通过$uid获取最小用户信息
 	 *
 	 * @param integer $uid
+	 * @param boolean $include_ecuser
 	 * @return multitype:
 	 */
-	public static function getTinyInfoByUid($uid)
+	public static function getTinyInfoByUid($uid, $include_ecuser = false)
 	{
-	  return D()->get_one("SELECT ".self::tinyFields()." FROM `{member}` WHERE `uid`=%d", $uid);
+	  $uinfo = D()->get_one("SELECT ".self::tinyFields()." FROM `{member}` WHERE `uid`=%d", $uid);
+	  if ($include_ecuser && !empty($uinfo)) {
+	    $ectable  = ectable('users');
+	    $uinfo_ec = D()->get_one("SELECT `user_id` AS ec_user_id FROM {$ectable} WHERE `member_platform`='%s' AND `member_id`=%d", APP_PLATFORM, $uid);
+	    $uinfo = array_merge($uinfo, $uinfo_ec);
+	  }
+	  return $uinfo;
 	}
 	
 	/**

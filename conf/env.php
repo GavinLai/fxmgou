@@ -31,9 +31,12 @@ return [
   'tpldebug' => 1,
   //站点信息
   'site' => [
-  	'mobile' => 't.fxmgou.com',
-  	'shop' => 'pc.fxmgou.com',
+  	'mobile' => 'http://t.fxmgou.com',
+  	'shop' => 'http://pc.fxmgou.com',
   ],
+  //debug白名单uid
+  //'debug_white_list' => ['10001'],
+  'debug_white_list' => [],
   //上传文件保存目录 
   'picsavedir'=>'/a/',
   //平台币兑人民币比率,1元=10平台币

@@ -25,6 +25,19 @@ class Weixin {
 	 * @var array
 	 */
 	public static $allowAccount = array('fxmgou');
+
+	/**
+	 * Weixin constant name
+	 * @var constant
+	 */
+	const PLUGIN_JSSDK = 'jssdk';
+	const PLUGIN_WXPAY = 'wxpay';
+	
+	/**
+	 * All weixin plugins name
+	 * @var array
+	 */
+	public static $plugins = array(self::PLUGIN_JSSDK, self::PLUGIN_WXPAY);
 	
 	/**
 	 * WeixinHelper instance
@@ -43,6 +56,13 @@ class Weixin {
 	 * @var WeixinJSSDK
 	 */
 	public $jssdk;
+	
+	/**
+	 * WeixinPay instatnce
+	 * 
+	 * @var WeixinPay
+	 */
+	public $wxpay;
 	
 	/**
 	 * API address url prefix
@@ -134,9 +154,10 @@ class Weixin {
 
 	/**
 	 * 初始化配置
+	 * @param array $plugins, 额外的插件，如 'jssdk', 'wxpay' 等
 	 * @param string $target, 目标平台，可选值：'fxmgou' 等
 	 */
-	private function init($target)
+	private function init(Array $plugins = array(), $target = 'fxmgou')
 	{
 	  if (!in_array($target, self::$allowAccount)) {
 	    throw new Exception("Weixin public account not allowed: {$target}");
@@ -153,16 +174,22 @@ class Weixin {
 		
 		$this->helper    = new WeixinHelper($this);
 		$this->oauth     = new OAuth2(array('client_id'=>$this->appId,'secret_key'=>$this->appSecret,'response_type'=>'code','scope'=>'snsapi_base','state'=>'base'),'weixin');
-		$this->jssdk     = new WeixinJSSDK($this->appId, $this->appSecret, $this);
+		if (in_array(self::PLUGIN_JSSDK, $plugins)) {
+		  $this->jssdk   = new WeixinJSSDK($this->appId, $this->appSecret, $this);
+		}
+		if (in_array(self::PLUGIN_WXPAY, $plugins)) {
+		  $this->wxpay   = new WeixinPay($this->appId, $this->appSecret, $this);
+		}
 	}
 	
 	/**
-	 * 构造函数
+	 * 初始化构造函数
+	 * @param array $plugins, 额外的插件，如 'jssdk', 'wxpay' 等
 	 * @param string $target, 目标平台，可选值：'fxmgou' 等
 	 */
-	public function __construct($target = 'fxmgou')
+	public function __construct(Array $plugins = array(), $target = 'fxmgou')
 	{
-		$this->init($target); //该句必须出现在所有对外方法的最开始
+		$this->init($plugins, $target); //该句必须出现在所有对外方法的最开始
 	}
 	
 	/**
@@ -267,7 +294,7 @@ class Weixin {
       case 'SCAN':
         break;
       case 'CLICK':
-        $base_url = 'http://'.Config::get('env.site.mobile');
+        $base_url = Config::get('env.site.mobile');
         switch ($postObj->EventKey) {
           case '100': //最新文章
             $contentText = $this->helper->latestArticles();
@@ -320,7 +347,7 @@ class Weixin {
     elseif(!empty($contentText)&&is_array($contentText)){
       //msgTpl
       $text = '';
-      $base_url = 'http://'.Config::get('env.site.mobile');
+      $base_url = Config::get('env.site.mobile');
       foreach($contentText as $val){
         switch ($val['type_id']) {
           case 'word':
@@ -544,61 +571,6 @@ class Weixin {
     return $this->oauth->request_access_token($code);
   }
   
-  /**
-   * 获取前端html Weinxin JS-SDK引入代码及初始配置
-   *
-   * @param array $jsApiList
-   * @param boolean $debug
-   * @return string
-   */
-  public function js(Array $jsApiList = array(), $debug = true) {
-    if (empty($jsApiList)) {
-      $jsApiList = [
-        'onMenuShareTimeline',
-        'onMenuShareAppMessage',
-        'onMenuShareQQ',
-        'onMenuShareWeibo',
-        'chooseImage',
-        'previewImage',
-        'uploadImage',
-        'downloadImage',
-        'getNetworkType',
-        'openLocation',
-        'getLocation',
-        'hideOptionMenu',
-        'showOptionMenu',
-        'closeWindow',
-        'scanQRCode',
-        'chooseWXPay',
-      ];
-    }
-    
-    $signPackage = $this->jssdk->getSignPackage();
-    $jsApiStr    = "'" . implode("','", $jsApiList) . "'";
-    $debugStr    = $debug ? 'true' : 'false';
-    $now         = time();
-    
-    $jsfile = '<script src="'.$this->jssdk->getSdkFile().'"></script>';
-    $jsconf =<<<HEREDOC
-<script>
-if (typeof(wx)=='object') {
-  wx.config({
-    debug: {$debugStr},
-    appId: '{$signPackage["appId"]}',
-    timestamp: {$signPackage["timestamp"]},
-    nonceStr: '{$signPackage["nonceStr"]}',
-    signature: '{$signPackage["signature"]}',
-    jsApiList: [{$jsApiStr}]
-  });
-  wx.ready(function(){wxData.isReady=true});
-}
-</script>
-HEREDOC;
-    
-    return $jsfile . $jsconf;
-    
-  }
-  
   //~ the following is some util functions
   
   /**
@@ -626,20 +598,28 @@ HEREDOC;
   
   /**
    * 创建随机 nonce 字符串
+   * 
    * @param string $length
    * @return string
    */
   public static function createNonceStr($length = 16) {
-    return WeixinJSSDK::createNonceStr($length);
+    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    $str = "";
+    for ($i = 0; $i < $length; $i++) {
+      $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
+    }
+    return $str;
   }
   
   /**
-   * 返回JS-SDK文件路径
+   * 返回当前请求的精确url地址
    * @return string
    */
-  public static function getJsSdkFile() {
-    return WeixinJSSDK::getSdkFile();
-  }
+  public static function requestUrl() {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    $url = "{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+    return $url;
+  } 
   
 }
 
@@ -688,16 +668,15 @@ class WeixinJSSDK {
    * 
    * @return array
    */
-  public function getSignPackage() {
+  private function getSignPackage() {
     
     $jsapiTicket = $this->getJsApiTicket();
 
     // 注意 URL 一定要动态获取，不能 hardcode.
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    $url = "{$protocol}{$_SERVER['HTTP_HOST']}{$_SERVER['REQUEST_URI']}";
+    $url = $this->wx->requestUrl();
   
     $timestamp = time();
-    $nonceStr = $this->createNonceStr();
+    $nonceStr = $this->wx->createNonceStr();
   
     // 这里参数的顺序要按照 key 值 ASCII 码升序排序
     $string = "jsapi_ticket={$jsapiTicket}&noncestr={$nonceStr}&timestamp={$timestamp}&url={$url}";
@@ -713,20 +692,6 @@ class WeixinJSSDK {
       "rawString" => $string
     );
     return $signPackage;
-  }
-  
-  /**
-   * 创建随机 nonce 字符串
-   * @param string $length
-   * @return string
-   */
-  public static function createNonceStr($length = 16) {
-    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    $str = "";
-    for ($i = 0; $i < $length; $i++) {
-      $str .= substr($chars, mt_rand(0, strlen($chars) - 1), 1);
-    }
-    return $str;
   }
   
   /**
@@ -768,6 +733,160 @@ class WeixinJSSDK {
     }
     return $result;
   }
+  
+
+  /**
+   * 获取前端html Weinxin JS-SDK引入代码及初始配置
+   *
+   * @param array $jsApiList
+   * @return string
+   */
+  public function js(Array $jsApiList = array()) {
+    if (empty($jsApiList)) {
+      $jsApiList = [
+      'onMenuShareTimeline',
+      'onMenuShareAppMessage',
+      'onMenuShareQQ',
+      'onMenuShareWeibo',
+      'chooseImage',
+      'previewImage',
+      'uploadImage',
+      'downloadImage',
+      'getNetworkType',
+      'openLocation',
+      'getLocation',
+      'hideOptionMenu',
+      'showOptionMenu',
+      'closeWindow',
+      'scanQRCode',
+      'chooseWXPay',
+      ];
+    }
+  
+    $debugWhiteList = C('env.debug_white_list');
+    $signPackage = $this->getSignPackage();
+    $jsApiStr    = "'" . implode("','", $jsApiList) . "'";
+    $debugStr    = in_array($GLOBALS['user']->uid, $debugWhiteList) ? 'true' : 'false';
+    $now         = time();
+  
+    $jsfile = '<script type="text/javascript" src="'.self::$sdkFile.'"></script>';
+    $jsconf =<<<HEREDOC
+<script type="text/javascript">
+if (typeof(wx)=='object') {
+  wx.config({
+    debug: {$debugStr},
+    appId: '{$signPackage["appId"]}',
+    timestamp: {$signPackage["timestamp"]},
+    nonceStr: '{$signPackage["nonceStr"]}',
+    signature: '{$signPackage["signature"]}',
+    jsApiList: [{$jsApiStr}]
+  });
+  wx.ready(function(){wxData.isReady=true});
+}
+</script>
+HEREDOC;
+  
+    return $jsfile . $jsconf;
+  
+  }
+}
+
+/**
+ * Weixin 支付 类
+ *
+ * @author Gavin<laigw.vip@gmail.com>
+ */
+class WeixinPay {
+  
+  /**
+   * App Id
+   * 
+   * @var string
+   */
+  private $appId;
+  
+  /**
+   * App Secret
+   * 
+   * @var string
+   */
+  private $appSecret;
+  
+  /**
+   * Weixin Object
+   * @var Weixin
+   */
+  private $wx;
+  
+  public function __construct($appId, $appSecret, Weixin $wx = NULL) {
+    $this->appId = $appId;
+    $this->appSecret = $appSecret;
+    $this->wx = $wx;
+  }
+  
+  /**
+   * 获取appId
+   * @return string
+   */
+  public function getAppId() {
+    return $this->appId;
+  }
+  
+  /**
+   * 获取收获地址签名
+   * 
+   * @param string $appId
+   * @param string $url
+   * @param string $timeStamp
+   * @param string $nonceStr
+   * @param string $accessToken
+   * @return string 返回签名字串
+   */
+  public static function addrSign($appId, $url, $timeStamp, $nonceStr, $accessToken) {
+    $str  = "accesstoken={$accessToken}&appid={$appId}&noncestr={$nonceStr}&timestamp={$timeStamp}&url={$url}";
+    //trace_debug('weixin_jsaddress_sign_raw', $str);
+    //echo $str ."\n";
+    $sign = sha1($str);
+    //trace_debug('weixin_jsaddress_sign_val', $sign);
+    return $sign;
+  }
+  
+  /**
+   * 返回 address 收获地址 js
+   */
+  public function addrJs($accessToken) {
+    $appId     = $this->appId;
+    $url       = $this->wx->requestUrl(); // 注意URL一定要动态获取，不能hardcode.
+    $timeStamp = time();
+    $nonceStr  = $this->wx->createNonceStr();
+    $sign      = $this->addrSign($appId, $url, $timeStamp, $nonceStr, $accessToken);
+    
+    $js =<<<HEREDOC
+<script type="text/javascript">
+function wxEditAddress() {
+
+if (typeof(WeixinJSBridge)=='object') {
+WeixinJSBridge.invoke('editAddress', {
+  "appId": "{$appId}",
+  "scope": "jsapi_address",
+  "signType": "sha1",
+  "addrSign": "{$sign}",
+  "timeStamp": "{$timeStamp}",
+  "nonceStr": "{$nonceStr}",
+  }, function (res) {
+    if(typeof(wxEditAddressCallback)=='function') {
+      wxEditAddressCallback(res,"{$appId}","{$sign}","{$timeStamp}","{$nonceStr}","{$accessToken}");
+    }
+  });
+}
+
+}
+</script>
+HEREDOC;
+    
+    return $js;
+  }
+  
   
 }
 
@@ -913,6 +1032,9 @@ class WeixinHelper {
     elseif (preg_match('/有什么/', $keyword)) {
       $result = '你好，非常感谢你对小蜜的关注，我们近期将会上线产品模块，敬请留意！';
     }
+    elseif (preg_match('/^http(s)?:\/\//i', $keyword)) {
+      $result = "请访问: <a http=\"{$keyword}\">{$keyword}</a>";
+    }
     elseif(in_array($keyword, array('?','？','阿','啊','在','在?','在？','哈哈','呵呵','哈','呵','哼'))
       || is_numeric($keyword)
       || preg_match("!^/:!", $keyword) //表情
@@ -984,7 +1106,7 @@ class WeixinHelper {
   public function about($type = 0) {
     $ext = $ext2 = '';
     if (1==$type) {
-      $ext = "祝你五一好心情，玩得开心哟，参加滦河马拉松赛事的话预祝你取得好成绩！/:,@-D\n\n";
+      //$ext = "祝你五一好心情，玩得开心哟，参加滦河马拉松赛事的话预祝你取得好成绩！/:,@-D\n\n";
       $ext2= "，小蜜还会定期为你发布一些可能会对你有用的资讯文章";
     }
     elseif (2==$type) {

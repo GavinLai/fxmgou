@@ -13,7 +13,7 @@
     <p><em>￥<?=$goods_info['shop_price']?></em></p>
   </div>
   <div class="gprop">
-    <p><span>剩余：</span><em><?=$goods_info['goods_number']?></em></p>
+    <p><span>剩余：</span><em id="stock-num"><?=$goods_info['goods_number']?></em></p>
     <p><span>运费：</span><em><?php if($goods_info['is_shipping']):echo '免运费';else:echo '';endif;?></em></p>
   </div>
   <article class="gdesc">

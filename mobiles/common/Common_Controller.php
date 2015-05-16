@@ -15,9 +15,6 @@ class Common_Controller extends Controller {
   public static $loginWhiteList = [
     'user/oauth',
     'user/oauth/%s',
-    'node/show/%s',
-    'node/show/%s/%d',
-    'default/guide',
   ];
   
   /**
@@ -27,12 +24,10 @@ class Common_Controller extends Controller {
    */
   public static function menu_init() {
     return [
-      '!^cate/(\d+)$!i'       => 'default/cate/$1',
-      '!^cate/(\d+)/(\d+)$!i' => 'node/cate/$1/$2',
-      '!^edit/(\d+)$!i'       => 'node/edit/$1',
-      '!^item/(\d+)$!i'       => 'default/item/$1',
-      '!^explore$!i'          => 'default/explore',
-      '!^about$!i'            => 'default/about',
+      '!^item/(\d+)$!i'      => 'default/item/$1',
+      '!^item/([a-z_]+)$!i'  => 'default/item_$1',
+      '!^explore$!i'         => 'default/explore',
+      '!^about$!i'           => 'default/about',
     ];
   }
   
@@ -66,20 +61,29 @@ class Common_Controller extends Controller {
     
     //读取最新用户信息以客户端缓存
     global $user;
-    $uinfo = Member::getTinyInfoByUid($user->uid);
-    $user->openid    = $uinfo['openid'];
-    $user->unionid   = $uinfo['unionid'];
-    $user->subscribe = $uinfo['subscribe'];
-    $user->username  = $uinfo['username'];
-    $user->nickname  = $uinfo['nickname'];
-    $user->sex       = $uinfo['sex'];
-    $user->logo      = $uinfo['logo'];
+    if ($user->uid) {
+      $uinfo = Member::getTinyInfoByUid($user->uid, TRUE);
+      $user->openid    = $uinfo['openid'];
+      $user->unionid   = $uinfo['unionid'];
+      $user->subscribe = $uinfo['subscribe'];
+      $user->username  = $uinfo['username'];
+      $user->nickname  = $uinfo['nickname'];
+      $user->sex       = $uinfo['sex'];
+      $user->logo      = $uinfo['logo'];
+      $user->ec_user_id= $uinfo['ec_user_id'];
+      
+      if (!$request->is_hashreq()) { //不是hash request，则查看购物车是否有商品
+        $cartNum = Goods::getUserCartNum($user->ec_user_id);
+        $user->ec_cart_num = $cartNum;
+      }
+    }
     
   }
   
   /**
    * on dispatch after hook
    *
+   * 注意：如果action中已经中途exit了，则这个方法不会被执行，可以使用on_shutdown
    * @param Request $request
    * @param Response $response
    */

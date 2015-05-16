@@ -34,6 +34,8 @@ return [
   	'mobile' => 'fxm.8558.com',
   	'shop' => 'pc.fxmgou.com',
   ],
+  //debug白名单uid
+  'debug_white_list' => [],
   //上传文件保存目录 
   'picsavedir'=>'/a/',
   //平台币兑人民币比率,1元=10平台币

@@ -33,6 +33,19 @@ class View extends CBase {
   protected $tpl_name = '';
   
   /**
+   * Save filter function hooks
+   * @var array
+   */
+  protected $filter_hooks = array();
+  
+  /**
+   * Filter tag constants
+   * @var constant
+   */
+  const FILTER_TAG_RENDER = 'render';
+  const FILTER_TAG_OUTPUT = 'output';
+  
+  /**
    * Constructor
    * 
    * @param string $tpl_name, Name of Template for rendering
@@ -78,6 +91,9 @@ class View extends CBase {
                             ));
     $this->assign('contextpath', Config::get('env.contextpath','/'));
     $this->assign_by_ref('user', $GLOBALS['user']);
+    
+    //add default output filter
+    $this->add_output_filter(array($this,'filter_output'));
   }
   
   /**
@@ -137,12 +153,7 @@ class View extends CBase {
    * 
    */
   public function render($tpl_name = null) {
-    return $this->filter_output($this->tpl->render(isset($tpl_name)
-                                                   ? $tpl_name
-                                                   : $this->tpl_name,
-                                                   null,
-                                                   null,
-                                                   false));
+    return $this->tpl->render((isset($tpl_name) ? $tpl_name: $this->tpl_name),null,null,false);
   }
   
   /**
@@ -155,13 +166,91 @@ class View extends CBase {
   }
   
   /**
+   * Add render filter function
+   * 
+   * @param callback $func_to_add The name of the function to be called when the filter is applied.
+   * @return View
+   */
+  public function add_render_filter($func_to_add) {
+    $this->add_filter(self::FILTER_TAG_RENDER, $func_to_add);
+    return $this;
+  }
+  
+  /**
+   * Add output filter function
+   * 
+   * @param callback $func_to_add The name of the function to be called when the filter is applied.
+   * @return View
+   */
+  public function add_output_filter($func_to_add) {
+    $this->add_filter(self::FILTER_TAG_OUTPUT, $func_to_add);
+    return $this;
+  }
+  
+  /**
+   * add append filter
+   * @param callback $func_to_add
+   * @param string $position all values are ['head','foot']
+   * @param string $type all values are ['js','css']
+   * @return PageView
+   */
+  public function add_append_filter($func_to_add) {
+    //do nothing here, leave to PageView implement
+    return $this;
+  }
+  
+  /**
+   * Add filter function hook
+   *
+   * @param string $tag The name of the filter to hook the $func_to_add to.
+   * @param callback $func_to_add The name of the function to be called when the filter is applied.
+   * @return View
+   */
+  protected function add_filter($tag, $func_to_add) {
+    if (!isset($this->filter_hooks[$tag])) $this->filter_hooks[$tag] = array();
+    array_push($this->filter_hooks[$tag], array('func_name'=>$func_to_add));
+    return $this;
+  }
+  
+  /**
+   * Call the functions added to the filter hook(by add_filter).
+   * 
+   * @param string $tag
+   * @param mixed $value The value on which the filters hooked to <tt>$tag</tt> are applied on.
+   * @param mixed $var,... Additional variables passed to the functions hooked to <tt>$tag</tt>.
+   * @return mixed The filtered value after all hooked functions are applied to it.
+   */
+  protected function apply_filter($tag, $value = null) {
+    $args = func_get_args();
+    array_shift($args);
+    $argnum = count($args);
+    
+    if (isset($this->filter_hooks[$tag]) && !empty($this->filter_hooks[$tag])) {
+      $hooks = $this->filter_hooks[$tag];
+      $this->filter_hooks[$tag] = array(); //clear
+      foreach ($hooks as $hk) {
+        if (is_callable($hk['func_name'])) {
+          $value = call_user_func_array($hk['func_name'], array_merge($args,[$this])); //append the current 'View' object to the end
+          if ($argnum>0) { //indicating has at least one input argument for the hook function, then set the returning value for the first argument
+            $args[0] = $value;
+          }
+        }
+      }
+    }
+    
+    return $value;
+  }
+  
+  /**
    * Magically converts view object to string.
    *
    * @return string
    */
   public function __toString() {
     try {
-      return $this->render();
+      $this->apply_filter(self::FILTER_TAG_RENDER);
+      $render_string = $this->render();
+      return $this->apply_filter(self::FILTER_TAG_OUTPUT, $render_string);
     }
     catch (Exception $e) {
       trigger_error($e->getMessage(), E_USER_WARNING);

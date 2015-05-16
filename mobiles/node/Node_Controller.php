@@ -225,7 +225,7 @@ class Node_Controller extends Controller {
 
     if($nodeInfo['type_id']=='card'&&$nodeInfo['has_img']){
       if($card_img==''||preg_match('/http:\/\//',$card_img)){
-        $card_img = 'http://'.config::get('env.site.mobile').$nodeInfo['img_url'];
+        $card_img = Config::get('env.site.mobile').$nodeInfo['img_url'];
       }else{
         $file = $request->post('img',''); 
         $b = explode(',', $file);
@@ -252,7 +252,7 @@ class Node_Controller extends Controller {
         file_put_contents($filepath, $file_data);
         chmod($filepath, 0444);
 
-        $card_img = 'http://'.config::get('env.site.mobile').$filepath;
+        $card_img = Config::get('env.site.mobile').$filepath;
       }
     }
 
@@ -284,7 +284,7 @@ class Node_Controller extends Controller {
     $nuid = Node_Model::saveCard($card);
     if($nuid>0){
       $data['flag'] = 'SUC';
-      $data['data'] = ['nuid'=>$nuid,'img'=>$card_img ? $card_img : 'http://'.config::get('env.site.mobile').$card['cover']];
+      $data['data'] = ['nuid'=>$nuid,'img'=>$card_img ? $card_img : Config::get('env.site.mobile').$card['cover']];
     }else{
       $data['msg'] = '系统繁忙，请稍后再试';
     }
@@ -442,7 +442,7 @@ class Node_Controller extends Controller {
       $node_info['content'] = $user_node_info['content'];
     }
     
-    $baseurl = 'http://'.config::get('env.site.mobile');
+    $baseurl = Config::get('env.site.mobile');
     $this->v->assign('node_info', $node_info)->assign('baseurl',$baseurl);
     
     $theuid = empty($_SESSION['uid']) ? 0 : $_SESSION['uid'];

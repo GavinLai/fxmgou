@@ -1,14 +1,5 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <script>gData.referURI='/';</script>
-<nav class="topnav">
-  <div class="listyle"><a href="javascript:;" class="" onclick="return change_list_style(this)"><i class="micon"></i></a></div>
-  <div class="mbar clearfix">
-    <a href="javascript:;" class="fl on">价格从低到高<b class="triangle"></b></a>
-    <a href="javascript:;" class="fr">筛选<b class="triangle"></b></a>
-    <a href="javascript:;">新品</a>
-  </div>
-</nav>
-
 <div class="block block2" id="listyle-1">
   <ul class="liset">
   <?php foreach($goods_latest AS $it):?>
@@ -39,18 +30,4 @@
   <?php endforeach;?>
   </ul>
 </div>
-
-<script>
-function change_list_style(obj) {
-	if ($(obj).hasClass('ls2')) {
-		$(obj).removeClass('ls2');
-		$('#listyle-2').hide();
-		$('#listyle-1').show();
-	} else {
-		$(obj).addClass('ls2');
-		$('#listyle-1').hide();
-		$('#listyle-2').show();
-	}
-}
-</script>
 <?php include T($tpl_footer);?>
