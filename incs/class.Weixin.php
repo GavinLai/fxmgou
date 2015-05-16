@@ -863,23 +863,21 @@ class WeixinPay {
     
     $js =<<<HEREDOC
 <script type="text/javascript">
-function wxEditAddress() {
-
-if (typeof(WeixinJSBridge)=='object') {
-WeixinJSBridge.invoke('editAddress', {
-  "appId": "{$appId}",
-  "scope": "jsapi_address",
-  "signType": "sha1",
-  "addrSign": "{$sign}",
-  "timeStamp": "{$timeStamp}",
-  "nonceStr": "{$nonceStr}",
-  }, function (res) {
-    if(typeof(wxEditAddressCallback)=='function') {
-      wxEditAddressCallback(res,"{$appId}","{$sign}","{$timeStamp}","{$nonceStr}","{$accessToken}");
-    }
-  });
-}
-
+function wxEditAddress(func_cb) {
+  if (typeof(WeixinJSBridge)=='object') {
+    WeixinJSBridge.invoke('editAddress', {
+      "appId": "{$appId}",
+      "scope": "jsapi_address",
+      "signType": "sha1",
+      "addrSign": "{$sign}",
+      "timeStamp": "{$timeStamp}",
+      "nonceStr": "{$nonceStr}",
+    }, function (res) {
+      if(typeof(func_cb)=='function') {
+        func_cb(res);
+      }
+    });
+  }
 }
 </script>
 HEREDOC;

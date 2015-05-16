@@ -291,10 +291,111 @@ class Goods {
     return empty($ret) ? [] : $ret;
   }
   
+  public static function getRegionName($region_id) {
+    $ectb = ectable('region');
+    $sql  = "SELECT `region_name` FROM {$ectb} WHERE `region_id`=%d";
+    $row  = D()->raw_query($sql,$region_id)->get_one();
+    if (!empty($row)) return $row['region_name'];
+    return false;
+  }
   
+  /**
+   * 根据地区名字来查找地区id
+   * 
+   * @param string $region_name 地区名字
+   * @param integer $region_type 地区类型：0:国家，1:省份，2:市级，3:区级
+   * @param integer $parent_id 当地区类型是市级和区级时，需要$parent_id来区分，因为有可能是重名的
+   */
+  public static function getRegionId($region_name, $region_type = 1, $parent_id = 0) {
+    $ectb = ectable('region');
+    $sql  = "SELECT `region_id` FROM {$ectb} WHERE `region_type`=%d AND ";
+    if (0===$region_type) { //国家需精确匹配
+      $sql .= "`region_name`='%s'";
+    }
+    elseif (1===$region_type) { //身份也是精确匹配,但是需要将末尾可能存在的"省"字去掉
+      $region_name = preg_replace('/(省$)/u', '', $region_name); //先把可能存在末尾的"省"字去掉
+      $sql .= "`region_name`='%s'";
+    }
+    else { //市级和区级，名称可能带"市"或"区"，也可能不带
+      $w = 2==$region_type ? '市' : '区';
+      $region_name = preg_replace('/('.$w.'$)/u', '', $region_name); //先把可能存在末尾的"市"或"区"字去掉
+      $sql .= "`region_name` like '%s%' AND `parent_id`=%d"; //市和区在全国范围内都可能有重名的，需要parent_id来区分
+    }
+    $row = D()->raw_query($sql,$region_type,$region_name,$parent_id)->get_one();
+    if (!empty($row)) return $row['region_id'];
+    return 0;
+  }
   
+  public static function getUserAddress($ec_user_id) {
+    $ectb = ectable('user_address');
+    $sql  = "SELECT * FROM {$ectb} WHERE `user_id`=%d ORDER BY `address_id` DESC";
+    $ret  = D()->raw_query($sql,$ec_user_id)->fetch_array_all();
+    if (!empty($ret)) {
+      foreach ($ret AS &$addr) {
+        $contact_phone = !empty($addr['mobile']) ? $addr['mobile'] : $addr['tel']; //优先选择手机作为联系电话
+        
+        //填充地区名称
+        if (empty($addr['country_name']) && !empty($addr['country'])) {
+          $addr['country_name'] = self::getRegionName($addr['country']);
+        }
+        if (empty($addr['province_name']) && !empty($addr['province'])) {
+          $addr['province_name'] = self::getRegionName($addr['province']);
+          $addr['province_name'].= '省';
+        }
+        if (empty($addr['city_name']) && !empty($addr['city'])) {
+          $addr['city_name'] = self::getRegionName($addr['city']);
+          if (!preg_match('/(市$)/u', $addr['city_name'])) {
+            $addr['city_name'].= '市';
+          }
+        }
+        if (empty($addr['district_name']) && !empty($addr['district'])) {
+          $addr['district_name'] = self::getRegionName($addr['district']);
+          if (!preg_match('/(区$)/u', $addr['district_name'])) {
+            $addr['district_name'].= '区';
+          }
+        }
+        
+        //添加额外属性，便于前端显示
+        $addr['contact_phone']  = $contact_phone;
+        $addr['show_consignee'] = $addr['consignee']."（{$contact_phone}）";
+        $addr['show_address']   = $addr['province_name'].$addr['city_name'].$addr['district_name'].$addr['address'];
+      }
+    }
+    return empty($ret) ? [] : $ret;
+  }
   
-  
+  /**
+   * 保存用户收货地址
+   * 
+   * @param array $data 要保存的字段数据
+   * @param integer $address_id 地址id，当为0时表示新插入，否则表示更新
+   * @return boolean
+   */
+  public static function saveUserAddress(Array $data, $address_id = 0) {
+    
+    //补全地区信息
+    if (empty($data['country']) && !empty($data['country_name'])) {
+      $data['country'] = self::getRegionId($data['country_name'], 0);
+    }
+    if (empty($data['province']) && !empty($data['province_name'])) {
+      $data['province'] = self::getRegionId($data['province_name'], 1);
+    }
+    if (empty($data['city']) && !empty($data['city_name'])) {
+      $data['city'] = self::getRegionId($data['city_name'], 2, $data['province']);
+    }
+    if (empty($data['district']) && !empty($data['district_name'])) {
+      $data['district'] = self::getRegionId($data['district_name'], 3, $data['city']);
+    }
+    
+    if (!$address_id) { //新插入
+      $address_id = D()->insert(ectable('user_address'), $data, true, true);
+    }
+    else { //编辑
+      D()->update(ectable('user_address'), $data, ['address_id'=>$address_id], true);
+    }
+    
+    return $address_id;
+  }
   
   
   

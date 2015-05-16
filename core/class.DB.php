@@ -396,7 +396,7 @@ class DB {
    * @param array $insertarr
    *  insert key-value array
    *
-   * @param int $returnid
+   * @param boolean $returnid
    *  whether return insert id
    *  
    * @param boolean $rawmode
@@ -405,7 +405,7 @@ class DB {
    * @return int
    *  insert id if set $returnid=1, else affected rows
    */
-  public function insert($tablename, Array $insertarr, $returnid = 1, $rawmode = FALSE) {
+  public function insert($tablename, Array $insertarr, $returnid = TRUE, $rawmode = FALSE) {
     $server_mode  = self::WRITABLE; //Because of 'INSERT', so use self::WRITABLE
     $insertkeysql = $insertvaluesql = $comma = '';
     foreach ($insertarr as $insert_key => $insert_value) {
@@ -510,7 +510,7 @@ class DB {
    * @param array $insertarr
    *  insert key-value array
    *
-   * @param int $returnid
+   * @param boolean $returnid
    *  whether return insert id
    *
    * @return
@@ -519,7 +519,7 @@ class DB {
    * @deprecated
    *  use $this->insert() method instead
    */
-  public function insert_table($tablename, Array $insertarr, $returnid = 1) {
+  public function insert_table($tablename, Array $insertarr, $returnid = TRUE) {
     return $this->insert($tablename, $insertarr, $returnid);
   }
   

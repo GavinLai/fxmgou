@@ -581,6 +581,9 @@ a:hover{ text-decoration: none; }
 	background-image: url("../img/2x/address.png");
 	background-size: 25px 25px;
 }
+.order-express .express-noicon:before {
+	background-image: none;
+}
 .order-express .express-it:after {
 	content: '';
 	position: absolute;
@@ -590,6 +593,12 @@ a:hover{ text-decoration: none; }
 	height: 16px;
 	background-image: url("../img/2x/address_right_arrow.png");
 	background-size: 16px 16px;
+}
+.order-express .express-add {
+  color:#07d;
+  font-size: 16px;
+  font-size: 1.6rem;
+  text-align: center;
 }
 .order-express .express-detail {
 	margin: 0 35px 0 25px;

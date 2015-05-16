@@ -47,8 +47,9 @@ class Trade_Controller extends Controller {
       'trade/cart/list'   => 'cart_list',
       'trade/cart/delete' => 'cart_delete',
       'trade/cart/chgnum' => 'cart_chgnum',
-      'trade/order/confirm' => 'order_confirm',
-      'trade/order/submit'  => 'order_submit',
+      'trade/order/confirm'  => 'order_confirm',
+      'trade/order/submit'   => 'order_submit',
+      'trade/order/upaddress'=> 'order_upaddress',
     ];
   }
   
@@ -244,26 +245,22 @@ class Trade_Controller extends Controller {
         $rid = trim($rid);
       }
       
+      //订单商品信息
       $order_goods = Goods::getOrderGoods($cart_rids, null, $total_price);
       $this->v->assign('order_goods', $order_goods);
       $this->v->assign('order_goods_num', count($order_goods));
       $this->v->assign('total_price', $total_price);
       
+      //搜索地址
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      $user_addrs = Goods::getUserAddress($ec_user_id);
+      $this->v->assign('user_addrs', $user_addrs);
+      $this->v->assign('user_addrs_num', count($user_addrs));
+      
     }
     else {
       $code = $request->get('code', '');
       if (''!=$code) { //微信base授权
-        $requrl = $request->url();
-        $reqref = $request->refer();
-        
-        trace_debug('weixin_jsaddress_auth_comeback', $requrl);
-        trace_debug('weixin_jsaddress_auth_comeback_refer', $reqref);
-        trace_debug('weixin_jsaddress_auth_comeback_ua', $request->ua());
-        
-        if (isset($_SESSION['jsapi_address_oauth']) && $_SESSION['jsapi_address_oauth']) {
-          unset($_SESSION['jsapi_address_oauth']);
-          $response->redirect($requrl);
-        }
         
         $state = $request->get('state', '');
         
@@ -283,31 +280,12 @@ class Trade_Controller extends Controller {
         $accessToken = $code_ret['access_token'];
         $wxAddrJs = $wx->wxpay->addrJs($accessToken);
         $this->v->add_append_filter(function(PageView $v) use($wxAddrJs) {
-          $jscallback =<<<HEREDOC
-<script>
-function wxEditAddressCallback(res,appid,sign,timestamp,nonce,accesstoken) {
-  if (res) { //有返回
-    alert(res.err_msg);
-    /*alert(appid+"\n"+sign+"\n"+timestamp+"\n"+nonce+"\n"+accesstoken);
-    
-    alert(res.username);
-    alert(res.telNumber);
-    alert(res.proviceFirstStageName+res.addressCitySecondStageName+res.addressCountiesThirdStageName+res.addressDetailInfo);
-    alert(res.addressPostalCode);*/
-    
-  }else{ //空，用户取消
-    alert('empty');
-  }
-}
-</script>
-HEREDOC;
-          $v->append_to_foot_js .= $jscallback.$wxAddrJs;
+          $v->append_to_foot_js .= $wxAddrJs;
         },'foot');
         
       }
       else { //正常访问
         if (Weixin::isWeixinBrowser()) {
-          $_SESSION['jsapi_address_oauth'] = 1;
           (new Weixin())->authorizing($request->url(), 'base'); //base授权获取access token以便于操作收货地址
           //(new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin?act=jsapi_address&refer='.urlencode($request->url()), 'base'); //base授权获取access token以便于操作收货地址
         }
@@ -335,6 +313,68 @@ HEREDOC;
       
     }
     $response->send($this->v);
+  }
+  
+
+  /**
+   * 更新收货地址
+   *
+   * @param Request $request
+   * @param Response $response
+   */
+  public function order_upaddress(Request $request, Response $response)
+  {
+    if ($request->is_post()) {
+      $ret = ['flag'=>'FAIL','msg'=>'更新失败'];
+      trace_debug('order_upaddress', $_POST);
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ret['msg'] = '未登录, 请登录';
+        $response->sendJSON($ret);
+      }
+      
+      $address_id    = $request->post('address_id', 0);
+      $consignee     = $request->post('consignee', '');
+      $contact_phone = $request->post('contact_phone', '');
+      $country       = $request->post('country', 1);
+      $country_name  = $request->post('country_name', '中国');
+      $province      = $request->post('province', 0);
+      $province_name = $request->post('province_name', '');
+      $city          = $request->post('city', 0);
+      $city_name     = $request->post('city_name', '');
+      $district      = $request->post('district', 0);
+      $district_name = $request->post('district_name', '');
+      $address       = $request->post('address', '');
+      $zipcode       = $request->post('zipcode', '');
+      
+      $address_id = intval($address_id);
+      $data = [
+        'user_id'       => $ec_user_id,
+        'consignee'     => $consignee,
+        'country'       => $country,
+        'country_name'  => $country_name,
+        'province'      => $province,
+        'province_name' => $province_name,
+        'city'          => $city,
+        'city_name'     => $city_name,
+        'district'      => $district,
+        'district_name' => $district_name,
+        'address'       => $address,
+        'zipcode'       => $zipcode,
+      ];
+      if (preg_match('/^1\d{10}$/', $contact_phone)) { //是手机号
+        $data['mobile'] = $contact_phone;
+      }
+      else {
+        $data['tel'] = $contact_phone;
+      }
+      
+      $address_id = Goods::saveUserAddress($data, $address_id);
+      $ret = ['flag'=>'SUC','msg'=>'更新成功','address_id'=>$address_id];
+      
+      $response->sendJSON($ret);
+    }
   }
   
 }
