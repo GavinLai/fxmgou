@@ -477,6 +477,63 @@ function T($tpl_name) {
 }
 
 /**
+ * Packaging a valid URL
+ * 
+ * @param string $uri the input uri
+ * @param string|array $vars the input parameters
+ * @param boolean $domain whether display domain, default to FALSE
+ * @return string
+ */
+function U($uri = '', $vars = '', $domain = FALSE) {
+  
+  // Cache some variables
+  static $is_clean, $ctx_path, $site_domain;
+  if (!isset($is_clean)) {
+    $is_clean = Config::get('env.cleanurl',0);
+  }
+  if (!isset($ctx_path)) {
+    $ctx_path = Config::get('env.contextpath','/');
+  }
+  if (!isset($site_domain)) {
+    $site_domain = Config::get('env.site.mobile','');
+  }
+  
+  // Check query parameters
+  if(is_string($vars)) { // var1=1&var2=2 translate to array
+    parse_str($vars, $vars);
+  }
+  elseif(!is_array($vars)){
+    $vars = array();
+  }
+  
+  // Check input uri
+  if (preg_match('/^\//', $uri)) { //begin as '/'
+    $uri = substr($uri, 1); //strip the beginning '/'
+  }
+  
+  // Whether clean url
+  if ($is_clean) {
+    $uri  = $ctx_path . $uri;
+  }
+  else {
+    $uri  = $ctx_path . '?q=' .$uri;
+  }
+  
+  // Append query string
+  if (!empty($vars)) {
+    $vars = http_build_query($vars);
+    $uri .= (strpos($uri,'?')===false?'?':'&'). $vars;
+  }
+  
+  // Check domain
+  if ($domain && ''!=$site_domain) {
+    $uri = $site_domain . $uri;
+  }
+  
+  return $uri;
+}
+
+/**
  * 
  * @return boolean
  */

@@ -389,10 +389,17 @@ a:hover{ text-decoration: none; }
 	line-height: 37px;
 	padding: 0 10px;
 }
+.list-head.list-head-gray {
+	background: #f5f5f5;
+}
+.list-head.list-head-blue {
+	background: #eaf8ff;
+}
 .list-head a { color: #00a0f8; }
 .list-body {
 	overflow: auto;
   zoom: 1;
+  position: relative;
 }
 .list-body .it {
 	padding: 7px 10px;
@@ -626,16 +633,25 @@ a:hover{ text-decoration: none; }
 .order-topay { padding: 15px 10px; }
 .order-topay .row { margin-bottom: 10px; }
 .order-topay .row.row-last { font-size: 12px;font-size: 1.2rem;text-align: center;color: #999; }
+.list-head-order .order-sn { margin-left: 5px; }
+.list-body.list-body-order .it {min-height: 90px;}
+.list-body.list-body-order .price-txt { color: #999;margin-left: 3px; }
+.right-merge { background: #fff;text-align: right;position: absolute;top: 0;right: 0;bottom: 1px;padding: 7px 10px 7px 0;width:29.16667%;/*=c-24-7*/-webkit-box-sizing: border-box;-moz-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box; }
+.order-status > p { margin-bottom: 4px; }
+.order-status > p.last { margin-bottom: 0; }
+.order-status > p a { color: #00a0f8; }
+.order-status .btn { padding: 0 5px; }
 
 /*PC下的样式*/
 @media only screen and (min-width: 1025px){
-#rtWrap {width: 720px;}
-.swipe{min-height:300px;}
-.list-body .col-1,.list-body .col-2 {
-	padding: 0;
-  height: 175px;
-  line-height: 175px;
-}
+
+	#rtWrap {width: 720px;}
+  .swipe{min-height:300px;}
+  .list-body .col-1,.list-body .col-2 {
+	  padding: 0;
+    height: 175px;
+    line-height: 175px;
+  }
 
 }
 

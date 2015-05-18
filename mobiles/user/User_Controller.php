@@ -8,9 +8,11 @@ defined('IN_SIMPHP') or die('Access Denied');
 
 class User_Controller extends Controller {
   
-  private $_nav_no     = 1;
-  private $_nav        = 'user';
-  private $_nav_second = '';
+  private $nav_no     = 1;       //主导航id
+  private $topnav_no  = 0;       //顶部导航id
+  private $nav_flag1  = 'user';  //导航标识1
+  private $nav_flag2  = '';      //导航标识2
+  private $nav_flag3  = '';      //导航标识3
   
   public function menu() {
     return [
@@ -28,10 +30,16 @@ class User_Controller extends Controller {
    */
   public function init($action, Request $request, Response $response)
   {
-    $this->v = new PageView();
-    $this->v->assign('nav_no',     $this->_nav_no)
-            ->assign('nav',        $this->_nav)
-            ->assign('nav_second', $this->_nav_second);
+    if (!$request->is_post()) {
+      $this->v = new PageView();
+      $this->v->add_render_filter(function(View $v){
+        $v->assign('nav_no',     $this->nav_no)
+          ->assign('topnav_no',  $this->topnav_no)
+          ->assign('nav_flag1',  $this->nav_flag1)
+          ->assign('nav_flag2',  $this->nav_flag2)
+          ->assign('nav_flag3',  $this->nav_flag3);
+      });
+    }
   }
   
   /**
@@ -50,35 +58,9 @@ class User_Controller extends Controller {
     }
     else {
       //检查用户信息完成度，nickname或logo没有的话都重定向请求OAuth2详细认证获取资料
-      User_Model::checkUserInfoCompleteDegree($userInfo, '/user');
+      User_Model::checkUserInfoCompleteDegree($userInfo, '/user/');
     }
     
-    $response->send($this->v);
-  }
-
-  /**
-   * 随机生成内容
-   * @param  Request  $request  [description]
-   * @param  Response $response [description]
-   * @return [type]             [description]
-   */
-  public function find(Request $request, Response $response)
-  {
-    $this->v->set_tplname('mod_user_find');
-    if ($request->is_hashreq()) {
-      $uid = $GLOBALS['user']->uid;
-      //随机获取10条记录
-      import('node/Node_Model');
-      $recordes = Node_Model::getRandNode(8);
-      $nodes = [];
-      foreach($recordes as $v){
-        $record = Node_Model::getNodeInfo($v['nid']);
-        $record['collect'] = Node_Model::actionRecord($v['nid'], $uid, 'collect');
-        $record['love'] = Node_Model::actionRecord($v['nid'], $uid, 'love');
-        $nodes[] = $record;
-      }
-      $this->v->assign('nodes', $nodes);
-    }
     $response->send($this->v);
   }
   
@@ -89,120 +71,48 @@ class User_Controller extends Controller {
    * @return [type]             [description]
    */
   public function feedback(Request $request, Response $response){
-    $this->v->set_tplname('mod_user_feedback');
-    if ($request->is_hashreq()) {
+    
+    if ($request->is_post()) {
+      
+      $res = ['flag'=>'FAIL', 'data'=>''];
+      $content = $request->post('content', '');
+      $contact = $request->post('contact', '');
+      if(content==''){
+        $res['data'] = '内容不能为空';
+      }else{
+        $fid = User_Model::saveFeedback(['content'=>$content, 'contact'=> $contact]);
+        if($fid>0){
+          $res['flag'] = 'SUC';
+        }else{
+          $res['data']= '系统繁忙，请稍后再试！';
+        }
+      }
+      $response->sendJSON($res);
       
     }
-    $response->send($this->v);
-  }
-  
-  /**
-   * [saveFeedback description]
-   * @param  Request  $request  [description]
-   * @param  Response $response [description]
-   * @return [type]             [description]
-   */
-  public function saveFeedback(Request $request, Response $response){
-    $res = ['flag'=>'FAIL', 'data'=>''];
-    $content = $request->post('content', '');
-    $contact = $request->post('contact', '');
-    if(content==''){
-      $res['data'] = '内容不能为空';
-    }else{
-      $fid = User_Model::saveFeedback(['content'=>$content, 'contact'=> $contact]);
-      if($fid>0){
-        $res['flag'] = 'SUC';
-      }else{
-        $res['data']= '系统繁忙，请稍后再试！';
+    else {
+      
+      $this->v->set_tplname('mod_user_feedback');
+      if ($request->is_hashreq()) {
+      
       }
+      $response->send($this->v);
+      
     }
-    $response->sendJSON($res);
-  }
-
-  /**
-   * [notice description]
-   * @param  Request  $request  [description]
-   * @param  Response $response [description]
-   * @return [type]             [description]
-   */
-  public function notice(Request $request, Response $response){
-    $this->v->set_tplname('mod_user_notice');
-    if ($request->is_hashreq()) {
-      //获取最近分享的10条记录
-      import('node/Node_Model');
-      $page_size = 5;
-      $shareHistory = Node_Model::getShareHistory($GLOBALS['user']->uid,$page_size);
-
-      $next_page = $GLOBALS['pager_currpage_arr'][0]+1;
-      $total_page = $GLOBALS['pager_totalpage_arr'][0];
-
-      $show_blk = ['blk_1'];//显示区域
-      if(isset($_GET['p'])){
-        $show_blk = [];
-      }
-      $this->v->assign('show_blk',$show_blk);
-      $this->v->assign('total_page',$total_page)->assign('next_page', $next_page);
-
-      $this->v->assign('share', $shareHistory);
-    }
-    $this->v->assign('nav_no',0);
-    $response->send($this->v);
-  }
-  
-  /**
-   * [setup description]
-   * @param  Request  $request  [description]
-   * @param  Response $response [description]
-   * @return [type]             [description]
-   */
-  public function setup(Request $request, Response $response){
-    $this->v->set_tplname('mod_user_setup');
-    if ($request->is_hashreq()) {
-      $userInfo = Member::getTinyInfoByUid($GLOBALS['user']->uid);
-      $this->v->assign('user', $userInfo);
-    }
-    $response->send($this->v);
   }
   
   public function collect(Request $request, Response $response){
     $uid  = $GLOBALS['user']->uid;
-    $type = $request->arg(2);
-    if(empty($type)||!in_array($type, ['word', 'card', 'music', 'gift'])){
-      $type = 'word';
-    }
 
     $this->v->set_tplname('mod_user_collect');
-    $this->v->assign('type', $type);
 
     if ($request->is_hashreq()) {
       $list = [];
       $cate = [];
-      /*
-      $list = User_Model::getCollectByType($uid, $type);
-      import('node/Node_Model');
-      $category = Node_Model::getCategoryList();
-      $cate = [];
-      foreach($category as $v){
-        $cate[$v['cate_id']] = $v['cate_name'];
-      }
-      */
       $this->v->assign('list', $list)->assign('cate', $cate);
     }
 
     $response->send($this->v); 
-  }
-  
-  public function cancleCollect(Request $request, Response $response){
-    $res = ['flag'=>'FAIL','data'=>[],'msg'=>''];
-    $nid = (int)$request->post('nid', 0);
-    $uid = $GLOBALS['user']->uid;
-    import('node/Node_Model');
-    if(Node_Model::cancleCollect($nid, $uid)){
-      $res['flag'] = 'SUC';
-    }else{
-      $res['msg'] = '请稍后再试';
-    }
-    $response->sendJSON($res);
   }
 
   /**
@@ -255,7 +165,7 @@ class User_Controller extends Controller {
       
       //授权出错
       if (!in_array($state, array('base','detail'))) {
-        Fn::showErrorMessage('授权出错，不能访问应用！');
+        Fn::show_error_message('授权出错，不能访问应用！');
       }
       
       $wx = new Weixin();
@@ -263,7 +173,7 @@ class User_Controller extends Controller {
       //用code换取access token
       $code_ret = $wx->request_access_token($code);
       if (!empty($code_ret['errcode'])) {
-        Fn::showErrorMessage('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')');
+        Fn::show_error_message('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')');
       }
       
       //获取到openid
@@ -281,7 +191,7 @@ class User_Controller extends Controller {
           
           $uinfo_wx = $wx->userInfoByOAuth2($openid, $code_ret['access_token']);
           if (!empty($uinfo_wx['errcode'])) { //失败！则报错
-            Fn::showErrorMessage('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
+            Fn::show_error_message('微信获取用户信息出错！<br/>'.$uinfo_wx['errcode'].'('.$uinfo_wx['errmsg'].')');
           }
           
           //保存微信用户信息到本地库
@@ -342,7 +252,7 @@ class User_Controller extends Controller {
       if ('login'==$auth_action) {
         
         if (empty($uid)) {
-          Fn::showErrorMessage('微信授权登录失败！');
+          Fn::show_error_message('微信授权登录失败！');
         }
         
         Member::setLocalLogin($uid);
@@ -353,7 +263,7 @@ class User_Controller extends Controller {
     }
     else {
       //授权未通过
-      Fn::showErrorMessage('未授权，不能访问应用！');
+      Fn::show_error_message('未授权，不能访问应用！');
     }
   }
 
@@ -389,29 +299,29 @@ class User_Controller extends Controller {
    */
   public function tokenLogin(Request $request, Response $response){
     
-    //1.简单openId登录
+    //检查token
     $token = $request->get('token','');
     if(''==$token){
       $this->tips($request, $response);
     }
     
+    //检查数据库token，以获取openid
     $openid = User_Model::checkAccessToken($token);
     if($openid === FALSE){
       $this->tips($request, $response);
     }
     
+    //通过openid 获取用户信息
     $userInfo = Member::getTinyInfoByOpenid($openid);
     if(empty($userInfo)){
-      Fn::showErrorMessage();
+      Fn::show_error_message();
     }
     
     //设置本地登录状态
     Member::setLocalLogin($userInfo['uid']);
     
-    $refer = 'http://'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-    $response->redirect($refer);
-    
-    exit;
+    //Token登录后去到当前页(避免session没写成功走正常流程)
+    $response->redirect($request->url());
   }
   
   /**

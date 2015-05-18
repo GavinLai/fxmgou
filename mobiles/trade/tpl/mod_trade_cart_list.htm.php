@@ -35,16 +35,18 @@
 <?php else:?>
     <li class="list-empty">
       <h1 class="list-empty-header">购物车空空如也  o(╯□╰)o</h1>
-      <div class="list-empty-content"><a href="<?=$contextpath?>explore">去逛逛，我要血拼！</a></div>
+      <div class="list-empty-content"><a href="<?php echo U('explore')?>">去逛逛，我要血拼！</a></div>
     </li>
 <?php endif;?>
 
   </ul>
 </div>
 <script>
-$('#cart-list-body .withclickurl').click(function(){
-	window.location.href = $(this).parent().attr('data-url');
-	return false;
+$(function(){
+	$('#cart-list-body .withclickurl').click(function(){
+		window.location.href = $(this).parent().attr('data-url');
+		return false;
+	});
 });
 </script>
 <script>set_cart_action('<?=$cartNum?>','<?=$cartRecNum?>');/*see m.js*/</script>

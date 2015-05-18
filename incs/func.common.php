@@ -115,12 +115,12 @@ function config_set($key, $val = '', $encode = 'R')
  */
 function emptyimg()
 {
-  return '/misc/images/b.gif';
+  return C('env.contextpath').'misc/images/b.gif';
 }
 
 function ploadingimg()
 {
-  return '/misc/images/bloading.gif';
+  return C('env.contextpath').'misc/images/bloading.gif';
 }
 
 /**
@@ -140,11 +140,12 @@ function trace_debug($key, $val='')
 
 /**
  * 处理用户输入
- * @param unknown_type $str
- * @param unknown_type $is_strip_tags	是否处理html,php标签
- * @return multitype:NULL
+ * 
+ * @param string $str
+ * @param boolean $is_strip_tags	是否处理html,php标签
+ * @return string
  */
-function treat_input_str($str,$is_strip_tags=true)
+function treat_input_str($str, $is_strip_tags=true)
 {
 	if(is_array($str)) {
 		$a = array();
@@ -167,7 +168,7 @@ function treat_input_str($str,$is_strip_tags=true)
 
 /**
  * 生成指定长度的随机密码
- * Enter description here ...
+ * 
  * @param unknown_type $len
  * @param char $type 类型	both(混合),number(数字)
  */
@@ -191,7 +192,7 @@ function create_randcode($len=10,$type='both')
  */
 function default_logo()
 {
-	return '/misc/images/avatar/default_ulogo.png';
+	return C('env.contextpath').'misc/images/avatar/default_ulogo.png';
 }
 
 /**
@@ -366,7 +367,8 @@ SHTML;
 
 /**
  * 生成指定类型的id
- * @param unknown_type $idname
+ * 
+ * @param string $idname
  */
 function idmaker($idname)
 {
@@ -437,6 +439,15 @@ function gen_order_no()
 	return $pre.$id;
 }
 
+/**
+ * 对称加解密
+ * 
+ * @param string $string
+ * @param string $operation
+ * @param string $key
+ * @param integer $expiry
+ * @return string
+ */
 function zf_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0)
 {
   $ckey_length = 4;
@@ -487,6 +498,12 @@ function zf_authcode($string, $operation = 'DECODE', $key = '', $expiry = 0)
   }
 }
 
+/**
+ * 订单状态
+ * 
+ * @param integer $state
+ * @return Ambigous <string>|multitype:string
+ */
 function getOrderState($state='')
 {
   //0:已下单，-1:表示发货失败,-2:已取消，1：已扣款，2:已发货,3:交易完成
@@ -507,6 +524,11 @@ function getOrderState($state='')
   }
 }
 
+/**
+ * 发货状态
+ * @param integer $state
+ * @return Ambigous <string>|multitype:string
+ */
 function getSendState($state='')
 {
   //发货状态,0:不发货,1:待发货，2:已发货,3:已收货
@@ -525,10 +547,10 @@ function getSendState($state='')
 
 /**
  * 获取发货方式
- * Enter description here ...
- * @param unknown_type $type
+ * 
+ * @param string $type
  */
-function get_send_type($type=NULL)
+function get_send_type($type = NULL)
 {
   //发货发式,0:未知,1:EMS,2:顺丰,3:圆通,4:申通,5:汇通,6:中通,7:韵达,8:天天
   $send_type = array(
@@ -556,7 +578,7 @@ function get_send_type($type=NULL)
 
 /**
  * 字符串的截取
- * Enter description here ...
+ * 
  * @param unknown_type $string
  * @param unknown_type $length
  * @param unknown_type $append
@@ -607,14 +629,16 @@ function truncate($string,$length,$append = true)
  * @param string $tbname
  * @return string
  */
-function ectable( $tbname ) {
+function ectable( $tbname )
+{
   return ECDB . '.`' . ECDB_PRE . $tbname . '`';
 }
 
 /**
  * 显示在html head 里的全局js
  */
-function headscript() {
+function headscript()
+{
   global $user;
   
   // Global data
@@ -643,7 +667,8 @@ function headscript() {
 /**
  * 显示在html foot后的js，如微信JS-SDK
  */
-function footscript() {
+function footscript()
+{
   $q = Request::q();
   if (!$q) $q = '/';
   

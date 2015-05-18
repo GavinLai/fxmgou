@@ -9,9 +9,7 @@ defined('IN_SIMPHP') or die('Access Denied');
 class Goods {
   
   public static function goods_url($goods_id, $with_prefix = FALSE) {
-    static $urlpre;
-    if ($with_prefix && !isset($urlpre)) $urlpre = C('env.site.mobile');
-    return ($with_prefix ? $urlpre.'/item/' : '/item/').$goods_id;
+    return U('item/'.$goods_id,'',$with_prefix);
   }
   
   public static function goods_picurl($goods_pic) {
@@ -465,30 +463,85 @@ class Goods {
   }
   
   /**
-   * 将支付LOG插入数据表
-   *
-   * @access  public
-   * @param   integer     $order_id   订单编号
-   * @param   float       $amount     订单金额
-   * @param   integer     $type       支付类型
-   * @param   integer     $is_paid    是否已支付
-   *
-   * @return  int
+   * 获取订单列表
+   * 
+   * @param integer $user_id
+   * @return array
    */
-  public static function insertPayLog($order_id, $amount, $type = PAY_SURPLUS, $is_paid = 0) {
-    $ectb = ectable('pay_log');
-    $insert = [
-      'order_id'    => $order_id,
-      'order_amount'=> $amount,
-      'order_type'  => $type,
-      'is_paid'     => $is_paid,
-    ];
-    $log_id = D()->insert(ectable('pay_log'), $insert, true, true);
-    return $log_id;
+  public static function getOrderList($user_id) {
+    if (empty($user_id)) return [];
+    
+    $start = 0;
+    $limit = 50;
+    
+    $ectb_order = ectable('order_info');
+    $ectb_goods = ectable('goods');
+    $ectb_order_goods = ectable('order_goods');
+    
+    $sql = "SELECT * FROM {$ectb_order} WHERE `user_id`=%d ORDER BY `order_id` DESC LIMIT %d,%d";
+    $orders = D()->raw_query($sql, $user_id, $start, $limit)->fetch_array_all();
+    if (!empty($orders)) {
+      foreach ($orders AS &$ord) {
+        $ord['show_status_html'] = self::genStatusHtml($ord);
+        $ord['order_goods'] = [];
+        $sql = "SELECT og.*,g.`goods_thumb` FROM {$ectb_order_goods} og INNER JOIN {$ectb_goods} g ON og.`goods_id`=g.`goods_id` WHERE `order_id`=%d ORDER BY `rec_id` DESC";
+        $order_goods = D()->raw_query($sql, $ord['order_id'])->fetch_array_all();
+        if (!empty($order_goods)) {
+          foreach ($order_goods AS &$g) {
+            $g['goods_url']   = self::goods_url($g['goods_id']);
+            $g['goods_thumb'] = self::goods_picurl($g['goods_thumb']);
+          }
+          $ord['order_goods'] = $order_goods;
+        }
+      }
+    }
+    else {
+      $orders = [];
+    }
+    return $orders;
   }
   
+  /**
+   * 生成订单各种状态显示html
+   * 
+   * @param array $order
+   * @return string
+   */
+  public static function genStatusHtml(Array &$order) {
+    
+    $html = '';
+    
+    $order['active_order'] = 0; //便于区分订单显示样式
+    if ($order['order_status'] < OS_CANCELED) { //订单 未确认|已确认
+      if ($order['pay_status'] == PS_UNPAYED) { //未支付
+        $html .= '<p class="order-status-txt">订单'.Fn::pay_status($order['pay_status']).'</p>';
+        $html .= '<p class="order-status-op"><a href="" class="btn btn-orange btn-order-topay" data-order_id="'.$order['order_id'].'">立即付款</a></p>';
+        $html .= '<p class="order-status-op last"><a href="javascript:;" class="btn-order-cancel" data-order_id="'.$order['order_id'].'">取消订单</a></p>';
+        $order['active_order'] = 1;
+      }
+    }
+    else {
+      $html .= '<p>订单'.Fn::order_status($order['order_status']).'</p>';
+    }
+    
+    return $html;
+  }
   
-  
+  /**
+   * 取消订单
+   * 
+   * @param integer $order_id
+   * @return boolean
+   */
+  public static function orderCancel($order_id) {
+    if (!$order_id) return false;
+    $ectb = ectable('order_info');
+    D()->update(ectable('order_info'), ['order_status'=>OS_CANCELED], ['order_id'=>$order_id], true);
+    if (D()->affected_rows()==1) {
+      return true;
+    }
+    return false;
+  }
   
 }
  

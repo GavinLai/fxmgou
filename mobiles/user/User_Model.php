@@ -12,25 +12,9 @@ class User_Model extends Model {
 		$fid = D()->insert('feedback', $data);
 		return $fid;
 	}
-
-	public static function getCollectByType($uid, $type, $limit=30){
-	  $records = [];
-	  if (!$uid) return $records;
-		if($type=="word"){
-			$sql = "SELECT a.aid,a.timeline,n.*  FROM {action} AS a LEFT JOIN {node} AS n ON a.nid=n.nid WHERE a.uid=%d AND a.type_id='%s' AND a.action='collect' ";
-			$sqlcnt = "SELECT COUNT(*) FROM {action} WHERE uid=%s AND type_id='%s' AND action='collect'";
-			$records = D()->pager_query($sql, $limit, $sqlcnt, 0, $uid, $type)->fetch_array_all();
-		}else{
-			$sql = "SELECT a.aid,a.timeline,n.*,t.* FROM {action} AS a LEFT JOIN {node} AS n ON a.nid=n.nid LEFT JOIN {node}_{$type} AS t ON n.nid=t.tnid WHERE a.uid=%d AND a.type_id='%s' AND action='collect'";
-			$sqlcnt = "SELECT COUNT(*) FROM {action} WHERE uid=%s AND type_id='%s' AND action='collect' ";
-			$records = D()->pager_query($sql, $limit, $sqlcnt, 0, $uid, $type)->fetch_array_all();
-		}
-
-		return $records;
-	}
 	
 	public static function checkAccessToken($token){
-		$record = D()->get_one("SELECT * FROM {access_token} WHERE token='%s' ", $token);
+		$record = D()->get_one("SELECT * FROM {access_token} WHERE token='%s'", $token);
 		if(empty($record)){
 			return FALSE;
 		}

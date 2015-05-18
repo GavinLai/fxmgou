@@ -142,10 +142,10 @@ class Default_Controller extends Controller {
       }
       else {
         $purl = C('env.site.shop');
-        $goods_info['goods_thumb']  = $purl . '/' . $goods_info['goods_thumb'];
-        $goods_info['goods_img']    = $purl . '/' . $goods_info['goods_img'];
-        $goods_info['original_img'] = $purl . '/' . $goods_info['original_img'];
-        //$goods_info['goods_desc']   = htmlspecialchars($goods_info['goods_desc']);
+        $goods_info['goods_thumb']  = Goods::goods_picurl($goods_info['goods_thumb']);
+        $goods_info['goods_img']    = Goods::goods_picurl($goods_info['goods_img']);
+        $goods_info['original_img'] = Goods::goods_picurl($goods_info['original_img']);
+        
         include (SIMPHP_CORE.'/libs/htmlparser/simple_html_dom.php');
         $dom = str_get_html($goods_info['goods_desc']);
         $imgs= $dom->find('img');
@@ -156,7 +156,7 @@ class Default_Controller extends Controller {
           }
           
           foreach($imgs_src as $psrc) {
-            if(preg_match('!^/!', $psrc)) {
+            if(preg_match('/^\//', $psrc)) { //表示本地上传图片
               $goods_info['goods_desc'] = str_replace('src="'.$psrc.'"', 'src="'.$purl . $psrc.'"', $goods_info['goods_desc']);
             }
           }

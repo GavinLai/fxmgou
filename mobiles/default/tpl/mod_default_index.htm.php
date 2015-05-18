@@ -57,7 +57,7 @@ $(function(){
     <ul class="liset">
     <?php foreach($goods_latest AS $it):?>
       <li class="liit">
-        <a href="<?=$contextpath?>item/<?=$it['goods_id']?>">
+        <a href="<?php echo U('item/'.$it['goods_id'])?>">
           <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic"  onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>
@@ -75,7 +75,7 @@ $(function(){
     <ul class="liset">
     <?php foreach($top['goods_set'] AS $it):?>
       <li class="liit">
-        <a href="<?=$contextpath?>item/<?=$it['goods_id']?>">
+        <a href="<?php echo U('item/'.$it['goods_id'])?>">
           <img src="<?php echo ploadingimg()?>" alt="<?=$it['goods_name']?>" class="gpic" onload="imgLazyLoad(this,'<?=$it['goods_img']?>')" />
           <h3 class="gt"><?=$it['goods_name']?></h3>
           <p class="gp"><em>￥<?=$it['shop_price']?></em></p>

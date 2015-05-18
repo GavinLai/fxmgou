@@ -1,6 +1,6 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <div id="right-icon" class="no-text hide">
-  <a href="<?=$contextpath?>trade/cart/list" id="global-cart"><?=$user->ec_cart_num?></a>
+  <a href="<?php echo U('trade/cart/list')?>" id="global-cart"><?=$user->ec_cart_num?></a>
 </div>
 
 <?php if ((!isset($no_display_cart) || !$no_display_cart) && $user->ec_cart_num):?>
@@ -10,9 +10,9 @@
 <?php if ($nav_no==1):?>
 
 <nav id="nav-1" class="nav no-bounce">
- <div class="nav-it"><a href="<?=$contextpath?>" <?php if('home'==$nav_flag1):?>class="cur"<?php endif;?> rel="home">首页</a></div>
- <div class="nav-it"><a href="<?=$contextpath?>explore" <?php if('explore'==$nav_flag1):?>class="cur"<?php endif;?> rel="explore">宝贝</a></div>
- <div class="nav-it"><a href="<?=$contextpath?>user/" <?php if('user'==$nav_flag1):?>class="cur"<?php endif;?> rel="user">我的</a></div>
+ <div class="nav-it"><a href="<?php echo U()?>" <?php if('home'==$nav_flag1):?>class="cur"<?php endif;?> rel="home">首页</a></div>
+ <div class="nav-it"><a href="<?php echo U('explore')?>" <?php if('explore'==$nav_flag1):?>class="cur"<?php endif;?> rel="explore">宝贝</a></div>
+ <div class="nav-it"><a href="<?php echo U('user')?>" <?php if('user'==$nav_flag1):?>class="cur"<?php endif;?> rel="user">我的</a></div>
  <div class="nav-it"><a href="http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205641974&idx=1&sn=d21c0b265b021ce6e6f9b693551d83b1#rd" rel="about">关于</a></div>
 </nav>
 <script>
@@ -27,7 +27,7 @@ $('.nav a').click(function(){
 <nav id="nav-2" class="nav nav-<?=$nav_no?> nav-<?=$nav_flag1?> no-bounce">
   <div class="nav-body clearfix">
 <?php if ('item'==$nav_flag1):?>
-    <div class="nav-it"><a href="<?=$contextpath?>" class="btn">☜返回</a></div>
+    <div class="nav-it"><a href="javascript:history.back();" class="btn">☜返回</a></div>
     <div class="nav-it"><a href="javascript:void(0);" class="btn">收藏</a></div>
     <div class="nav-it"><a href="javascript:void(0);" class="btn btn-orange" id="btn-add-to-cart" data-goods_id="<?=$the_goods_id?>">加入购物车</a></div>
 <?php elseif ('cart'==$nav_flag1):?>

@@ -76,7 +76,7 @@
 
 <div class="order-topay">
   <div class="row"><button class="btn btn-block btn-green" id="btn-wxpay" data-payid="2">微信安全支付</button></div>
-  <div class="row"><a class="btn btn-block btn-white" href="<?=$contextpath?>trade/cart/list">返回购物车修改</a></div>
+  <div class="row"><a class="btn btn-block btn-white" href="<?php echo U('trade/cart/list')?>">返回购物车修改</a></div>
   <div class="row row-last">支付完成后，如需退换货请及时联系商家</div>
 </div>
 
@@ -121,7 +121,7 @@ function wxEditAddressCallback(res) {
       updata.district_name = $expr.attr('data-district_name');
       updata.address       = $expr.attr('data-address');
       updata.zipcode       = $expr.attr('data-zipcode');
-      F.post(gData.contextpath+'trade/order/upaddress',updata,function(ret){
+      F.post('<?php echo U('trade/order/upaddress')?>',updata,function(ret){
   			if (ret.flag=='SUC') {
   	  		if (!updata.address_id) {
   	  		  $expr.attr('data-addrid', ret.address_id);
@@ -161,7 +161,7 @@ $(function(){
 		}
 
 		window.dopaying = 1;
-		F.post(gData.contextpath+'trade/order/submit',{"address_id":addr_id,"cart_rids":cart_rids,"order_msg":order_msg,"pay_id":pay_id},function(ret){
+		F.post('<?php echo U('trade/order/submit')?>',{"address_id":addr_id,"cart_rids":cart_rids,"order_msg":order_msg,"pay_id":pay_id},function(ret){
 			  window.dopaying = undefined;
   			if (ret.flag=='SUC') {
   	  		//window.location.href = ret.payurl;

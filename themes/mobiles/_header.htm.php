@@ -1,9 +1,9 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 
-<?php if('explore'==$nav_flag1):?>
+<?php if(isset($nav_flag1) && 'explore'==$nav_flag1):?>
 
 <nav class="topnav">
-  <div class="listyle"><a href="javascript:;" class="" onclick="change_list_style(this)"><i class="micon"></i></a></div>
+  <div class="listyle"><a href="javascript:;" onclick="change_list_style(this)"><i class="micon"></i></a></div>
   <div class="mbar clearfix">
     <a href="javascript:;" class="fl on">价格从低到高<b class="triangle"></b></a>
     <a href="javascript:;" class="fr">筛选<b class="triangle"></b></a>
@@ -25,12 +25,12 @@ function change_list_style(obj) {
 }
 </script>
 
-<?php elseif ('cart'==$nav_flag1):?>
+<?php elseif (isset($nav_flag1) && 'cart'==$nav_flag1):?>
 
 <nav class="topnav topnav-cart clearfix" id="topnav-cart">
-  <a class="c-3-1<?php if('cartlist'==$nav_flag2):echo ' on';endif;?>" href="<?=$contextpath?>trade/cart/list">购物车</a>
-  <a class="c-3-1<?php if('buyrecord'==$nav_flag2):echo ' on';endif;?>" href="<?=$contextpath?>trade/buyrecord">购买记录</a>
-  <a class="c-3-1" href="<?=$contextpath?>">返回首页</a>
+  <a class="c-3-1<?php if('cartlist'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/cart/list')?>">购物车</a>
+  <a class="c-3-1<?php if('buyrecord'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/buyrecord')?>">购买记录</a>
+  <a class="c-3-1" href="<?php echo U('explore')?>">返回购买</a>
 </nav>
 <script>
 $(function(){

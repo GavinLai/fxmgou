@@ -50,6 +50,7 @@ class Trade_Controller extends Controller {
       'trade/order/confirm'  => 'order_confirm',
       'trade/order/submit'   => 'order_submit',
       'trade/order/upaddress'=> 'order_upaddress',
+      'trade/order/cancel'   => 'order_cancel',
     ];
   }
   
@@ -198,6 +199,23 @@ class Trade_Controller extends Controller {
     $this->topnav_no = 1; // >0: 表示有topnav bar，具体值标识哪个topnav bar(有多个的情况下)
     if ($request->is_hashreq()) {
       
+      $orders_num = 0;
+      $errmsg = '';
+      $this->v->add_render_filter(function(View $v) use(&$orders_num, &$errmsg){
+        $v->assign('errmsg', $errmsg)
+          ->assign('orders_num', $orders_num);
+      });
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $errmsg = "无效请求";
+        $response->send($this->v);
+      }
+      
+      $orders = Goods::getOrderList($ec_user_id);
+      $orders_num = count($orders);
+      $this->v->assign('orders', $orders);
+      
     }
     else {
       
@@ -267,7 +285,7 @@ class Trade_Controller extends Controller {
         
         //授权出错
         if (!in_array($state, array('base','detail'))) {
-          Fn::showErrorMessage('授权出错，提交订单失败！', true);
+          Fn::show_error_message('授权出错，提交订单失败！', true);
         }
         
         $wx = new Weixin(['wxpay']);
@@ -275,7 +293,7 @@ class Trade_Controller extends Controller {
         //用code换取access token
         $code_ret = $wx->request_access_token($code);
         if (!empty($code_ret['errcode'])) {
-          Fn::showErrorMessage('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')', true);
+          Fn::show_error_message('微信授权错误<br/>'.$code_ret['errcode'].'('.$code_ret['errmsg'].')', true);
         }
         
         $accessToken = $code_ret['access_token'];
@@ -363,12 +381,6 @@ class Trade_Controller extends Controller {
       
       $order_sn = Fn::gen_order_no();
       
-      // 缺货处理方式
-      $oos = [];
-      $oos[OOS_WAIT]    = '等待所有商品备齐后再发';
-      $oos[OOS_CANCEL]  = '取消订单';
-      $oos[OOS_CONSULT] = '与店主协商';
-      
       $ectb_order = ectable('order_info');
       $order = [
         'order_sn'         => $order_sn,
@@ -393,7 +405,7 @@ class Trade_Controller extends Controller {
         'shipping_name'    => $shipping_info['shipping_name'],
         'pay_id'           => $pay_info['pay_id'],
         'pay_name'         => $pay_info['pay_name'],
-        'how_oos'          => $oos[OOS_WAIT],
+        'how_oos'          => Fn::oos_status(OOS_WAIT),
         'how_surplus'      => '',
         //...
         'goods_amount'     => $total_price,
@@ -464,7 +476,7 @@ class Trade_Controller extends Controller {
         }
         
         // 处理表 pay_log
-        Goods::insertPayLog($order_id, $true_amount, PAY_ORDER);
+        Trade_Model::insertPayLog($order_id, $true_amount, PAY_ORDER);
         
         // 没有成功购买的商品，则返回错误告诉用户重新添加
         if (empty($succ_goods)) {
@@ -498,7 +510,6 @@ class Trade_Controller extends Controller {
       $response->send($this->v);
     }
   }
-  
 
   /**
    * 更新收货地址
@@ -555,6 +566,38 @@ class Trade_Controller extends Controller {
       
       $address_id = Goods::saveUserAddress($data, $address_id);
       $ret = ['flag'=>'SUC','msg'=>'更新成功','address_id'=>$address_id];
+      
+      $response->sendJSON($ret);
+    }
+  }
+
+  /**
+   * 取消订单
+   *
+   * @param Request $request
+   * @param Response $response
+   */
+  public function order_cancel(Request $request, Response $response)
+  {
+    if ($request->is_post()) {
+      $ret = ['flag'=>'FAIL','msg'=>'取消失败'];
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ret['msg'] = '未登录, 请登录';
+        $response->sendJSON($ret);
+      }
+      
+      $order_id = $request->post('order_id', 0);
+      if (!$order_id) {
+        $ret['msg'] = '订单id为空';
+        $response->sendJSON($ret);
+      }
+      
+      $b = Goods::orderCancel($order_id);
+      if ($b) {
+        $ret = ['flag'=>'SUC','msg'=>'取消成功', 'order_id'=>$order_id];
+      }
       
       $response->sendJSON($ret);
     }

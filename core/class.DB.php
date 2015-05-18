@@ -440,7 +440,7 @@ class DB {
    * @return int
    *  affected rows
    */
-  public function update($tablename, Array $setarr, Array $wherearr = array(), $rawmode = FALSE) {
+  public function update($tablename, Array $setarr, Array $wherearr, $rawmode = FALSE) {
     $server_mode = self::WRITABLE; //Because of 'UPDATE', so use self::WRITABLE
     $setsql = $comma = '';
     foreach ($setarr as $set_key => $set_value) {
@@ -541,7 +541,7 @@ class DB {
    * @deprecated
    *  use $this->update() method instead
    */
-  public function update_table($tablename, Array $setarr, Array $wherearr = array()) {
+  public function update_table($tablename, Array $setarr, Array $wherearr) {
     return $this->update($tablename, $setarr, $wherearr);
   }
   
