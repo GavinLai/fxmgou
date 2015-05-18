@@ -3,6 +3,9 @@ test.php
 test.html
 test*.php
 test*.html
+var/*
+conf-pro/*
+incs/libs/wxpay/cert/*
 
 # Eclipse
 .buildpath
@@ -10,7 +13,6 @@ test*.html
 .cproject
 .settings/
 .externalToolBuilders/
-var/*
 
 # Windows image file caches
 Thumbs.db
