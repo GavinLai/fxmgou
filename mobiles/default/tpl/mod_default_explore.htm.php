@@ -31,3 +31,4 @@
   </ul>
 </div>
 <?php include T($tpl_footer);?>
+<script>F.isDownpullDisplay=false;</script>

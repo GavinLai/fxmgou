@@ -27,7 +27,7 @@ $('.nav a').click(function(){
 <nav id="nav-2" class="nav nav-<?=$nav_no?> nav-<?=$nav_flag1?> no-bounce">
   <div class="nav-body clearfix">
 <?php if ('item'==$nav_flag1):?>
-    <div class="nav-it"><a href="javascript:history.back();" class="btn">☜返回</a></div>
+    <div class="nav-it"><a href="<?php echo U('explore')?>" class="btn">☜返回</a></div>
     <div class="nav-it"><a href="javascript:void(0);" class="btn">收藏</a></div>
     <div class="nav-it"><a href="javascript:void(0);" class="btn btn-orange" id="btn-add-to-cart" data-goods_id="<?=$the_goods_id?>">加入购物车</a></div>
 <?php elseif ('cart'==$nav_flag1):?>

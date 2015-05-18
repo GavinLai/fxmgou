@@ -6,6 +6,7 @@
 (function( $, F, w, UNDEF ) {
 	
 	F.isTouch = "createTouch" in document;
+	F.isDownpullDisplay = true;
 	
 	// Set dom constants
 	F.doms = {wrapper:"#rtWrap",activepage:"#activePage",nav:"#nav-1",scroller:".scrollArea",loading:"#loadingCanvas"};
@@ -129,7 +130,10 @@
 	F._scrolling = function() {
 		var dp_type = 'downPull';
 		if (this.y > 20) {
-			F.pagebg.show();
+			
+			if(F.isDownpullDisplay) F.pagebg.show();
+			else F.pagebg.hide();
+			
 			if(F.event.flag.downpull
 		       && (typeof(F.event._events[dp_type])=='object')
 		       && F.event._events[dp_type].length>0)
