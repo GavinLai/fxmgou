@@ -4,6 +4,7 @@ test.html
 test*.php
 test*.html
 var/*
+conf-pro
 conf-pro/*
 incs/libs/wxpay/cert/*
 
