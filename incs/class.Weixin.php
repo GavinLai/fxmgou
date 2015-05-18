@@ -30,14 +30,14 @@ class Weixin {
 	 * Weixin constant name
 	 * @var constant
 	 */
-	const PLUGIN_JSSDK = 'jssdk';
-	const PLUGIN_WXPAY = 'wxpay';
+	const PLUGIN_JSSDK  = 'jssdk';
+	const PLUGIN_JSADDR = 'jsaddr';
 	
 	/**
 	 * All weixin plugins name
 	 * @var array
 	 */
-	public static $plugins = array(self::PLUGIN_JSSDK, self::PLUGIN_WXPAY);
+	public static $plugins = array(self::PLUGIN_JSSDK, self::PLUGIN_JSADDR);
 	
 	/**
 	 * WeixinHelper instance
@@ -58,11 +58,11 @@ class Weixin {
 	public $jssdk;
 	
 	/**
-	 * WeixinPay instatnce
+	 * WeixinJSAddr instatnce
 	 * 
-	 * @var WeixinPay
+	 * @var WeixinJSAddr
 	 */
-	public $wxpay;
+	public $jsaddr;
 	
 	/**
 	 * API address url prefix
@@ -175,10 +175,10 @@ class Weixin {
 		$this->helper    = new WeixinHelper($this);
 		$this->oauth     = new OAuth2(array('client_id'=>$this->appId,'secret_key'=>$this->appSecret,'response_type'=>'code','scope'=>'snsapi_base','state'=>'base'),'weixin');
 		if (in_array(self::PLUGIN_JSSDK, $plugins)) {
-		  $this->jssdk   = new WeixinJSSDK($this->appId, $this->appSecret, $this);
+		  $this->jssdk   = new WeixinJSSDK($this->appId, $this);
 		}
-		if (in_array(self::PLUGIN_WXPAY, $plugins)) {
-		  $this->wxpay   = new WeixinPay($this->appId, $this->appSecret, $this);
+		if (in_array(self::PLUGIN_JSADDR, $plugins)) {
+		  $this->jsaddr  = new WeixinJSAddr($this->appId, $this);
 		}
 	}
 	
@@ -657,10 +657,9 @@ class WeixinJSSDK {
    */
   private $wx;
   
-  public function __construct($appId, $appSecret, Weixin $wx = NULL) {
+  public function __construct($appId, Weixin $wx = NULL) {
     $this->appId = $appId;
-    $this->appSecret = $appSecret;
-    $this->wx = $wx;
+    $this->wx    = $wx;
   }
   
   /**
@@ -792,11 +791,11 @@ HEREDOC;
 }
 
 /**
- * Weixin 支付 类
+ * Weixin JS收货地址 类
  *
  * @author Gavin<laigw.vip@gmail.com>
  */
-class WeixinPay {
+class WeixinJSAddr {
   
   /**
    * App Id
@@ -818,10 +817,9 @@ class WeixinPay {
    */
   private $wx;
   
-  public function __construct($appId, $appSecret, Weixin $wx = NULL) {
+  public function __construct($appId, Weixin $wx = NULL) {
     $this->appId = $appId;
-    $this->appSecret = $appSecret;
-    $this->wx = $wx;
+    $this->wx    = $wx;
   }
   
   /**
@@ -842,24 +840,21 @@ class WeixinPay {
    * @param string $accessToken
    * @return string 返回签名字串
    */
-  public static function addrSign($appId, $url, $timeStamp, $nonceStr, $accessToken) {
+  public static function sign($appId, $url, $timeStamp, $nonceStr, $accessToken) {
     $str  = "accesstoken={$accessToken}&appid={$appId}&noncestr={$nonceStr}&timestamp={$timeStamp}&url={$url}";
-    //trace_debug('weixin_jsaddress_sign_raw', $str);
-    //echo $str ."\n";
     $sign = sha1($str);
-    //trace_debug('weixin_jsaddress_sign_val', $sign);
     return $sign;
   }
   
   /**
    * 返回 address 收获地址 js
    */
-  public function addrJs($accessToken) {
+  public function js($accessToken) {
     $appId     = $this->appId;
     $url       = $this->wx->requestUrl(); // 注意URL一定要动态获取，不能hardcode.
     $timeStamp = time();
     $nonceStr  = $this->wx->createNonceStr();
-    $sign      = $this->addrSign($appId, $url, $timeStamp, $nonceStr, $accessToken);
+    $sign      = $this->sign($appId, $url, $timeStamp, $nonceStr, $accessToken);
     
     $js =<<<HEREDOC
 <script type="text/javascript">

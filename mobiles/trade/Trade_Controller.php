@@ -288,7 +288,7 @@ class Trade_Controller extends Controller {
           Fn::show_error_message('授权出错，提交订单失败！', true);
         }
         
-        $wx = new Weixin(['wxpay']);
+        $wx = new Weixin([Weixin::PLUGIN_JSADDR]);
         
         //用code换取access token
         $code_ret = $wx->request_access_token($code);
@@ -297,7 +297,7 @@ class Trade_Controller extends Controller {
         }
         
         $accessToken = $code_ret['access_token'];
-        $wxAddrJs = $wx->wxpay->addrJs($accessToken);
+        $wxAddrJs = $wx->jsaddr->js($accessToken);
         $this->v->add_append_filter(function(PageView $v) use($wxAddrJs) {
           $v->append_to_foot_js .= $wxAddrJs;
         },'foot');
@@ -306,7 +306,6 @@ class Trade_Controller extends Controller {
       else { //正常访问
         if (Weixin::isWeixinBrowser()) {
           (new Weixin())->authorizing($request->url(), 'base'); //base授权获取access token以便于操作收货地址
-          //(new Weixin())->authorizing('http://'.$request->host().'/user/oauth/weixin?act=jsapi_address&refer='.urlencode($request->url()), 'base'); //base授权获取access token以便于操作收货地址
         }
       }
     }

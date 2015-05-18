@@ -51,6 +51,11 @@ class ApiIOCurl extends ApiIO {
 
 		// disable 100-continue
 		curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Expect:'));
+		
+		// set ipv4 as default dns resolving
+    if(defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')){
+		  curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4); //php 5.3+ and curl 7.10.8+ are required
+		}
 
 		if (!empty($cookie_string)) {
 			curl_setopt($ch, CURLOPT_COOKIE, $cookie_string);

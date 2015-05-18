@@ -673,7 +673,7 @@ function footscript()
   if (!$q) $q = '/';
   
   $resjs = '';
-  $wx = new Weixin(['jssdk']);
+  $wx = new Weixin([Weixin::PLUGIN_JSSDK]);
   $base_url = C('env.site.mobile').'/';
   $shop_url = C('env.site.shop').'/';
   

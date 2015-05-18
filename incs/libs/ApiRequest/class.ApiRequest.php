@@ -58,7 +58,7 @@ class ApiRequest implements ApiRequestInterface {
               'protocol'=> 'http',      //请求协议，http/https
               'method'  => 'get',       //请求方法, get/post
               'timeout' => 10,          //请求执行超时时间(单位：秒)
-              'timeout_connect' => 3,   //请求连接超时时间(单位：秒)
+              'timeout_connect' => 5,   //请求连接超时时间(单位：秒)
               'sslcert' => array(),     //SSL证书信息，包括：cert_file, cert_passwd, cert_type("PEM"默认,"DER","ENG") 三个可选"字段 => 值"，仅对protocol=https有效
               'cafile'  => '',          //证书文件地址(绝对地址)，仅对protocol=https有效
             );
