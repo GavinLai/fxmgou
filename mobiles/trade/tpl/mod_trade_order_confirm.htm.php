@@ -80,6 +80,8 @@
   <div class="row row-last">支付完成后，如需退换货请及时联系商家</div>
 </div>
 
+<?php form_topay_script(U('trade/order/record'));?>
+
 <script>
 function wxEditAddressCallback(res) {
   if (res) { //有返回
@@ -148,26 +150,24 @@ $(function(){
 		return false;
 	});
 	$('#btn-wxpay').click(function(){
-		if (typeof(window.dopaying)=='undefined') window.dopaying = 0;
-		if (window.dopaying) return false;
-
 		var pay_id   = parseInt($(this).attr('data-payid'));
 		var addr_id  = parseInt($('#express-it').attr('data-addrid'));
 		var order_msg= $('#order-message').val();
 		var cart_rids= $('#cart-list-body').attr('data-cart_rids');
 		if (!addr_id) {
-			alert();
+			alert('请填写收货地址');
 			return false;
 		}
 
-		window.dopaying = 1;
+		var _this = this;
+		$(this).text('努力加载中, 请稍候...').attr('disabled',true);
 		F.post('<?php echo U('trade/order/submit')?>',{"address_id":addr_id,"cart_rids":cart_rids,"order_msg":order_msg,"pay_id":pay_id},function(ret){
-			  window.dopaying = undefined;
   			if (ret.flag=='SUC') {
-  	  		//window.location.href = ret.payurl;
-  	  	  alert(ret.msg+"\n"+ret.true_amount);
+  				$(_this).text('页面跳转中...');
+  				form_topay_submit(ret.order_id, 'wxpay');
   			}
   			else{
+  				$(_this).text('微信安全支付').removeAttr('disabled');
   				alert(ret.msg);
   			}
 	  });

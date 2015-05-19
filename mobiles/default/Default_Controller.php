@@ -141,6 +141,9 @@ class Default_Controller extends Controller {
         $errmsg = '查询商品不存在: goods_id: '.$goods_id;
       }
       else {
+        
+        Goods::addGoodsClickCnt($goods_id);
+        
         $purl = C('env.site.shop');
         $goods_info['goods_thumb']  = Goods::goods_picurl($goods_info['goods_thumb']);
         $goods_info['goods_img']    = Goods::goods_picurl($goods_info['goods_img']);

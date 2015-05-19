@@ -797,6 +797,39 @@ HEREDOC_1;
   echo $resjs;
 }
 
+function form_topay_script($back_url) {
+  $frm_action = U('trade/order/topay');
+  $html =<<<HEREDOC
+<div class="hide">
+  <form id="frm-topay" action="{$frm_action}" method="post">
+    <input type="hidden" name="pay_mode" value="wxpay" id="frm-paymode" />
+    <input type="hidden" name="order_id" value="0"  id="frm-orderid"/>
+    <input type="hidden" name="back_url" value="{$back_url}" />
+  </form>
+</div>
+<script type="text/javascript">
+function form_topay_submit(order_id, pay_mode) {
+  var _self = form_topay_submit;
+  if (typeof(_self._frm) !='object') {
+    _self._frm = $('#frm-topay');
+  }
+  if (typeof(_self._frm_orid) !='object') {
+    _self._frm_orid = $('#frm-orderid');
+  }
+  if (typeof(_self._frm_mode) !='object') {
+    _self._frm_mode = $('#frm-paymode');
+  }
+  if (typeof(pay_mode)=='undefined') {
+    pay_mode = 'wxpay';
+  }
+  _self._frm_orid.val(order_id);
+  _self._frm_mode.val(pay_mode);
+  _self._frm.submit();
+}
+</script>
+HEREDOC;
+  echo $html;
+}
 
 
 

@@ -43,42 +43,37 @@
 
 <?php endforeach;?>
 
-<div class="hide">
-  <form id="frm-topay" action="<?php echo U('trade/order/topay')?>" method="post">
-    <input type="hidden" name="pay_mode" value="wxpay" id="frm-paymode" />
-    <input type="hidden" name="order_id" value="0"  id="frm-orderid"/>
-  </form>
-</div>
+<?php form_topay_script(U('trade/order/record'));?>
 
 <script>
 $(function(){
 	var $lbod = $('.list-body');
+	var thisctx = {};
 	
 	$('.withclickurl',$lbod).click(function(){
 		window.location.href = $(this).parent().attr('data-url');
 		return false;
 	});
 	$('.btn-order-cancel',$lbod).click(function(){
-		if (typeof(F.ajaxing_cancel)=='undefined') {
-			F.ajaxing_cancel = 0;
+		if (typeof(thisctx.ajaxing_cancel)=='undefined') {
+			thisctx.ajaxing_cancel = 0;
 		}
-		if (F.ajaxing_cancel) return false;
-		F.ajaxing_cancel = 1;
+		if (thisctx.ajaxing_cancel) return false;
+		thisctx.ajaxing_cancel = 1;
 
-		var pdata = {"order_id": parseInt($(this).attr('data-order_id'))};
-		F.post('<?php echo U('trade/order/cancel')?>',pdata,function(ret){
-			F.ajaxing_cancel = undefined;
-			if (ret.flag=='SUC') {
-				window.location.reload();
-			}
-		});
+		if (confirm('确定取消该订单么？')) {
+  		var pdata = {"order_id": parseInt($(this).attr('data-order_id'))};
+  		F.post('<?php echo U('trade/order/cancel')?>',pdata,function(ret){
+  			thisctx.ajaxing_cancel = undefined;
+  			if (ret.flag=='SUC') {
+  				window.location.reload();
+  			}
+  		});
+		}
 		return false;
 	});
 	$('.btn-order-topay',$lbod).click(function(){
-		var order_id = parseInt($(this).attr('data-order_id'));
-		F.log('order_id: '+order_id);
-		$('#frm-orderid').val(order_id);
-		$('#frm-topay').submit();
+		form_topay_submit($(this).attr('data-order_id'));
 	});
 });
 </script>

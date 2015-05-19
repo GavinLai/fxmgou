@@ -272,7 +272,7 @@ class Goods {
     return $row;
   }
   
-  public static function getOrderGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
+  public static function getCartsGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
     if (!is_array($cart_rec_ids)) {
       $cart_rec_ids = [$cart_rec_ids];
     }
@@ -471,6 +471,33 @@ class Goods {
   }
   
   /**
+   * 获取一个订单下的商品列表
+   * 
+   * @param integer $order_id
+   * @return array
+   */
+  public static function getOrderGoods($order_id) {
+    if (empty($order_id)) return [];
+    
+    $ectb_goods = ectable('goods');
+    $ectb_order_goods = ectable('order_goods');
+    
+    $sql = "SELECT og.*,g.`goods_thumb` FROM {$ectb_order_goods} og INNER JOIN {$ectb_goods} g ON og.`goods_id`=g.`goods_id` WHERE og.`order_id`=%d ORDER BY og.`rec_id` DESC";
+    $order_goods = D()->raw_query($sql, $order_id)->fetch_array_all();
+    if (!empty($order_goods)) {
+      foreach ($order_goods AS &$g) {
+        $g['goods_url']   = self::goods_url($g['goods_id']);
+        $g['goods_thumb'] = self::goods_picurl($g['goods_thumb']);
+      }
+    }
+    else {
+      $order_goods = [];
+    }
+    
+    return $order_goods;
+  }
+  
+  /**
    * 获取订单列表
    * 
    * @param integer $user_id
@@ -486,13 +513,13 @@ class Goods {
     $ectb_goods = ectable('goods');
     $ectb_order_goods = ectable('order_goods');
     
-    $sql = "SELECT * FROM {$ectb_order} WHERE `user_id`=%d ORDER BY `order_id` DESC LIMIT %d,%d";
+    $sql = "SELECT * FROM {$ectb_order} WHERE `user_id`=%d ORDER BY `order_status` ASC, `order_id` DESC LIMIT %d,%d";
     $orders = D()->raw_query($sql, $user_id, $start, $limit)->fetch_array_all();
     if (!empty($orders)) {
       foreach ($orders AS &$ord) {
         $ord['show_status_html'] = self::genStatusHtml($ord);
         $ord['order_goods'] = [];
-        $sql = "SELECT og.*,g.`goods_thumb` FROM {$ectb_order_goods} og INNER JOIN {$ectb_goods} g ON og.`goods_id`=g.`goods_id` WHERE `order_id`=%d ORDER BY `rec_id` DESC";
+        $sql = "SELECT og.*,g.`goods_thumb` FROM {$ectb_order_goods} og INNER JOIN {$ectb_goods} g ON og.`goods_id`=g.`goods_id` WHERE og.`order_id`=%d ORDER BY og.`rec_id` DESC";
         $order_goods = D()->raw_query($sql, $ord['order_id'])->fetch_array_all();
         if (!empty($order_goods)) {
           foreach ($order_goods AS &$g) {
@@ -535,6 +562,25 @@ class Goods {
     return $html;
   }
   
+
+  /**
+   * 更新商品点击数
+   *
+   * @param integer $goods_id
+   * @param integer $inc
+   * @return boolean
+   */
+  public static function addGoodsClickCnt($goods_id, $inc = 1) {
+    if (!$goods_id) return false;
+  
+    $ectb = ectable('goods');
+    D()->raw_query("UPDATE {$ectb} SET `click_count`=`click_count`+%d WHERE `goods_id`=%d", $inc, $goods_id);
+    if (D()->affected_rows()==1) {
+      return true;
+    }
+    return false;
+  }
+  
   /**
    * 取消订单
    * 
@@ -543,8 +589,30 @@ class Goods {
    */
   public static function orderCancel($order_id) {
     if (!$order_id) return false;
-    $ectb = ectable('order_info');
     D()->update(ectable('order_info'), ['order_status'=>OS_CANCELED], ['order_id'=>$order_id], true);
+    if (D()->affected_rows()==1) {
+      //还要将对应的库存加回去
+      $order_goods = self::getOrderGoods($order_id);
+      if (!empty($order_goods)) {
+        foreach ($order_goods AS $g) {
+          self::changeGoodsStock($g['goods_id'],$g['goods_number']);
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 更新订单
+   * 
+   * @param array $updata
+   * @param integer $order_id
+   * @return boolean 
+   */
+  public static function orderUpdate(Array $updata, $order_id) {
+    if (!$order_id) return false;
+    D()->update(ectable('order_info'), $updata, ['order_id'=>$order_id], true);
     if (D()->affected_rows()==1) {
       return true;
     }

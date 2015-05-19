@@ -266,7 +266,7 @@ class Trade_Controller extends Controller {
       }
       
       //订单商品信息
-      $order_goods = Goods::getOrderGoods($cart_rids, null, $total_price);
+      $order_goods = Goods::getCartsGoods($cart_rids, null, $total_price);
       $this->v->assign('order_goods', $order_goods);
       $this->v->assign('order_goods_num', count($order_goods));
       $this->v->assign('total_price', $total_price);
@@ -331,7 +331,7 @@ class Trade_Controller extends Controller {
         $ret['msg'] = '未登录, 请登录';
         $response->sendJSON($ret);
       }
-      trace_debug('order_submit_post', $_POST);
+      
       $address_id    = $request->post('address_id', 0);
       $cart_rids_str = $request->post('cart_rids', '');
       $order_msg     = $request->post('order_msg', '');
@@ -374,7 +374,7 @@ class Trade_Controller extends Controller {
       // 购物车商品列表
       $cart_rids_arr = explode(',', $cart_rids_str);
       $total_price = 0;
-      $order_goods = Goods::getOrderGoods($cart_rids_arr, $ec_user_id, $total_price);
+      $order_goods = Goods::getCartsGoods($cart_rids_arr, $ec_user_id, $total_price);
       if (count($order_goods)!=count($cart_rids_arr)) {
         $ret['msg'] = '该订单商品无效，请返回购物车重新添加';
         $response->sendJSON($ret);
@@ -488,7 +488,7 @@ class Trade_Controller extends Controller {
         // 清除购物车
         Goods::deleteCartGoods($cart_rids_arr, $ec_user_id);
         
-        $ret = ['flag'=>'SUC','msg'=>'订单提交成功','true_amount'=>$true_amount];
+        $ret = ['flag'=>'SUC','msg'=>'订单提交成功','order_id'=>$order_id,'true_amount'=>$true_amount];
         $response->sendJSON($ret);
       }
       else {
@@ -623,8 +623,14 @@ class Trade_Controller extends Controller {
       
       $pay_mode = $request->post('pay_mode', 'wxpay'); //默认微信支付
       $order_id = $request->post('order_id', 0);
+      $back_url = $request->post('back_url', '');
       
-      if (!in_array($pay_mode, ['wxpay','alipay'])) {
+      $supported_paymode = [
+        'wxpay'  => '微信安全支付',
+        'alipay' => '支付宝支付',
+      ];
+      
+      if (!in_array($pay_mode, array_keys($supported_paymode))) {
         Fn::show_error_message('不支持该支付方式: '.$pay_mode);
       }
       if (!$order_id) {
@@ -635,17 +641,29 @@ class Trade_Controller extends Controller {
       if (empty($order_info)) {
         Fn::show_error_message('订单不存在');
       }
+      else {
+        $order_info['order_goods'] = Goods::getOrderGoods($order_info['order_id']);
+        if (empty($order_info['order_goods'])) {
+          Fn::show_error_message('订单下没有对应商品');
+        }
+      }
       
-      $order2pay = [
+      $order4pay = [
         'order_sn'     => $order_info['order_sn'],
         'order_amount' => $order_info['order_amount'],
+        'order_goods'  => $order_info['order_goods'],
       ];
+      
       if ('wxpay'==$pay_mode) {
-        $jsApiParams = Wxpay::unifiedOrder($order2pay, $user->openid);
+        $order4pay['wxpay_data'] = $order_info['wxpay_data'];
+        $jsApiParams = Wxpay::unifiedOrder($order4pay, $user->openid);
         $this->v->assign('jsApiParams', $jsApiParams);
       }
       
       $this->v->assign('pay_mode', $pay_mode);
+      $this->v->assign('supported_paymode', $supported_paymode);
+      
+      $this->v->assign('back_url', $back_url);
       
       $response->send($this->v);
       

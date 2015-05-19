@@ -34,5 +34,5 @@ select {padding: 2px;border: 1px solid #ccc;}
 button {width: auto;overflow: visible;line-height: 1.2;}
 button::-moz-focus-inner {border: 0; padding: 0;}
 
-.bbsizing {-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box;}
+.bbsizing {-webkit-box-sizing: border-box;-moz-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box;}
 .autoflow {overflow: auto;zoom: 1;}
