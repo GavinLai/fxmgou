@@ -19,7 +19,7 @@ return [
   'usecdn'   => 1,
   'allowed_moddirs' => ['modules','mobiles','admins','apis'],
   //[Log]
-  'log_dir' => '/var/tmp',
+  'log_dir' => '/var/log',
   //[TemplateSetting]
   'tplclass' => 'PlainTpl',
   'tplpostfix' => '.htm.php',

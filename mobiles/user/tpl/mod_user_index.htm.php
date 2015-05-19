@@ -10,7 +10,7 @@
   <a href="<?php echo U('user/collect')?>" class="btn"><i class="i2"></i><span>我的收藏</span></a>
 </div>
 <div class="tlist clearfix">
-  <a href="<?php echo U('trade/buyrecord')?>" class="btn"><i class="i2"></i><span>购买记录</span></a>
+  <a href="<?php echo U('trade/order/record')?>" class="btn"><i class="i2"></i><span>购买记录</span></a>
 </div>
 <div class="tlist clearfix">
 	<a href="<?php echo U('user/feedback')?>" class="btn"><i class="i4"></i><span>问题反馈</span></a>

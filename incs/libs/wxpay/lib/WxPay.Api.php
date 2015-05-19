@@ -4,9 +4,9 @@ if (!defined('WXPAY_SDK_ROOT')) {
   define('WXPAY_SDK_ROOT', substr(__DIR__, 0, -4).'/libs/wxpay/');
 }
 
-require_once WXPAY_SDK_ROOT."WxPay.Exception.php";
-require_once WXPAY_SDK_ROOT."WxPay.Config.php";
-require_once WXPAY_SDK_ROOT."WxPay.Data.php";
+require_once WXPAY_SDK_ROOT."lib/WxPay.Exception.php";
+require_once WXPAY_SDK_ROOT."lib/WxPay.Config.php";
+require_once WXPAY_SDK_ROOT."lib/WxPay.Data.php";
 require_once WXPAY_SDK_ROOT.'unit/log.php';
 
 class WxPayApi

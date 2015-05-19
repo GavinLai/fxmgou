@@ -51,6 +51,8 @@ class Trade_Controller extends Controller {
       'trade/order/submit'   => 'order_submit',
       'trade/order/upaddress'=> 'order_upaddress',
       'trade/order/cancel'   => 'order_cancel',
+      'trade/order/record'   => 'order_record',
+      'trade/order/topay'    => 'order_topay',
     ];
   }
   
@@ -191,9 +193,9 @@ class Trade_Controller extends Controller {
    * @param Request $request
    * @param Response $response
    */
-  public function buyrecord(Request $request, Response $response)
+  public function order_record(Request $request, Response $response)
   {
-    $this->v->set_tplname('mod_trade_buyrecord');
+    $this->v->set_tplname('mod_trade_order_record');
     $this->nav_flag2 = 'buyrecord';
     $this->nav_no    = 0;
     $this->topnav_no = 1; // >0: 表示有topnav bar，具体值标识哪个topnav bar(有多个的情况下)
@@ -600,6 +602,58 @@ class Trade_Controller extends Controller {
       
       $response->sendJSON($ret);
     }
+  }
+  
+  /**
+   * tips页显示
+   * @param Request $request
+   * @param Response $response
+   */
+  public function order_topay(Request $request, Response $response){
+    
+    
+    if ($request->is_post()) {
+      
+      global $user;
+      if (!$user->uid) {
+        Fn::show_error_message('未登录，请先登录');
+      }
+      
+      $this->v = new PageView('','topay');
+      
+      $pay_mode = $request->post('pay_mode', 'wxpay'); //默认微信支付
+      $order_id = $request->post('order_id', 0);
+      
+      if (!in_array($pay_mode, ['wxpay','alipay'])) {
+        Fn::show_error_message('不支持该支付方式: '.$pay_mode);
+      }
+      if (!$order_id) {
+        Fn::show_error_message('订单为空');
+      }
+      
+      $order_info = Goods::getOrderInfo($order_id);
+      if (empty($order_info)) {
+        Fn::show_error_message('订单不存在');
+      }
+      
+      $order2pay = [
+        'order_sn'     => $order_info['order_sn'],
+        'order_amount' => $order_info['order_amount'],
+      ];
+      if ('wxpay'==$pay_mode) {
+        $jsApiParams = Wxpay::unifiedOrder($order2pay, $user->openid);
+        $this->v->assign('jsApiParams', $jsApiParams);
+      }
+      
+      $this->v->assign('pay_mode', $pay_mode);
+      
+      $response->send($this->v);
+      
+    }
+    else {
+      Fn::show_error_message('非法访问');
+    }
+    
   }
   
 }

@@ -43,13 +43,22 @@
 
 <?php endforeach;?>
 
+<div class="hide">
+  <form id="frm-topay" action="<?php echo U('trade/order/topay')?>" method="post">
+    <input type="hidden" name="pay_mode" value="wxpay" id="frm-paymode" />
+    <input type="hidden" name="order_id" value="0"  id="frm-orderid"/>
+  </form>
+</div>
+
 <script>
 $(function(){
-	$('.list-body .withclickurl').click(function(){
+	var $lbod = $('.list-body');
+	
+	$('.withclickurl',$lbod).click(function(){
 		window.location.href = $(this).parent().attr('data-url');
 		return false;
 	});
-	$('.list-body .btn-order-cancel').click(function(){
+	$('.btn-order-cancel',$lbod).click(function(){
 		if (typeof(F.ajaxing_cancel)=='undefined') {
 			F.ajaxing_cancel = 0;
 		}
@@ -64,6 +73,12 @@ $(function(){
 			}
 		});
 		return false;
+	});
+	$('.btn-order-topay',$lbod).click(function(){
+		var order_id = parseInt($(this).attr('data-order_id'));
+		F.log('order_id: '+order_id);
+		$('#frm-orderid').val(order_id);
+		$('#frm-topay').submit();
 	});
 });
 </script>

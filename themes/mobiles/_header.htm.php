@@ -29,7 +29,7 @@ function change_list_style(obj) {
 
 <nav class="topnav topnav-cart clearfix" id="topnav-cart">
   <a class="c-3-1<?php if('cartlist'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/cart/list')?>">购物车</a>
-  <a class="c-3-1<?php if('buyrecord'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/buyrecord')?>">购买记录</a>
+  <a class="c-3-1<?php if('buyrecord'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/order/record')?>">购买记录</a>
   <a class="c-3-1" href="<?php echo U('explore')?>">返回购买</a>
 </nav>
 <script>

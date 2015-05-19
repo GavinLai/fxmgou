@@ -263,6 +263,14 @@ class Goods {
     return $ret;
   }
   
+  public static function getOrderInfo($order_id) {
+    if (empty($order_id)) return false;
+    
+    $ectb = ectable('order_info');
+    $sql  = "SELECT * FROM {$ectb} WHERE `order_id`=%d";
+    $row  = D()->get_one($sql, $order_id);
+    return $row;
+  }
   
   public static function getOrderGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
     if (!is_array($cart_rec_ids)) {
@@ -515,7 +523,7 @@ class Goods {
     if ($order['order_status'] < OS_CANCELED) { //订单 未确认|已确认
       if ($order['pay_status'] == PS_UNPAYED) { //未支付
         $html .= '<p class="order-status-txt">订单'.Fn::pay_status($order['pay_status']).'</p>';
-        $html .= '<p class="order-status-op"><a href="" class="btn btn-orange btn-order-topay" data-order_id="'.$order['order_id'].'">立即付款</a></p>';
+        $html .= '<p class="order-status-op"><a href="javascript:;" class="btn btn-orange btn-order-topay" data-order_id="'.$order['order_id'].'">立即付款</a></p>';
         $html .= '<p class="order-status-op last"><a href="javascript:;" class="btn-order-cancel" data-order_id="'.$order['order_id'].'">取消订单</a></p>';
         $order['active_order'] = 1;
       }

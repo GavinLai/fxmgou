@@ -128,7 +128,7 @@ function ploadingimg()
  * @param string $key
  * @param mixed $val
  */
-function trace_debug($key, $val='')
+function trace_debug($key, $val)
 {
   if (!empty($key)) {
     $val = is_string($val) ? $val : print_r($val, TRUE);
