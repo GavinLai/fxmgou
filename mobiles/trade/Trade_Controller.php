@@ -648,15 +648,8 @@ class Trade_Controller extends Controller {
         }
       }
       
-      $order4pay = [
-        'order_sn'     => $order_info['order_sn'],
-        'order_amount' => $order_info['order_amount'],
-        'order_goods'  => $order_info['order_goods'],
-      ];
-      
       if ('wxpay'==$pay_mode) {
-        $order4pay['wxpay_data'] = $order_info['wxpay_data'];
-        $jsApiParams = Wxpay::unifiedOrder($order4pay, $user->openid);
+        $jsApiParams = Wxpay::unifiedOrder($order_info, $user->openid);
         $this->v->assign('jsApiParams', $jsApiParams);
       }
       

@@ -62,8 +62,6 @@ class Wxpay {
       $order_detail = rtrim($order_detail,",");
     }
     
-    //trace_debug('wxpay_unifiedorder_order', $order);
-    
     //统一下单
     if (empty($order['wxpay_data'])) {
       $now   = time();
@@ -81,9 +79,9 @@ class Wxpay {
       $input->SetOpenid($openId);
       
       $order_wx = WxPayApi::unifiedOrder($input);
+      trace_debug('wxpay_unifiedorder_wxreturn', $order_wx);
       
-      if ('SUCCESS'==$order_wx['return_code'] && 'SUCCESS'==$order_wx['result_code']) {
-        //保存信息以防再次重复提交
+      if ('SUCCESS'==$order_wx['return_code'] && 'SUCCESS'==$order_wx['result_code']) { //保存信息以防再次重复提交
         $wxpay_data = [
           'appid'      => $order_wx['appid'],
           'mch_id'     => $order_wx['mch_id'],
@@ -98,9 +96,8 @@ class Wxpay {
     }
     else {
       $order_wx = json_decode($order['wxpay_data'], true);
+      trace_debug('wxpay_unifiedorder_cachedb', $order_wx);
     }
-
-    trace_debug('wxpay_unifiedorder_wxreturn', $order_wx);
     
     $jsApiParameters = $tools->GetJsApiParameters($order_wx);
     
