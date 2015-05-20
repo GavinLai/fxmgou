@@ -1,6 +1,6 @@
 <?php
 /**
- * 
+ * 微信支付回调通知
  *
  * @author Gavin<laigw.vip@gmail.com>
  */
@@ -74,7 +74,7 @@ class Wxpay_Controller extends Controller {
             'order_status'   => OS_CONFIRMED,
             'confirm_time'   => simphp_gmtime(), //跟从ecshop习惯，使用格林威治时间
             'pay_status'     => PS_PAYED,
-            'pay_time'       => $time_end,
+            'pay_time'       => simphp_gmtime($time_end),
             'money_paid'     => $pay_log['order_amount'],
             'order_amount'   => 0,
             'pay_data2'      => json_encode($data) //保存微信支付接口的返回

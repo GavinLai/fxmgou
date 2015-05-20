@@ -215,11 +215,14 @@ function simphp_array_merge() {
 }
 
 /**
- * Get the current timestamp of GMT(Greenwich Time)
+ * Get the current GMT timestamp or translate time to GMT(Greenwich Time)
+ * 
+ * @param integer $time a appointing time, optional
  * @return number
  */
-function simphp_gmtime() {
-  return (time() - date('Z'));
+function simphp_gmtime($time = NULL) {
+  if (!isset($time)) $time = time();
+  return ($time - date('Z'));
 }
 
 /**
