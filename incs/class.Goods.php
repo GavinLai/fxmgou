@@ -591,6 +591,7 @@ class Goods {
     if (!$order_id) return false;
     D()->update(ectable('order_info'), ['order_status'=>OS_CANCELED], ['order_id'=>$order_id], true);
     if (D()->affected_rows()==1) {
+      
       //还要将对应的库存加回去
       $order_goods = self::getOrderGoods($order_id);
       if (!empty($order_goods)) {
@@ -598,6 +599,10 @@ class Goods {
           self::changeGoodsStock($g['goods_id'],$g['goods_number']);
         }
       }
+      
+      //写order_action的日志
+      Order::order_action_log($order_id, ['action_note'=>'用户取消']);
+      
       return true;
     }
     return false;

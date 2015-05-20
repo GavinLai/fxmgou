@@ -414,7 +414,7 @@ class Trade_Controller extends Controller {
         'order_amount'     => $total_price,
         //...
         'referer'          => '本站',
-        'add_time'         => simphp_time(),
+        'add_time'         => simphp_gmtime(), //跟从ecshop习惯，使用格林威治时间
         //...
       ];
       $order['order_amount'] = $order['goods_amount'] + $order['shipping_fee'];
@@ -477,7 +477,7 @@ class Trade_Controller extends Controller {
         }
         
         // 处理表 pay_log
-        Trade_Model::insertPayLog($order_id, $true_amount, PAY_ORDER);
+        Trade_Model::insertPayLog($order_id, $order_sn, $true_amount, PAY_ORDER);
         
         // 没有成功购买的商品，则返回错误告诉用户重新添加
         if (empty($succ_goods)) {

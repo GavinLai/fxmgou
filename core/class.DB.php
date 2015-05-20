@@ -13,6 +13,12 @@ class DB {
   const WRITABLE = 'write';
   const READONLY = 'read';
   
+  // Lock type
+  const LOCK_READ       = 'READ';
+  const LOCK_READ_LOCAL = 'READ LOCAL';
+  const LOCK_WRITE      = 'WRITE';
+  const LOCK_WRITE_LOW  = 'LOW_PRIORITY WRITE';
+  
   /**
    * Record current db connection mode(WRITABLE or READONLY), default to 'write'
    * @var string
@@ -82,10 +88,28 @@ class DB {
   protected static $_instance;
   
   /**
+   * The current 'select' sql server mode
+   * @var string
+   */
+  protected $_select_mode = self::READONLY;
+  
+  /**
+   * The current 'select' cache where condition
+   * @var array
+   */
+  protected $_select_cache= array();
+  
+  /**
+   * SQL of submiting to $this->query
+   * @var string
+   */
+  protected $_sql = '';
+  
+  /**
    * The current submiting query SQL string, read only
    * @var string
    */
-  public $qstring = '';
+  protected $_sql_final = '';
   
   /**
    * Whether realtime query
@@ -181,7 +205,7 @@ class DB {
    * @return string WRITABLE or READONLY
    */
   protected function check_server_mode($qstring) {
-    return ($this->realtime_query || preg_match( '/^\s*(insert|delete|update|replace|create|alter|truncate|drop)\s/i', $qstring ))
+    return ($this->realtime_query || preg_match( '/^\s*(insert|delete|update|replace|create|alter|truncate|drop|lock|unlock)\s/i', $qstring ))
            ? self::WRITABLE : self::READONLY;
   }
   
@@ -240,7 +264,7 @@ class DB {
    * @return DbResult
    */
   public function query($sql) {
-    if (is_array($sql)) {
+    if (is_array($sql)) { // 'All arguments in one array' syntax
       $args = $sql;
     }
     else {
@@ -253,9 +277,6 @@ class DB {
       $append = FALSE;
       $sql = array_shift($args);
     }
-    if (isset($args[0]) && is_array($args[0])) { // 'All arguments in one array' syntax
-      $args = $args[0];
-    }
     
     $server_mode = $this->check_server_mode($sql);
     $this->connect($server_mode);
@@ -264,7 +285,7 @@ class DB {
     }
     $this->query_callback($args, TRUE, $server_mode);
     $sql = preg_replace_callback(self::DB_QUERY_REGEXP, array($this,'query_callback'), $sql);
-    $this->qstring = $sql;
+    $this->_sql_final = $sql;
     $this->_dbMode = $server_mode;
     $this->_query  = $this->_driverObj[$server_mode]->query($sql);
     return $this->_query;
@@ -462,7 +483,7 @@ class DB {
     }
     if (!$rawmode) {
       $tablename = '`' . $this->tablePrefix . $tablename . '`';
-    }    
+    }
     $this->realtime_query = TRUE;  //make sure use writable mode
     $rs = $this->raw_query("UPDATE {$tablename} SET {$setsql} WHERE {$where}");
     $this->realtime_query = FALSE; //restore
@@ -543,6 +564,250 @@ class DB {
    */
   public function update_table($tablename, Array $setarr, Array $wherearr) {
     return $this->update($tablename, $setarr, $wherearr);
+  }
+  
+  /**
+   * Get the sql to query() method 
+   * 
+   * @return string
+   */
+  public function getSql() {
+    return $this->_sql;
+  }
+  
+  /**
+   * Get the final sql to MySQL
+   * 
+   * @return string
+   */
+  public function getSqlFinal() {
+    return $this->_sql_final;
+  }
+  
+  /**
+   * sql SELECT part
+   * 
+   * @param string $fields
+   *   SELECT fileds string
+   * @return DbResult
+   */
+  public function select($fields = '*') {
+    $this->_sql = "SELECT {$fields}".$this->_sql;
+    if($this->_select_mode==self::WRITABLE) $this->realtime_query = TRUE;  //make sure use writable mode
+    $rs = $this->query(empty($this->_select_cache) ? $this->_sql : array_merge(array($this->_sql), $this->_select_cache));
+    if($this->_select_mode==self::WRITABLE) $this->realtime_query = FALSE; //restore
+    $this->_sql = ''; //finished, clear it
+    $this->_select_cache = array();
+    return $rs;
+  }
+  
+  /**
+   * sql FROM part, all 'select' chain begin with it, end endof select() method
+   *
+   * @param string $table_refes
+   *   support format like as:
+   *   from('users')               == from('tb_users')
+   *   from('tb_users')            == from('tb_users')
+   *   from('tb_users AS u')       == from('tb_users AS u')
+   *   from('users u')             == from('tb_users u')
+   *   from('{users}')             == from('tb_users')
+   *   from('{users} u')           == from('tb_users u')
+   *   from('db2.`users`')         == from('db2.`users`')
+   *   from('{users} u INNER JOIN db2.`users` u2 ON u.user_id=u2.user_id') == from('tb_users u INNER JOIN db2.`users` u2 ON u.user_id=u2.user_id')
+   *   ...and so on
+   * @param $server_mode
+   *   DB::READONLY or DB::WRITABLE
+   * @return DB
+   */
+  public function from($table_refes, $server_mode = self::READONLY) {
+    $this->_sql = '';//begin with this
+    $this->_select_cache = array();
+    $this->_select_mode  = $server_mode;
+    $table_refes = trim($table_refes);
+    if (strpos($table_refes, '`')!==false ||
+      strpos($table_refes, '{')!==false ||
+      strpos($table_refes, '.')!==false) {
+      //no need parsing, directly passthrough or hand over to the lower logic
+    }
+    else {
+      if (strpos($table_refes, $this->tablePrefix)===0) { //begin with table prefix, such as 'tb_xxx'
+        //no need parsing, directly passthrough
+      }
+      else {
+        $table_refes = $this->tablePrefix . $table_refes;
+      }
+    }
+    $this->_sql .= " FROM {$table_refes}";
+    return $this;
+  }
+  
+  /**
+   * sql WHERE part
+   * 
+   * @param string|array $where_condition,
+   *   when $where_condition is an array, use 'AND' to connecting the confitions
+   *   when $where_condition is a string, support like as %d, %s placeholder
+   * @param ... 
+   * @return DB
+   */
+  public function where($where_condition) {
+    if (!empty($where_condition)) {
+      if (is_array($where_condition)) {
+        $where = $comma = '';
+        foreach ($where_condition AS $k => $v) {
+          $where .= $comma . '`'.$k.'`=\''.$this->escape_string($v, $this->_select_mode).'\'';
+          $comma  = ' AND ';
+        }
+      }
+      else {
+        $where = $where_condition; //support like as %d, %s placeholder
+        $args = func_get_args();
+        array_shift($args); // the rest of $args is for the %d, %s parameters
+        $this->_select_cache = $args; // Cache it
+      }
+      $this->_sql .= " WHERE {$where}";
+    }
+    return $this;
+  }
+  
+  /**
+   *  sql GROUP BY part
+   * 
+   * @param string $string
+   * @param ...
+   * @return DB
+   */
+  public function group_by($string) {
+    $args = func_get_args();
+    if (count($args) > 0) {
+      $string = implode(',', $args);
+      $this->_sql .= " GROUP BY {$string}";
+    }
+    return $this;
+  }
+  
+  /**
+   * sql HAVING part
+   * 
+   * @param string|array $where_condition,
+   *   when $where_condition is an array, use 'AND' to connecting the confitions
+   * @return DB
+   */
+  public function having($where_condition) {
+    if (!empty($where_condition)) {
+      $where = $where_condition;
+      if (is_array($where_condition)) {
+        $where = $comma = '';
+        foreach ($where_condition AS $k => $v) {
+          $where .= $comma . $k.'=\''.$this->escape_string($v, $this->_select_mode).'\'';
+          $comma  = ' AND ';
+        }
+      }
+      $this->_sql .= " HAVING {$where}";
+    }
+    return $this;
+  }
+  
+  /**
+   * sql ORDER BY part
+   * 
+   * @param string $string
+   * @param ...
+   * @return DB
+   */
+  public function order_by($string) {
+    $args = func_get_args();
+    if (count($args) > 0) {
+      $string = implode(',', $args);
+      $this->_sql .= " ORDER BY {$string}";
+    }
+    return $this;
+  }
+  
+  /**
+   * sql LIMIT part
+   * 
+   * @param integer $offset
+   * @param integer $row_count
+   * @return DB
+   */
+  public function limit($offset, $row_count = NULL) {
+    if (!isset($row_count)) {
+      $row_count = $offset;
+      $offset = 0;
+    }
+    $this->_sql .= " LIMIT {$offset},{$row_count}";
+    return $this;
+  }
+  
+  /**
+   * Call like SQL:
+   * LOCK TABLES t READ
+   * 
+   * @param string|array $table_name
+   *  when $table_name is a string, then indicating a table name
+   *  when $table_name is a array, then indicating one or more table, its' format like as:
+   *  array(
+   *    array('table_name'=>'t1','lock_type'=>DB::LOCK_READ,'alias'=>'t1_alias','raw_mode'=>false),
+   *    array('table_name'=>'t2','lock_type'=>DB::LOCK_WRITE,'alias'=>'','raw_mode'=>true),
+   *  )
+   * @return DB
+   */
+  public function lock_tables($table_name, $lock_type = self::LOCK_READ, $alias = '', $raw_mode = FALSE) {
+    if (is_string($table_name)) {
+      $table_name = array(array(
+        'table_name' => $table_name,
+        'lock_type'  => $lock_type,
+        'alias'      => $alias,
+        'raw_mode'   => $raw_mode,
+      ));
+    }
+    elseif (is_array($table_name)) {
+      if (count($table_name)>0 && !isset($table_name[0])) {
+        $table_name = array($table_name); //Make sure it is a two-dimensional array
+      }
+    }
+    else {
+      $table_name = [];
+    }
+    
+    if (count($table_name) > 0) {
+      
+      $sql = "LOCK TABLES";
+      foreach ($table_name AS $it) {
+        // table name
+        $tbname = $it['table_name'];
+        if (!$it['raw_mode']) {
+          $tbname = '`' . $this->tablePrefix . $tbname . '`';
+        }
+        $sql  .= ' '.$tbname;
+        
+        // alias
+        if (!empty($it['alias'])) {
+          $sql.= ' AS '.$it['alias'];
+        }
+        
+        // lock type
+        $sql  .= ' '.$it['lock_type'].',';
+        
+      }
+      $sql = substr($sql, 0, -1); //trim the last ','
+      
+      $this->query($sql);
+    }
+    
+    return $this;
+  }
+  
+  /**
+   * Call SQL: 
+   * UNLOCK TABLES
+   * 
+   * @return DB
+   */
+  public function unlock_tables() {
+    $this->query("UNLOCK TABLES");
+    return $this;
   }
   
   /**

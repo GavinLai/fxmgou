@@ -215,6 +215,14 @@ function simphp_array_merge() {
 }
 
 /**
+ * Get the current timestamp of GMT(Greenwich Time)
+ * @return number
+ */
+function simphp_gmtime() {
+  return (time() - date('Z'));
+}
+
+/**
  * Return system require timestamp
  *
  * @param $strict, when $strict is TRUE, then use microtime() for current strict time

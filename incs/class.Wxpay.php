@@ -57,18 +57,18 @@ class Wxpay {
     $order_detail = '';
     if (!empty($order['order_goods'])) {
       foreach ($order['order_goods'] As $g) {
-        $order_detail = $g['goods_name'].'('.$g['goods_price'].'x'.$g['goods_number']."),";
+        $order_detail .= $g['goods_name'].'('.$g['goods_price'].'x'.$g['goods_number'].")\n";
       }
-      $order_detail = rtrim($order_detail,",");
+      $order_detail = rtrim($order_detail,"\n");
     }
     
     //统一下单
-    if (empty($order['wxpay_data'])) {
+    if (empty($order['pay_data1'])) {
       $now   = time();
       $input = new WxPayUnifiedOrder();
-      $input->SetBody("福小蜜商品");
+      $input->SetBody('福小蜜商品');
       $input->SetDetail($order_detail);
-      //$input->SetAttach("test");
+      $input->SetAttach(''); //商家自定义数据，原样返回
       $input->SetOut_trade_no($order['order_sn']);
       $input->SetTotal_fee(intval($order['order_amount']*100)); //'分'为单位
       $input->SetTime_start(date('YmdHis', $now));
@@ -79,7 +79,7 @@ class Wxpay {
       $input->SetOpenid($openId);
       
       $order_wx = WxPayApi::unifiedOrder($input);
-      trace_debug('wxpay_unifiedorder_wxreturn', $order_wx);
+      //trace_debug('wxpay_unifiedorder_wxreturn', $order_wx);
       
       if ('SUCCESS'==$order_wx['return_code'] && 'SUCCESS'==$order_wx['result_code']) { //保存信息以防再次重复提交
         $wxpay_data = [
@@ -91,12 +91,12 @@ class Wxpay {
         if (isset($order_wx['code_url'])) {
           $wxpay_data['code_url'] = $order_wx['code_url'];
         }
-        Goods::orderUpdate(['wxpay_data'=>json_encode($wxpay_data)], $order['order_id']);
+        Goods::orderUpdate(['pay_data1'=>json_encode($wxpay_data)], $order['order_id']);
       }
     }
     else {
-      $order_wx = json_decode($order['wxpay_data'], true);
-      trace_debug('wxpay_unifiedorder_cachedb', $order_wx);
+      $order_wx = json_decode($order['pay_data1'], true);
+      //trace_debug('wxpay_unifiedorder_cachedb', $order_wx);
     }
     
     $jsApiParameters = $tools->GetJsApiParameters($order_wx);
@@ -106,6 +106,75 @@ class Wxpay {
     
   }
   
+  /**
+   * 支付结果回调通知
+   * 
+   * @param callable $callback
+   */
+  public static function nofify($callback) {
+    Log::DEBUG("begin notify");
+    $notify = new PayNotifyCallBack($callback);
+    $notify->Handle(false);
+  }
+  
+}
+
+/**
+ * 支付回调通知类
+ *
+ * @author Gavin
+ *
+ */
+include_once WXPAY_SDK_ROOT."lib/WxPay.Notify.php";
+class PayNotifyCallBack extends WxPayNotify
+{
+
+  private $_notify_callback;
+
+  public function __construct($callback) {
+    $this->_notify_callback = $callback;
+  }
+
+  //查询订单
+  public function QueryOrder($transaction_id)
+  {
+    $input = new WxPayOrderQuery();
+    $input->SetTransaction_id($transaction_id);
+    $result = WxPayApi::orderQuery($input);
+    Log::DEBUG("query:" . json_encode($result));
+    if(array_key_exists("return_code", $result)
+      && array_key_exists("result_code", $result)
+      && $result["return_code"] == "SUCCESS"
+      && $result["result_code"] == "SUCCESS")
+    {
+      return true;
+    }
+    return false;
+  }
+
+  //重写回调处理函数
+  public function NotifyProcess($data, &$msg)
+  {
+    Log::DEBUG("call back:" . json_encode($data));
+    $notfiyOutput = array();
+
+    if(!array_key_exists("transaction_id", $data)){
+      $msg = "输入参数不正确";
+      return false;
+    }
+    //查询订单，判断订单真实性
+    if(!$this->QueryOrder($data["transaction_id"])){
+      $msg = "订单查询失败";
+      return false;
+    }
+    //将控制权交给用户回调函数
+    $b = true;
+    if (is_callable($this->_notify_callback)) {
+      $b = call_user_func_array($this->_notify_callback, array($data, &$msg)); //将$msg引用传递下去，便于回调函数改写
+    }
+    
+    return $b ? true : false;
+  }
 }
 
 /*----- END FILE: class.Wxpay.php -----*/

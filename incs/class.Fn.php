@@ -7,6 +7,18 @@
 class Fn extends Func {
   
   /**
+   * 将yyyyMMddHHmmss格式的时间串转成Unix Timestamp
+   * @param string $time_string
+   * @return integer
+   */
+  static function to_timestamp($time_string) {
+    $time_string = substr($time_string, 0, 4).'-'.substr($time_string, 4, 2). '-'.substr($time_string, 6, 2).' '
+                  .substr($time_string, 8, 2).':'.substr($time_string, 10, 2).':'.substr($time_string, 12, 2); //转成 2014-10-30 13:35:25 的格式
+    $time_string = strtotime($time_string); //转成 Unix Timestamp 的格式
+    return $time_string;
+  }
+  
+  /**
    * 默认头像
    */
   public static function default_logo(){
