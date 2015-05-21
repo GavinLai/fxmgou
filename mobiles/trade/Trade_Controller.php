@@ -77,12 +77,18 @@ class Trade_Controller extends Controller {
   public function cart_add(Request $request, Response $response)
   {
     if ($request->is_post()) {
-      $ret = ['flag'=>'FAIL','msg'=>'添加失败'];
+      
       $goods_id = $request->post('goods_id',0);
       $goods_num= $request->post('goods_num',1);
-      $ret = Goods::addToCart($goods_id, $goods_num);
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ec_user_id = session_id();
+      }
+      
+      $ret = Goods::addToCart($goods_id, $goods_num, $ec_user_id);
       if ($ret['code']>0) {
-        $ret['cart_num'] = Goods::getUserCartNum($user_id);
+        $ret['cart_num'] = Goods::getUserCartNum($ec_user_id);
       }
       $response->sendJSON($ret);
     }

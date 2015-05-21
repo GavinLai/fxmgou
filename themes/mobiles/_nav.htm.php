@@ -28,7 +28,7 @@ $('.nav a').click(function(){
   <div class="nav-body clearfix">
 <?php if ('item'==$nav_flag1):?>
     <div class="nav-it"><a href="<?php echo U('explore')?>" class="btn">☜返回</a></div>
-    <div class="nav-it"><a href="javascript:void(0);" class="btn">收藏</a></div>
+    <div class="nav-it"><a href="javascript:void(0);" class="btn" id="btn-collect" data-goods_id="<?=$the_goods_id?>">收藏</a></div>
     <div class="nav-it"><a href="javascript:void(0);" class="btn btn-orange" id="btn-add-to-cart" data-goods_id="<?=$the_goods_id?>">加入购物车</a></div>
 <?php elseif ('cart'==$nav_flag1):?>
     <div class="c-lt checked" id="cart-checkall"><span class="check checked"></span>全选</div>
@@ -50,7 +50,7 @@ $('#btn-add-to-cart').click(function(){
 	_this.attr('data-ajaxing', 1);
 	var goods_id = _this.attr('data-goods_id'),
 	    goods_num= 1;
-	F.post('/trade/cart/add', {goods_id:goods_id,goods_num:goods_num}, function(ret){
+	F.post('<?php echo U('trade/cart/add')?>', {goods_id:goods_id,goods_num:goods_num}, function(ret){
 		_this.attr('data-ajaxing', 0);
 		if (ret.code > 0) {
 			$('#global-cart').text(ret.cart_num);
@@ -63,6 +63,18 @@ $('#btn-add-to-cart').click(function(){
 			alert(ret.msg);
 		}
 	});
+	return false;
+});
+
+$('#btn-collect').click(function(){
+	var _this = $(this);
+	if (_this.attr('data-ajaxing')=='1') return false;
+	_this.attr('data-ajaxing', 1);
+	var goods_id = _this.attr('data-goods_id');
+	F.post('<?php echo U('item/collect')?>', {goods_id:goods_id}, function(ret){
+		_this.text('已收藏');
+	});
+	return false;
 });
 <?php endif;?>
 

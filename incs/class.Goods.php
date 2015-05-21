@@ -18,6 +18,11 @@ class Goods {
     return $urlpre.$goods_pic;
   }
   
+  public static function getBrandInfo($brand_id) {
+    $row = D()->from(ectable('brand'))->where(['brand_id'=>intval($brand_id)])->select()->get_one();
+    return $row;
+  }
+  
   public static function getCategoryInfo($cat_id = 0, $just_show = TRUE, $just_ret_id = FALSE) {
     $ectb  = ectable('category');
     $show  = $just_show ? 'AND `is_show`=1' : '';
@@ -613,6 +618,51 @@ class Goods {
       return true;
     }
     return false;
+  }
+  
+  /**
+   * 检查是否已经收藏
+   */
+  public static function isCollected($goods_id, $ec_user_id) {
+    
+    if (!$ec_user_id) $ec_user_id = $GLOBALS['user']->ec_user_id;
+    
+    $rec_id = D()->from(ectable('collect_goods'))->where(['user_id'=>$ec_user_id, 'goods_id'=>$goods_id])->select('rec_id')->result();
+    return $rec_id ? true : false;
+    
+  }
+  
+  /**
+   * 收藏商品
+   * 
+   * @return string
+   *   'collected'   : 之前已收藏
+   *   'new_collect' : 成功新收藏
+   *   'collect_fail': 收藏失败
+   */
+  public static function goodsCollecting($goods_id, $ec_user_id) {
+    
+    if (!$ec_user_id) $ec_user_id = $GLOBALS['user']->ec_user_id;
+    
+    $ret = 'collected';
+    if (!self::isCollected($goods_id, $ec_user_id)) { //未收藏
+      $ins = [
+        'user_id'  => $ec_user_id,
+        'goods_id' => $goods_id,
+        'add_time' => simphp_time(),
+        'is_attention' => 0,
+      ];
+      $rid = D()->insert(ectable('collect_goods'), $ins, true, true);
+      if ($rid) {
+        $ret= 'new_collect';
+      }
+      else {
+        $ret= 'collect_fail';
+      }
+    }
+    
+    return $ret;
+    
   }
   
 }

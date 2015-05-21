@@ -144,6 +144,26 @@ class Default_Controller extends Controller {
         
         Goods::addGoodsClickCnt($goods_id);
         
+        //原产地名称和品牌信息
+        $goods_info['origin_place_name'] = '';
+        $goods_info['brand_info'] = [];
+        
+        $cat_info = Goods::getCategoryInfo($goods_info['origin_place_id'], false);
+        if (!empty($cat_info)) {
+          $goods_info['origin_place_name'] = $cat_info['cat_name'];
+        }
+        $brand_info = Goods::getBrandInfo($goods_info['brand_id']);
+        if (!empty($brand_info)) {
+          $goods_info['brand_info'] = $brand_info;
+        }
+        
+        //检查是否已经收藏
+        global $user;
+        $goods_info['is_collect'] = false;
+        if ($user->uid) {
+          $goods_info['is_collect'] = Goods::isCollected($goods_id, $user->ec_user_id);
+        }
+        
         $purl = C('env.site.shop');
         $goods_info['goods_thumb']  = Goods::goods_picurl($goods_info['goods_thumb']);
         $goods_info['goods_img']    = Goods::goods_picurl($goods_info['goods_img']);
@@ -175,6 +195,35 @@ class Default_Controller extends Controller {
     
     }
     $response->send($this->v);
+  }
+  
+  public function item_collect(Request $request, Response $response) {
+    
+    if ($request->is_post()) {
+      
+      $ret = ['flag'=>'FAIL','msg'=>'收藏失败'];
+      $goods_id = $request->post('goods_id',0);
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ret['msg'] = '未登录，请先登录';
+        $response->sendJSON($ret);
+      }
+      
+      $ret = ['flag'=>'SUC','msg'=>'收藏成功'];
+      
+      $res = Goods::goodsCollecting($goods_id, $ec_user_id);
+      if ($res=='collected') {
+        $ret['msg'] = '已收藏';
+      }
+      elseif ($res=='collect_fail') {
+        $ret = ['flag'=>'FAIL','msg'=>'收藏失败'];
+      }
+      
+      $response->sendJSON($ret);
+      
+    }
+    
   }
 
   public function about(Request $request, Response $response)
