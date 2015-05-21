@@ -12,10 +12,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
 <meta name="format-detection" content="telephone=no">
+<link rel="dns-prefetch" href="pc.fxmgou.com" />
+<link rel="dns-prefetch" href="res.wx.qq.com" />
+<?php if (C('env.usecdn')):?>
+<link rel="dns-prefetch" href="fcdn.qiniudn.com" />
+<?php endif;?>
 <link rel="shortcut icon" href="<?=$contextpath;?>favicon.ico" type="image/x-icon" />
 <link rel="apple-touch-icon" sizes="114x114" href="<?=$contextpath;?>misc/images/napp/touch-icon-114.png" />
 <link rel="apple-touch-icon" sizes="144x144" href="<?=$contextpath;?>misc/images/napp/touch-icon-144.png" />
-<link rel="dns-prefetch" href="res.wx.qq.com" />
 <?php tplholder('HEAD_CSS');?>
 <?php tplholder('HEAD_JS');?>
 <?php headscript();?>
@@ -27,20 +31,28 @@
     <div class="pageBg">该应用由<em>福小蜜</em>提供</div>
   </div>
   <div id="loadingCanvas" class="useTopNav-<?=$topnav_no?> useNav-<?=$nav_no?>"></div>
+  <div class="hide"><img src="<?php echo ploadingimg()?>" alt=""/></div>
   <?php include T('_nav');?>
 </div>
 <?php include T('_popdlg');?>
 </body>
-<?php footscript()?>
+<?php footscript();?>
 <?php tplholder('FOOT_JS');?>
 <script>var FST=new Object();FST.autostart=1;FST.uid=parseInt(gUser.uid);</script>
 <script type="text/javascript" src="<?=$contextpath;?>misc/js/fst.min.js"></script>
 </html><?php
-//add css file
+
+//: add css & js files
+if (C('env.usecdn')):
+add_css('http://fcdn.qiniudn.com/css/c.min.css',['scope'=>'global','ver'=>'none']);
+add_js('http://fcdn.qiniudn.com/js/jquery-2.1.3.min.js',['pos'=>'head','ver'=>'none']);
+add_js('http://fcdn.qiniudn.com/js/fm.min.js',['pos'=>'foot','ver'=>'none']);
+else:
 add_css('c.min.css',['scope'=>'global','ver'=>'none']);
-add_css('m.css',['scope'=>'global']);
-//add js file
 add_js('ext/jquery-2.1.3.min.js',['pos'=>'head','ver'=>'none']);
 add_js('fm.min.js',['pos'=>'foot','ver'=>'none']);
+endif;
+add_css('m.css',['scope'=>'global']);
 add_js('m.js',['pos'=>'foot']);
+
 ?>

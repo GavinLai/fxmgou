@@ -115,12 +115,14 @@ function config_set($key, $val = '', $encode = 'R')
  */
 function emptyimg()
 {
-  return C('env.contextpath').'misc/images/b.gif';
+  return C('env.usecdn') ? 'http://fcdn.qiniudn.com/img/b.gif'
+                         : C('env.contextpath').'misc/images/b.gif';
 }
 
 function ploadingimg()
 {
-  return C('env.contextpath').'misc/images/bloading.gif';
+  return C('env.usecdn') ? 'http://fcdn.qiniudn.com/img/bloading.gif' 
+                         : C('env.contextpath').'misc/images/bloading.gif';
 }
 
 /**
