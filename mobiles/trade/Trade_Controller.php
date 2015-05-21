@@ -51,6 +51,7 @@ class Trade_Controller extends Controller {
       'trade/order/submit'   => 'order_submit',
       'trade/order/upaddress'=> 'order_upaddress',
       'trade/order/cancel'   => 'order_cancel',
+      'trade/order/confirm_shipping'   => 'order_confirm_shipping',
       'trade/order/record'   => 'order_record',
       'trade/order/topay'    => 'order_topay',
     ];
@@ -558,12 +559,15 @@ class Trade_Controller extends Controller {
         'address'       => $address,
         'zipcode'       => $zipcode,
       ];
+      /*
       if (preg_match('/^1\d{10}$/', $contact_phone)) { //是手机号
         $data['mobile'] = $contact_phone;
       }
       else {
         $data['tel'] = $contact_phone;
       }
+      */
+      $data['tel'] = $contact_phone; //遵循ecshop习惯，优先使用tel(因为后台都是优先选择tel,mobile作为第二电话)
       
       $address_id = Goods::saveUserAddress($data, $address_id);
       $ret = ['flag'=>'SUC','msg'=>'更新成功','address_id'=>$address_id];
@@ -595,9 +599,41 @@ class Trade_Controller extends Controller {
         $response->sendJSON($ret);
       }
       
-      $b = Goods::orderCancel($order_id);
+      $b = Order::cancel($order_id);
       if ($b) {
         $ret = ['flag'=>'SUC','msg'=>'取消成功', 'order_id'=>$order_id];
+      }
+      
+      $response->sendJSON($ret);
+    }
+  }
+
+  /**
+   * 取消订单
+   *
+   * @param Request $request
+   * @param Response $response
+   */
+  public function order_confirm_shipping(Request $request, Response $response)
+  {
+    if ($request->is_post()) {
+      $ret = ['flag'=>'FAIL','msg'=>'取消失败'];
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $ret['msg'] = '未登录, 请登录';
+        $response->sendJSON($ret);
+      }
+      
+      $order_id = $request->post('order_id', 0);
+      if (!$order_id) {
+        $ret['msg'] = '订单id为空';
+        $response->sendJSON($ret);
+      }
+      
+      $b = Order::confirm_shipping($order_id);
+      if ($b) {
+        $ret = ['flag'=>'SUC','msg'=>'确认成功', 'order_id'=>$order_id];
       }
       
       $response->sendJSON($ret);

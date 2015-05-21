@@ -70,10 +70,34 @@ $(function(){
   			}
   		});
 		}
+		else {
+			thisctx.ajaxing_cancel = undefined;
+		}
 		return false;
 	});
 	$('.btn-order-topay',$lbod).click(function(){
 		form_topay_submit($(this).attr('data-order_id'));
+	});
+	$('.btn-ship-confirm',$lbod).click(function(){
+		if (typeof(thisctx.ajaxing_confirm)=='undefined') {
+			thisctx.ajaxing_confirm = 0;
+		}
+		if (thisctx.ajaxing_confirm) return false;
+		thisctx.ajaxing_confirm = 1;
+
+		if (confirm('确定收货么？')) {
+  		var pdata = {"order_id": parseInt($(this).attr('data-order_id'))};
+  		F.post('<?php echo U('trade/order/confirm_shipping')?>',pdata,function(ret){
+  			thisctx.ajaxing_confirm = undefined;
+  			if (ret.flag=='SUC') {
+  				window.location.reload();
+  			}
+  		});
+		}
+		else {
+			thisctx.ajaxing_confirm = undefined;
+		}
+		return false;
 	});
 });
 </script>

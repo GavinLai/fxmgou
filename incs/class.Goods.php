@@ -349,7 +349,7 @@ class Goods {
     $ret  = D()->raw_query($sql,$ec_user_id)->fetch_array_all();
     if (!empty($ret)) {
       foreach ($ret AS &$addr) {
-        $contact_phone = !empty($addr['mobile']) ? $addr['mobile'] : $addr['tel']; //优先选择手机作为联系电话
+        $contact_phone = !empty($addr['tel']) ? $addr['tel'] : $addr['mobile']; //遵循ecshop习惯，优先选择tel作为联系电话
         
         //填充地区名称
         if (empty($addr['country_name']) && !empty($addr['country'])) {
@@ -513,7 +513,7 @@ class Goods {
     $ectb_goods = ectable('goods');
     $ectb_order_goods = ectable('order_goods');
     
-    $sql = "SELECT * FROM {$ectb_order} WHERE `user_id`=%d ORDER BY `order_status` ASC, `order_id` DESC LIMIT %d,%d";
+    $sql = "SELECT * FROM {$ectb_order} WHERE `user_id`=%d ORDER BY `order_id` DESC LIMIT %d,%d";
     $orders = D()->raw_query($sql, $user_id, $start, $limit)->fetch_array_all();
     if (!empty($orders)) {
       foreach ($orders AS &$ord) {
@@ -547,16 +547,34 @@ class Goods {
     $html = '';
     
     $order['active_order'] = 0; //便于区分订单显示样式
-    if ($order['order_status'] < OS_CANCELED) { //订单 未确认|已确认
+    $br = '<br/>';
+    if (!in_array($order['order_status'], [OS_CANCELED,OS_INVALID,OS_RETURNED])) { //订单“活动中”
+      $order['active_order'] = 1;
       if ($order['pay_status'] == PS_UNPAYED) { //未支付
-        $html .= '<p class="order-status-txt">订单'.Fn::pay_status($order['pay_status']).'</p>';
+        $html .= '<p class="order-status-txt">'.Fn::pay_status($order['pay_status']).'</p>';
         $html .= '<p class="order-status-op"><a href="javascript:;" class="btn btn-orange btn-order-topay" data-order_id="'.$order['order_id'].'">立即付款</a></p>';
         $html .= '<p class="order-status-op last"><a href="javascript:;" class="btn-order-cancel" data-order_id="'.$order['order_id'].'">取消订单</a></p>';
-        $order['active_order'] = 1;
+      }
+      elseif ($order['pay_status']==PS_PAYED) { //已支付
+        $html .= '<p class="order-status-txt">'.Fn::pay_status($order['pay_status']).$br.Fn::shipping_status($order['shipping_status']);
+        if ($order['shipping_status']==SS_RECEIVED) {
+          $html.= $br.'<span style="color:green">'.Fn::zonghe_status(CS_FINISHED).'</span>'; //订单完成
+          $html.= '</p>';
+          $order['active_order'] = 0;
+        }
+        elseif ($order['shipping_status']==SS_SHIPPED) {
+          $html .= '</p><p class="order-status-op"><a href="javascript:;" class="btn btn-orange btn-ship-confirm" data-order_id="'.$order['order_id'].'">确认收货</a></p>';
+        }
+        else {
+          $html.= '</p>';
+        }
+      }
+      else { //支付中
+        $html .= '<p class="order-status-txt">'.Fn::order_status(OS_CONFIRMED).$br.Fn::pay_status($order['pay_status']).'</p>';
       }
     }
     else {
-      $html .= '<p>订单'.Fn::order_status($order['order_status']).'</p>';
+      $html .= '<p>'.Fn::order_status($order['order_status']).'</p>';
     }
     
     return $html;
@@ -576,33 +594,6 @@ class Goods {
     $ectb = ectable('goods');
     D()->raw_query("UPDATE {$ectb} SET `click_count`=`click_count`+%d WHERE `goods_id`=%d", $inc, $goods_id);
     if (D()->affected_rows()==1) {
-      return true;
-    }
-    return false;
-  }
-  
-  /**
-   * 取消订单
-   * 
-   * @param integer $order_id
-   * @return boolean
-   */
-  public static function orderCancel($order_id) {
-    if (!$order_id) return false;
-    D()->update(ectable('order_info'), ['order_status'=>OS_CANCELED], ['order_id'=>$order_id], true);
-    if (D()->affected_rows()==1) {
-      
-      //还要将对应的库存加回去
-      $order_goods = self::getOrderGoods($order_id);
-      if (!empty($order_goods)) {
-        foreach ($order_goods AS $g) {
-          self::changeGoodsStock($g['goods_id'],$g['goods_number']);
-        }
-      }
-      
-      //写order_action的日志
-      Order::order_action_log($order_id, ['action_note'=>'用户取消']);
-      
       return true;
     }
     return false;

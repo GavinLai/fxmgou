@@ -54,21 +54,26 @@ class Wxpay {
       $openId = $tools->GetOpenid();      
     }
     
-    $order_detail = '';
+    $order_detail  = '';
+    $wx_order_body = '';
     if (!empty($order['order_goods'])) {
       foreach ($order['order_goods'] As $g) {
         $order_detail .= $g['goods_name'].'('.$g['goods_price'].'x'.$g['goods_number'].")\n";
+        if (''==$wx_order_body) {
+          $wx_order_body = mb_truncate($g['goods_name'], 27);
+        }
       }
       $order_detail = rtrim($order_detail,"\n");
     }
     
     //统一下单
     if (empty($order['pay_data1'])) {
+      if (''==$wx_order_body) $wx_order_body = '福小蜜商品';
       $now   = time();
       $input = new WxPayUnifiedOrder();
-      $input->SetBody('福小蜜商品');
+      $input->SetBody($wx_order_body);
       $input->SetDetail($order_detail);
-      $input->SetAttach(''); //商家自定义数据，原样返回
+      $input->SetAttach('fxmgou'); //商家自定义数据，原样返回
       $input->SetOut_trade_no($order['order_sn']);
       $input->SetTotal_fee(intval($order['order_amount']*100)); //'分'为单位
       $input->SetTime_start(date('YmdHis', $now));

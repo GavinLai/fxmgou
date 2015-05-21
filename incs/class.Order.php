@@ -66,6 +66,58 @@ class Order {
     
   }
   
+  /**
+   * 取消订单
+   *
+   * @param integer $order_id
+   * @return boolean
+   */
+  static function cancel($order_id) {
+    if (!$order_id) return false;
+    
+    D()->update(ectable('order_info'), ['order_status'=>OS_CANCELED], ['order_id'=>$order_id], true);
+    
+    if (D()->affected_rows()==1) {
+  
+      //还要将对应的库存加回去
+      $order_goods = Goods::getOrderGoods($order_id);
+      if (!empty($order_goods)) {
+        foreach ($order_goods AS $g) {
+          Goods::changeGoodsStock($g['goods_id'],$g['goods_number']);
+        }
+      }
+  
+      //写order_action的日志
+      self::order_action_log($order_id, ['action_note'=>'用户取消']);
+  
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 确认订单收货
+   *
+   * @param integer $order_id
+   * @return boolean
+   */
+  static function confirm_shipping($order_id) {
+    if (!$order_id) return false;
+    
+    D()->update(ectable('order_info'),
+                ['shipping_status'=>SS_RECEIVED,'shipping_confirm_time'=>simphp_gmtime()],
+                ['order_id'=>$order_id], true);
+    
+    if (D()->affected_rows()==1) {
+  
+      //写order_action的日志
+      self::order_action_log($order_id, ['action_note'=>'用户确认收货']);
+  
+      return true;
+    }
+    return false;
+  }
+  
 }
  
 /*----- END FILE: class.Order.php -----*/
