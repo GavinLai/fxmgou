@@ -108,17 +108,40 @@ class Default_Controller extends Controller {
     $this->v->set_tplname('mod_default_explore');
     $this->nav_flag1 = 'explore';
     $this->topnav_no = 1; // >0: 表示有topnav bar，具体值标识哪个topnav bar(有多个的情况下)
+
+    $order_set = [
+      'zonghe'        => ['id' => 'zonghe'       , 'name' => '综合排序'   , 'is_show' => 1, 'is_last' => 0],
+      'click'         => ['id' => 'click'        , 'name' => '人气最高'   , 'is_show' => 1, 'is_last' => 0],
+      'collect'       => ['id' => 'collect'      , 'name' => '收藏最多'   , 'is_show' => 1, 'is_last' => 0],
+      'paid'          => ['id' => 'paid'         , 'name' => '销量最好'   , 'is_show' => 1, 'is_last' => 0],
+      'price_low2top' => ['id' => 'price_low2top', 'name' => '价格从低到高', 'is_show' => 1, 'is_last' => 0],
+      'price_top2low' => ['id' => 'price_top2low', 'name' => '价格从高到低', 'is_show' => 1, 'is_last' => 1],
+      'latest'        => ['id' => 'latest'       , 'name' => '新品'       , 'is_show' => 0, 'is_last' => 0],
+      'category'      => ['id' => 'category'     , 'name' => '分类'       , 'is_show' => 0, 'is_last' => 0],
+    ];
+    
+    $order = $request->get('o', '');
+    if (''==$order) {
+      $order = 'zonghe';
+    }
     
     if ($request->is_hashreq()) {
       
-      //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('latest',0,50);
-      $this->v->assign('goods_latest',$goods_latest);
+      $goods_list = [];
+      if ('latest'==$order) { //新品
+        $goods_list = Default_Model::getGoodsList('latest',0,20);
+      }
+      else {
+        $goods_list = Default_Model::getGoodsList($order,0,50);
+      }
+      $this->v->assign('goods_list',$goods_list);
       
     }
     else {
   
     }
+    
+    $this->v->assign('order', $order)->assign('order_set', $order_set);
     $response->send($this->v);
   }
   

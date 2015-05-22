@@ -845,6 +845,4 @@ HEREDOC;
 
 
 
-
-
 /*----- END FILE: func.common.php -----*/

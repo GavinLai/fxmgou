@@ -585,7 +585,6 @@ class Goods {
     return $html;
   }
   
-
   /**
    * 更新商品点击数
    *
@@ -599,6 +598,86 @@ class Goods {
     $ectb = ectable('goods');
     D()->raw_query("UPDATE {$ectb} SET `click_count`=`click_count`+%d WHERE `goods_id`=%d", $inc, $goods_id);
     if (D()->affected_rows()==1) {
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 更新商品收藏数
+   *
+   * @param integer $goods_id
+   * @param integer $inc
+   * @return boolean
+   */
+  public static function changeGoodsCollectCnt($goods_id, $inc = 1) {
+    if (!$goods_id) return false;
+  
+    $ectb = ectable('goods');
+    D()->raw_query("UPDATE {$ectb} SET `collect_count`=`collect_count`+%d WHERE `goods_id`=%d", $inc, $goods_id);
+    if (D()->affected_rows()==1) {
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 更新某个商品的"订单数"
+   * 
+   * @param integer $goods_id
+   * @return boolean
+   */
+  public static function updateGoodsOrderCnt($goods_id) {
+    $goods_id = intval($goods_id);
+    if (empty($goods_id)) return false;
+    
+    $ectb_goods = ectable('goods');
+    $ectb_order_goods = ectable('order_goods');
+    $ectb_pay_log = ectable('pay_log');
+    $sql =<<<HERESQL
+UPDATE {$ectb_goods} g, (
+				SELECT og.goods_id,COUNT(l.order_id) AS order_num
+				FROM {$ectb_order_goods} og LEFT JOIN {$ectb_pay_log} l ON og.order_id=l.order_id AND l.is_paid=1
+				WHERE og.goods_id={$goods_id}
+				GROUP BY og.goods_id
+			) pgon
+SET g.paid_order_count = pgon.order_num
+WHERE g.goods_id = pgon.goods_id
+HERESQL;
+    
+    D()->raw_query($sql);
+    if (D()->affected_rows() > 0) {
+      return true;
+    }
+    return false;
+  }
+  
+  /**
+   * 更新订单下所有商品的"订单数"
+   * 
+   * @param integer $order_id
+   * @return boolean
+   */
+  public static function updateGoodsOrderCntByOrderid($order_id) {
+    $order_id = intval($order_id);
+    if (empty($order_id)) return false;
+    
+    $ectb_goods = ectable('goods');
+    $ectb_order_goods = ectable('order_goods');
+    $ectb_pay_log = ectable('pay_log');
+    $sql =<<<HERESQL
+UPDATE {$ectb_goods} g, (
+				SELECT og.goods_id,COUNT(l.order_id) AS order_num
+				FROM {$ectb_order_goods} og LEFT JOIN {$ectb_pay_log} l ON og.order_id=l.order_id AND l.is_paid=1
+				WHERE og.goods_id IN(SELECT goods_id FROM {$ectb_order_goods} WHERE order_id={$order_id})
+				GROUP BY og.goods_id
+			) pgon
+SET g.paid_order_count = pgon.order_num
+WHERE g.goods_id = pgon.goods_id
+HERESQL;
+    
+    D()->raw_query($sql);
+    if (D()->affected_rows() > 0) {
       return true;
     }
     return false;
@@ -654,6 +733,7 @@ class Goods {
       ];
       $rid = D()->insert(ectable('collect_goods'), $ins, true, true);
       if ($rid) {
+        self::changeGoodsCollectCnt($goods_id, 1);
         $ret= 'new_collect';
       }
       else {

@@ -163,7 +163,7 @@ $(function(){
 		$(this).text('努力加载中, 请稍候...').attr('disabled',true);
 		F.post('<?php echo U('trade/order/submit')?>',{"address_id":addr_id,"cart_rids":cart_rids,"order_msg":order_msg,"pay_id":pay_id},function(ret){
   			if (ret.flag=='SUC') {
-  				$(_this).text('页面跳转中...');
+  				$(_this).text('支付跳转中...');
   				form_topay_submit(ret.order_id, 'wxpay');
   			}
   			else{

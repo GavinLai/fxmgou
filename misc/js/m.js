@@ -385,7 +385,7 @@
 	show_popdlg._wrap.addClass(toPreClass).css(options.css).show();
 	show_popdlg._wrap.animationComplete(function(){
 		/*show_popdlg._wrap.removeClass(toClass);*/
-  });
+	});
 	show_popdlg._wrap.removeClass(toPreClass).addClass(toClass);
 }
 ;function hide_popdlg() {

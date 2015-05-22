@@ -46,22 +46,49 @@ class Default_Model extends Model {
   public static function getGoodsList($type, $start = 0, $limit = 10, Array $extra = array()) {
     
     $ectb = ectable('goods');
+    $ectb_rel = ectable('order_goods');
     
-    $fields = "`goods_id`,`cat_id`,`goods_sn`,`goods_name`,`click_count`,`brand_id`,`goods_number`,`market_price`,`shop_price`,`goods_thumb`,`goods_img`,`add_time`,`last_update`";
+    $zonghe_order = '';
+    if (''==$type||'zonghe'==$type) { //综合排序，算法：zonghe_order = (click_count * 1 + collect_count * 100 + paid_order_count * 1000)
+      $zonghe_order = ",(click_count * 1 + collect_count * 100 + paid_order_count * 1000) AS zonghe_order";
+    }
+    
+    $fields = "`goods_id`,`cat_id`,`goods_sn`,`goods_name`,`click_count`,`collect_count`,`paid_order_count`,`brand_id`,`goods_number`,`market_price`,`shop_price`,`goods_thumb`,`goods_img`,`add_time`,`last_update`{$zonghe_order}";
     $sqlpre = "SELECT {$fields} FROM {$ectb} WHERE `is_on_sale`=1 AND `goods_img`<>''";
     $ret    = [];
     
-    if ('latest'==$type) {
-      $sql  = $sqlpre . "ORDER BY `add_time` DESC LIMIT %d, %d";
-      $ret  = D()->raw_query($sql,$start,$limit)->fetch_array_all();
+    $sql    = '';
+    if (''==$type||'zonghe'==$type) { //综合排序
+      $sql  = $sqlpre . "ORDER BY `zonghe_order` DESC";
     }
-    elseif ('category'==$type) {
+    elseif ('click'==$type) { //按点击数
+      $sql  = $sqlpre . "ORDER BY `click_count` DESC";
+    }
+    elseif ('collect'==$type) { //按收藏数
+      $sql  = $sqlpre . "ORDER BY `collect_count` DESC";
+    }
+    elseif ('paid'==$type) { //按订单数
+      $sql  = $sqlpre . "ORDER BY `paid_order_count` DESC";
+    }
+    elseif ('price_low2top'==$type) { //价格从低到高
+      $sql  = $sqlpre . "ORDER BY `shop_price` ASC";
+    }
+    elseif ('price_top2low'==$type) { //价格从高到低
+      $sql  = $sqlpre . "ORDER BY `shop_price` DESC";
+    }
+    elseif ('latest'==$type) { //新品
+      $sql  = $sqlpre . "ORDER BY `add_time` DESC";
+    }
+    elseif ('category'==$type) { //按分类
       $cat_id_in = '';
       if (isset($extra['cat_ids']) && !empty($extra['cat_ids'])) {
         $cat_id_in = implode(',', $extra['cat_ids']);
-        $sql  = $sqlpre . "AND `cat_id` IN({$cat_id_in}) ORDER BY `add_time` DESC LIMIT %d, %d";
-        $ret  = D()->raw_query($sql,$start,$limit)->fetch_array_all();
+        $sql  = $sqlpre . "AND `cat_id` IN({$cat_id_in}) ORDER BY `add_time` DESC";
       }
+    }
+    if (''!=$sql) {
+      $sql.= " LIMIT %d, %d";
+      $ret = D()->raw_query($sql,$start,$limit)->fetch_array_all();
     }
     
     if (!empty($ret)) {

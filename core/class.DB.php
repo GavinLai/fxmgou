@@ -430,7 +430,7 @@ class DB {
     $server_mode  = self::WRITABLE; //Because of 'INSERT', so use self::WRITABLE
     $insertkeysql = $insertvaluesql = $comma = '';
     foreach ($insertarr as $insert_key => $insert_value) {
-      $insertkeysql   .= $comma.'`'.$insert_key.'`';
+      $insertkeysql   .= $comma.'`'.trim($insert_key).'`';
       $insertvaluesql .= $comma.'\''.$this->escape_string($insert_value, $server_mode).'\'';
       $comma = ',';
     }
@@ -465,7 +465,7 @@ class DB {
     $server_mode = self::WRITABLE; //Because of 'UPDATE', so use self::WRITABLE
     $setsql = $comma = '';
     foreach ($setarr as $set_key => $set_value) {
-      $setsql .= $comma.'`'.$set_key.'`=\''.$this->escape_string($set_value, $server_mode).'\'';
+      $setsql .= $comma.'`'.trim($set_key).'`=\''.$this->escape_string($set_value, $server_mode).'\'';
       $comma = ',';
     }
     $where = $comma = '';
@@ -474,7 +474,7 @@ class DB {
     }
     elseif(is_array($wherearr)) {
       foreach ($wherearr as $key => $value) {
-        $where .= $comma.'`'.$key.'`=\''.$this->escape_string($value, $server_mode).'\'';
+        $where .= $comma.'`'.trim($key).'`=\''.$this->escape_string($value, $server_mode).'\'';
         $comma  = ' AND ';
       }
     }
@@ -507,7 +507,7 @@ class DB {
     elseif(is_array($wherearr)) {
       $comma = '';
       foreach ($wherearr as $key => $value) {
-        $where .= $comma.'`'.$key.'`=\''.$this->escape_string($value, $server_mode).'\'';
+        $where .= $comma.'`'.trim($key).'`=\''.$this->escape_string($value, $server_mode).'\'';
         $comma  = ' AND ';
       }
     }
@@ -655,7 +655,7 @@ class DB {
       if (is_array($where_condition)) {
         $where = $comma = '';
         foreach ($where_condition AS $k => $v) {
-          $where .= $comma . '`'.$k.'`=\''.$this->escape_string($v, $this->_select_mode).'\'';
+          $where .= $comma . '`'.trim($k).'`=\''.$this->escape_string($v, $this->_select_mode).'\'';
           $comma  = ' AND ';
         }
       }

@@ -83,6 +83,9 @@ class Wxpay_Controller extends Controller {
         
           //记录订单操作记录
           Order::order_action_log($order_id, ['action_note'=>'用户支付']);
+          
+          //更新订单下所有商品的"订单数"
+          Goods::updateGoodsOrderCntByOrderid($order_id);
         }
         else {
           D()->unlock_tables();// 解锁

@@ -60,13 +60,6 @@ class Order {
   }
   
   /**
-   * 
-   */
-  static function order_paid() {
-    
-  }
-  
-  /**
    * 取消订单
    *
    * @param integer $order_id
