@@ -161,7 +161,7 @@ class Default_Controller extends Controller {
       //获取商品信息
       $goods_info = Default_Model::getGoodsInfo($goods_id);
       if (empty($goods_info)) {
-        $errmsg = '查询商品不存在: goods_id: '.$goods_id;
+        $errmsg = "查询商品不存在或已下架(商品id: {$goods_id})";
       }
       else {
         

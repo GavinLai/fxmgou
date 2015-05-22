@@ -41,10 +41,21 @@ $('.nav a').click(function(){
   </div>
 </nav>
 <script>
+var nav_disabled = false;
+function nav_set_disabled() {
+	var nav_no    = '<?=$nav_no?>';
+	var nav_flag1 = '<?=$nav_flag1?>';
+	if (nav_no=='2' && nav_flag1=='item') {
+		nav_disabled = true;
+		$('#btn-collect').addClass('txt-disabled');
+		$('#btn-add-to-cart').addClass('disabled');
+	}
+}
 $(function(){
 
 <?php if ('item'==$nav_flag1):?>
 $('#btn-add-to-cart').click(function(){
+	if (nav_disabled) return false;
 	var _this = $(this);
 	if (_this.attr('data-ajaxing')=='1') return;
 	_this.attr('data-ajaxing', 1);
@@ -67,6 +78,7 @@ $('#btn-add-to-cart').click(function(){
 });
 
 $('#btn-collect').click(function(){
+	if (nav_disabled) return false;
 	var _this = $(this);
 	if (_this.attr('data-ajaxing')=='1') return false;
 	_this.attr('data-ajaxing', 1);

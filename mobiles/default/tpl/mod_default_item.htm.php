@@ -3,6 +3,7 @@
 <?php if(''!==$errmsg):?>
 
 <div class="error"><?=$errmsg?></div>
+<script>$(function(){nav_set_disabled();});</script>
 
 <?php else:?>
 
