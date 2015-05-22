@@ -11,11 +11,11 @@
           <em>￥<?=$it['shop_price']?></em>
           <span class="tip">
           <?php if($order=='click'):?>
-          访问量: <?=$it['click_count']?>
+          <?=$it['click_count']?>查看
           <?php elseif($order=='collect'):?>
-          收藏数: <?=$it['collect_count']?>
+          <?=$it['collect_count']?>收藏
           <?php else:?>
-          共售 <?=$it['paid_order_count']?> 笔
+          共售<?=$it['paid_order_count']?>笔
           <?php endif;?>
           </span>
           <span class="dmore">...</span>
@@ -38,7 +38,7 @@
           <p class="gbtm">
             <span class="tip">
           <?php if($order=='click'):?>
-          访问量: <?=$it['click_count']?>
+          查看数: <?=$it['click_count']?>
           <?php elseif($order=='collect'):?>
           收藏数: <?=$it['collect_count']?>
           <?php else:?>
