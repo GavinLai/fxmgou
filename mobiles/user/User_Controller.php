@@ -183,7 +183,7 @@ class User_Controller extends Controller {
    */
   public function oauth(Request $request, Response $response)
   {
-    trace_debug('weixin_oauth2_callback_doing', $_GET);
+    //trace_debug('weixin_oauth2_callback_doing', $_GET);
     $code = $request->get('code', '');
     if (''!=$code) { //授权通过
       $state = $request->get('state', '');
