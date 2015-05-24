@@ -52,20 +52,23 @@ class Default_Model extends Model {
   public static function getGoodsList($type = '', $order = '', $start = 0, $limit = 10, Array $extra = array()) {
     
     $ectb = ectable('goods');
-    $ectb_rel = ectable('order_goods');
+    $ectb_coll = ectable('collect_goods');
     
     $zonghe_order = '';
     if (''==$order||'zonghe'==$order) { //综合排序，算法：zonghe_order = (click_count * 1 + collect_count * 100 + paid_order_count * 1000)
-      $zonghe_order = ",(click_count * 1 + collect_count * 100 + paid_order_count * 1000) AS zonghe_order";
+      $zonghe_order = ",(g.click_count * 1 + g.collect_count * 100 + g.paid_order_count * 1000) AS zonghe_order";
     }
     
-    $fields = "`goods_id`,`cat_id`,`goods_sn`,`goods_name`,`click_count`,`collect_count`,`paid_order_count`,`brand_id`,`goods_number`,`market_price`,`shop_price`,`goods_thumb`,`goods_img`,`add_time`,`last_update`{$zonghe_order}";
-    $sqlpre = "SELECT {$fields} FROM {$ectb} WHERE `is_on_sale`=1 AND `goods_img`<>'' ";
+    $user_id= $GLOBALS['user']->ec_user_id;
+    $user_id= intval($user_id);
+    $fields = "g.`goods_id`,g.`cat_id`,g.`goods_sn`,g.`goods_name`,g.`click_count`,g.`collect_count`,g.`paid_order_count`,g.`brand_id`,g.`goods_number`,g.`market_price`,g.`shop_price`,g.`goods_thumb`,g.`goods_img`,g.`add_time`,g.`last_update`{$zonghe_order}";
+    $fields.= ",IF(cg.goods_id is NULL, 0, 1) AS collected";
+    $sqlpre = "SELECT {$fields} FROM {$ectb} g LEFT JOIN {$ectb_coll} cg ON cg.user_id={$user_id} AND g.goods_id=cg.goods_id WHERE g.`is_on_sale`=1 AND g.`goods_img`<>'' ";
     $ret    = [];
     
     $sql    = '';
     if ('latest'==$type) { //新品
-      $sql  = $sqlpre . "ORDER BY `add_time` DESC";
+      $sql  = $sqlpre . "ORDER BY g.`add_time` DESC";
     }
     else { //按分类查询
       
@@ -73,10 +76,10 @@ class Default_Model extends Model {
       if (isset($extra['cat_ids']) && !empty($extra['cat_ids'])) {
         if (is_array($extra['cat_ids'])) {
           $cat_id_in = implode(',', $extra['cat_ids']);
-          $sqlpre .= "AND `cat_id` IN({$cat_id_in}) ";
+          $sqlpre .= "AND g.`cat_id` IN({$cat_id_in}) ";
         }
         else {
-          $sqlpre .= "AND `cat_id`=".$extra['cat_ids']." ";
+          $sqlpre .= "AND g.`cat_id`=".$extra['cat_ids']." ";
         }
       }
       
@@ -84,22 +87,22 @@ class Default_Model extends Model {
         $sql  = $sqlpre . "ORDER BY `zonghe_order` DESC";
       }
       elseif ('click'==$order) { //按点击数
-        $sql  = $sqlpre . "ORDER BY `click_count` DESC";
+        $sql  = $sqlpre . "ORDER BY g.`click_count` DESC";
       }
       elseif ('collect'==$order) { //按收藏数
-        $sql  = $sqlpre . "ORDER BY `collect_count` DESC";
+        $sql  = $sqlpre . "ORDER BY g.`collect_count` DESC";
       }
       elseif ('paid'==$order) { //按订单数
-        $sql  = $sqlpre . "ORDER BY `paid_order_count` DESC";
+        $sql  = $sqlpre . "ORDER BY g.`paid_order_count` DESC";
       }
       elseif ('price_low2top'==$order) { //价格从低到高
-        $sql  = $sqlpre . "ORDER BY `shop_price` ASC";
+        $sql  = $sqlpre . "ORDER BY g.`shop_price` ASC";
       }
       elseif ('price_top2low'==$order) { //价格从高到低
-        $sql  = $sqlpre . "ORDER BY `shop_price` DESC";
+        $sql  = $sqlpre . "ORDER BY g.`shop_price` DESC";
       }
       else { //默认按添加时间倒排
-        $sql  = $sqlpre . "ORDER BY `add_time` DESC";
+        $sql  = $sqlpre . "ORDER BY g.`add_time` DESC";
       }
       
     }

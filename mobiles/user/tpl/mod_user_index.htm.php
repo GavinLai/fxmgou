@@ -1,6 +1,6 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
 <div class="uc-logo">
-  <img src="<?=$userInfo['logo']?>" alt="头像" /><br/>
+  <img src="<?php echo Fn::default_logo();?>" onload="imgLazyLoad(this,'<?=$userInfo['logo']?>')" alt="头像" /><br/>
   <?=$userInfo['nickname']?>
 </div>
 <ul class="uc-funlist">
