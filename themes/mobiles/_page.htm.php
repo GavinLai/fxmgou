@@ -28,7 +28,7 @@
 <div id="rtWrap">
   <?php include T($tpl_header);?>
   <div id="activePage" class="useTopNav-<?=$topnav_no?> useNav-<?=$nav_no?>"><section class="scrollArea"></section>
-    <div class="pageBg">该应用由<em>福小蜜</em>提供</div>
+    <div class="pageBg"><em>“正品保证”</em>不仅仅是一句口号</div>
   </div>
   <div id="loadingCanvas" class="useTopNav-<?=$topnav_no?> useNav-<?=$nav_no?>"></div>
   <div class="hide"><img src="<?php echo ploadingimg()?>" alt=""/></div>

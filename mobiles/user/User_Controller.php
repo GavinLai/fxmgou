@@ -18,6 +18,7 @@ class User_Controller extends Controller {
     return [
       'user' => 'index',
       'user/oauth/%s' => 'oauth',
+      'user/collect/cancel' => 'collect_cancel',
     ];
   }
   
@@ -74,18 +75,24 @@ class User_Controller extends Controller {
     
     if ($request->is_post()) {
       
-      $res = ['flag'=>'FAIL', 'data'=>''];
+      $res = ['flag'=>'FAIL', 'msg'=>''];
+      
       $content = $request->post('content', '');
       $contact = $request->post('contact', '');
-      if(content==''){
-        $res['data'] = '内容不能为空';
+      $content = trim($content);
+      $contact = trim($contact);
+      
+      if($content==''){
+        $res['msg'] = '内容不能为空';
+        $response->sendJSON($res);
+      }
+      
+      $fid = User_Model::saveFeedback(['msg_content'=>$content, 'user_email'=> $contact]);
+      if($fid>0){
+        $res['flag'] = 'SUC';
+        $res['backurl'] = U('user');
       }else{
-        $fid = User_Model::saveFeedback(['content'=>$content, 'contact'=> $contact]);
-        if($fid>0){
-          $res['flag'] = 'SUC';
-        }else{
-          $res['data']= '系统繁忙，请稍后再试！';
-        }
+        $res['msg']= '系统繁忙，请稍后再试！';
       }
       $response->sendJSON($res);
       
@@ -102,17 +109,44 @@ class User_Controller extends Controller {
   }
   
   public function collect(Request $request, Response $response){
-    $uid  = $GLOBALS['user']->uid;
-
     $this->v->set_tplname('mod_user_collect');
 
     if ($request->is_hashreq()) {
-      $list = [];
-      $cate = [];
-      $this->v->assign('list', $list)->assign('cate', $cate);
+      $collect_list = Goods::getUserCollectList();
+      $this->v->assign('collect_list', $collect_list);
+      $this->v->assign('collect_num', count($collect_list));
     }
 
     $response->send($this->v); 
+  }
+  
+  public function collect_cancel(Request $request, Response $response){
+    
+    if ($request->is_post()) {
+      
+      $res = ['flag'=>'FAIL','msg'=>'取消失败'];
+      
+      $ec_user_id = $GLOBALS['user']->ec_user_id;
+      if (!$ec_user_id) {
+        $res['msg'] = '未登录, 请登录';
+        $response->sendJSON($res);
+      }
+      
+      $rec_id = $request->post('rec_id', 0);
+      if (!$rec_id) {
+        $res['msg'] = '记录id为空';
+        $response->sendJSON($res);
+      }
+      
+      $b = Goods::goodsCollectCancel($rec_id);
+      if ($b) {
+        $res = ['flag'=>'SUC','msg'=>'取消成功'];
+      }
+      
+      $response->sendJSON($res);
+      
+    }
+    
   }
 
   /**

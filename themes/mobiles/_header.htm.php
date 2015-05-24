@@ -64,7 +64,7 @@ function change_sortorder(ele) {
 <nav class="topnav topnav-cart clearfix" id="topnav-cart">
   <a class="c-3-1<?php if('cartlist'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/cart/list')?>">购物车</a>
   <a class="c-3-1<?php if('buyrecord'==$nav_flag2):echo ' on';endif;?>" href="<?php echo U('trade/order/record','showwxpaytitle=1')?>">购买记录</a>
-  <a class="c-3-1" href="<?php echo U('explore')?>">返回购买</a>
+  <a class="c-3-1" href="<?=$backurl?>">☜返回</a>
 </nav>
 <script>
 $(function(){

@@ -23,7 +23,8 @@ html,body {
 
 /*----- project relative css -----*/
 /*通用*/
-a:hover{ text-decoration: none; }
+a:hover { text-decoration: none; }
+a.op { color: #00a0f8;font-size: 14px;font-size: 1.4rem; }
 .clickbg { background: #e9e9e9; }
 .btn {
   display: inline-block;
@@ -97,6 +98,8 @@ a:hover{ text-decoration: none; }
 .check.checked { background-position:0 -20px; }
 .check.delete { background-position:-20px 0; }
 .error { text-align: center;padding-top: 100px;font-size: 16px;font-size: 1.6rem; }
+.themore {-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;margin:20px 0;}
+.themore a{display:block;height:45px;line-height:45px;color:#000;text-align:center;font-size:16px;font-size:1.6rem;}
 
 /*主体页面dom*/
 #rtWrap { width: 100%;height: 100%;margin: 0 auto;position: relative;background: #f1f1f1;overflow: hidden; }
@@ -142,8 +145,8 @@ a:hover{ text-decoration: none; }
 
 /*底部主导航*/
 .nav { height: 44px;background: #f8f8f8;width: 100%;border-top: 1px solid #ddd;position: absolute;bottom: 0;left: 0; -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.2);box-shadow: 0 0 4px rgba(0,0,0,0.2); }
-.nav-it { display: block;float: left;width: 25%;height: 100%;line-height: 44px;text-align: center;border-right: 1px solid #ddd;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box; }
-.nav-it:nth-child(4){ border-right: none; }
+.nav-it { display: block;line-height: 44px;text-align: center;border-right: 1px solid #ddd;-moz-box-sizing: border-box;-webkit-box-sizing: border-box;-o-box-sizing: border-box;-ms-box-sizing: border-box;box-sizing: border-box; }
+.nav-it.last { border-right: none; }
 .nav-it a { color: #5f646e;display: block;height: 100%;font-size: 18px;font-size: 1.8rem; }
 .nav-it a.cur { color: #f15a0c; }
 .nav-2 {
@@ -155,7 +158,7 @@ a:hover{ text-decoration: none; }
 	background-color: #fff;
 }
 .nav-2 .nav-body { padding: 0 6px;height: 100%;font-size: 14px;font-size: 1.4rem; }
-.nav-2 .nav-it { width: 33.33333%;line-height: 40px;border: none;padding: 0 3px; }
+.nav-2 .nav-it { line-height: 40px;border: none;padding: 0 3px; }
 .nav-2 .btn {
 	display: inline-block;
 	width: 100%;
@@ -325,6 +328,9 @@ a:hover{ text-decoration: none; }
 	background: #fff;
 	margin: 10px 0;
 }
+.list-container.list-container-single {
+	margin: 0;
+}
 .list-head {
 	border-top: 1px solid #ddd;
 	height: 37px;
@@ -336,6 +342,11 @@ a:hover{ text-decoration: none; }
 }
 .list-head.list-head-blue {
 	background: #eaf8ff;
+}
+.list-container-single .list-head {
+	border-style: solid;
+	border-color: #ddd;
+	border-width: 0 0 1px;
 }
 .list-head a { color: #00a0f8; }
 .list-body {
@@ -584,33 +595,34 @@ a:hover{ text-decoration: none; }
 .order-status > p a { color: #00a0f8; }
 .order-status .btn { padding: 0 5px; }
 
-/*PC下的样式*/
-@media only screen and (min-width: 1025px){
-
-	#rtWrap {width: 720px;}
-  .swipe{min-height:300px;}
-  .list-body .col-1,.list-body .col-2 {
-	  padding: 0;
-    height: 175px;
-    line-height: 175px;
-  }
-
+/*用户中心*/
+.uc-logo { text-align:center; background: #fff; color:#333; font-size:18px;font-size:1.8rem; padding:20px 0;border-bottom:1px solid #ddd;}
+.uc-logo img { max-width:74px;-webkit-border-radius: 74px;-moz-border-radius: 74px;border-radius: 74px;}
+.uc-funlist { border-style: solid;border-color: #ddd;border-width: 1px 0;background: #fff;line-height: 40px;margin: 15px 0; }
+.uc-funlist .funit { padding-left: 15px; }
+.uc-funlist .funit.clickbg { background: #ddd; }
+.uc-funlist .funbtn { display: block;border-style: solid;border-color: #ddd;border-width: 0 0 1px;position: relative;color: #333;font-size: 16px;font-size: 1.6rem; }
+.uc-funlist .funit.last .funbtn { border-width: 0; }
+.uc-funlist .funit.nobb .funbtn { border-color: #fff; }
+.uc-funlist .funbtn i { margin-right: 3px; }
+.uc-funlist .funbtn:after {
+  content: '';
+  position: absolute;
+  top: 30%;
+  right: 10px;
+  width: 16px;
+  height: 16px;
+  background-image: url("../img/2x/address_right_arrow.png");
+  background-size: 16px 16px;
 }
-
-/*左键功能设置1*/
-.timg{ text-align:center; color:#000000; font-size:18px;font-size:1.8rem; padding:22px; margin-bottom:10px;border-bottom:1px solid #e9e9e9;}
-.timg img{ max-width:74px;border-radius: 74px;}
-.tlist{ width:93%; border:1px solid #e9e9e9; height:35px;line-height: 35px; margin:0 auto 5px;}
-.tlist a {display: block;width:100%;height:100%;}
-.tlist a:link,  .tlist a:visited {color:#333;}
-.tlist a:hover, .tlist a:active {color:#333;}
-.tlist i{ margin:7px 10px 0 10px; background:url(../img/icon.png) no-repeat;background-size: 250px; float:left; display:inline-block;width:20px;height:19px;}
-.tlist span{ float:left;font-size:14px; font-size:1.4rem; display:block;line-height:35px;}
-.tlist .i1{ background-position:-20px -148px;}
-.tlist .i2{ background-position:-20px -169px;}
-.tlist .i3{ background-position:-20px -227px;}
-.tlist .i4{ background-position:-20px -190px;}
-.tlist .i5{ background-position:-20px -208px;}
+.uc-feedback { background: #fff;padding: 30px 10% 150px; }
+.uc-feedback h2 { font-size: 18px;font-size: 1.8rem; }
+.uc-feedback textarea { width: 100%; min-height: 100px; }
+.uc-feedback .inptxt { border: 1px solid #ccc;width: 80%;height: 25px;line-height:25px; }
+.uc-feedback .btn { margin-top: 15px;padding: 4px 8px; }
+.uc-feedback a.ret { margin-left: 5px;color: #00a0f8;padding: 0 5px;text-decoration: underline; }
+.list-body-collect .tip { color: #999;font-size: 12px;font-size: 1.2rem; }
+.list-body-collect a.op { color: #ff6600; }
 
 /* 微信操作提示 */
 .cover {
@@ -639,28 +651,28 @@ textarea.flexText,.flex-text-wrap {outline: 0;margin: 0;border: none;padding: 0;
 .flex-text-wrap pre {display: block;visibility: hidden;}
 .flex-text-wrap {width:92%;margin:15px auto;}
 textarea.flexText,.flex-text-wrap pre {
-	/*
-	 * Add custom styling here
-	 * Ensure that typography, padding, border-width (and optionally min-height) are identical across textarea & pre
-	 */
-	background: #fffdd2;
-	border: 2px dashed #c6c6c6;
-	font-size: 1.8rem;
-	line-height: 1.7em;
-	margin: 0;
-	padding: 10px;
+  /*
+   * Add custom styling here
+   * Ensure that typography, padding, border-width (and optionally min-height) are identical across textarea & pre
+   */
+  background: #fffdd2;
+  border: 2px dashed #c6c6c6;
+  font-size: 1.8rem;
+  line-height: 1.7em;
+  margin: 0;
+  padding: 10px;
 }
 /* END flexText plugin style */
 
-.themore {-webkit-border-radius:5px;-moz-border-radius:5px;border-radius:5px;margin:20px 0;}
-.themore a{display:block;height:45px;line-height:45px;color:#000;text-align:center;font-size:16px;font-size:1.6rem;}
+/*PC下的样式*/
+@media only screen and (min-width: 1025px){
 
-.lblk {display:inline-block;}
-.center{text-align: center;}
+	#rtWrap {width: 720px;}
+  .swipe{min-height:300px;}
+  .list-body .col-1,.list-body .col-2 {
+	  padding: 0;
+    height: 175px;
+    line-height: 175px;
+  }
 
-
-
-
-
-
-
+}

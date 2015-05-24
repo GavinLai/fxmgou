@@ -21,7 +21,7 @@ class Fn extends Func {
   /**
    * 默认头像
    */
-  public static function default_logo(){
+  static function default_logo(){
     return C('env.contextpath').'misc/images/avatar/default_ulogo.png';
   }
   
@@ -32,7 +32,7 @@ class Fn extends Func {
    * @param boolean $with_back_btn 带“返回”按钮
    * @param string $title 文档标题
    */
-  public static function show_error_message($msg='非法访问！', $with_back_btn=false, $title='错误发生 - 福小蜜') {
+  static function show_error_message($msg='非法访问！', $with_back_btn=false, $title='错误发生 - 福小蜜') {
     $ctrl_str = '';
     if ($with_back_btn) {
       $ctrl_str .= '<a href="javascript:history.back()">返回</a>&nbsp;|&nbsp;';
@@ -58,7 +58,7 @@ class Fn extends Func {
    * 生成订单号
    * @return string
    */
-  public static function gen_order_no() {
+  static function gen_order_no() {
     /* 选择一个随机的方案 */
     mt_srand((double) microtime() * 1000000);
     return 'E'.date('YmdHis') . str_pad(mt_rand(1, 99999), 5, '0', STR_PAD_LEFT);
@@ -89,7 +89,7 @@ class Fn extends Func {
    * @param integer $status
    * @return mixed(string|array) 当传入的$status<0时，返回整个状态数组，否则，返回对应状态码描述，返回false时表示不存在$status指定的状态
    */
-  public static function order_status($status) {
+  static function order_status($status) {
     static $status_set = array(
       OS_UNCONFIRMED   => '未确认',
       OS_CONFIRMED     => '已确认',
@@ -108,7 +108,7 @@ class Fn extends Func {
    * @param integer $status
    * @return mixed(string|array) 当传入的$status<0时，返回整个状态数组，否则，返回对应状态码描述，返回false时表示不存在$status指定的状态
    */
-  public static function shipping_status($status) {
+  static function shipping_status($status) {
     static $status_set = array(
       SS_UNSHIPPED    => '未发货',
       SS_SHIPPED      => '已发货',
@@ -127,7 +127,7 @@ class Fn extends Func {
    * @param integer $status
    * @return mixed(string|array) 当传入的$status<0时，返回整个状态数组，否则，返回对应状态码描述，返回false时表示不存在$status指定的状态
    */
-  public static function pay_status($status) {
+  static function pay_status($status) {
     static $status_set = array(
       PS_UNPAYED => '未付款',
       PS_PAYING  => '付款中',
@@ -142,7 +142,7 @@ class Fn extends Func {
    * @param integer $status
    * @return mixed(string|array) 当传入的$status<0时，返回整个状态数组，否则，返回对应状态码描述，返回false时表示不存在$status指定的状态
    */
-  public static function zonghe_status($status) {
+  static function zonghe_status($status) {
     static $status_set = array(
       CS_AWAIT_PAY  => '待付款', //货到付款且已发货且未付款，非货到付款且未付款
       CS_AWAIT_SHIP => '待发货', //货到付款且未发货，非货到付款且已付款且未发货
@@ -157,7 +157,7 @@ class Fn extends Func {
    * @param integer $status
    * @return mixed(string|array) 当传入的$status<0时，返回整个状态数组，否则，返回对应状态码描述，返回false时表示不存在$status指定的状态
    */
-  public static function oos_status($status) {
+  static function oos_status($status) {
     static $status_set = array(
       OOS_WAIT    => '等待货物备齐后再发',
       OOS_CANCEL  => '取消订单',
@@ -165,6 +165,22 @@ class Fn extends Func {
     );
     return self::status($status_set, $status);
   }
+  
+  /**
+   * 读取($value为NULL时)或者设置缓存refer uri
+   * @param string $value
+   */
+  static function cache_refer_uri($value = NULL) {
+    $ck = 'refer_uri';
+    if (!isset($value)) {
+      $_SESSION[$ck] = $value;
+    }
+    else {
+      return isset($_SESSION[$ck]) ? $_SESSION[$ck] : null;
+    }
+  }
+  
+  
   
 }
  

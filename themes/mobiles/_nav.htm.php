@@ -10,10 +10,9 @@
 <?php if ($nav_no==1):?>
 
 <nav id="nav-1" class="nav no-bounce">
- <div class="nav-it"><a href="<?php echo U()?>" <?php if('home'==$nav_flag1):?>class="cur"<?php endif;?> rel="home">首页</a></div>
- <div class="nav-it"><a href="<?php echo U('explore')?>" <?php if('explore'==$nav_flag1):?>class="cur"<?php endif;?> rel="explore">宝贝</a></div>
- <div class="nav-it"><a href="<?php echo U('user')?>" <?php if('user'==$nav_flag1):?>class="cur"<?php endif;?> rel="user">我的</a></div>
- <div class="nav-it"><a href="http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205641974&idx=1&sn=d21c0b265b021ce6e6f9b693551d83b1#rd" rel="about">关于</a></div>
+ <div class="c-3-1 nav-it"><a href="<?php echo U()?>" <?php if('home'==$nav_flag1):?>class="cur"<?php endif;?> rel="home">首页</a></div>
+ <div class="c-3-1 nav-it"><a href="<?php echo U('explore')?>" <?php if('explore'==$nav_flag1):?>class="cur"<?php endif;?> rel="explore">所有宝贝</a></div>
+ <div class="c-3-1 nav-it last"><a href="<?php echo U('user')?>" <?php if('user'==$nav_flag1):?>class="cur"<?php endif;?> rel="user">我的</a></div>
 </nav>
 <script>
 $('.nav a').click(function(){
@@ -27,9 +26,9 @@ $('.nav a').click(function(){
 <nav id="nav-2" class="nav nav-<?=$nav_no?> nav-<?=$nav_flag1?> no-bounce">
   <div class="nav-body clearfix">
 <?php if ('item'==$nav_flag1):?>
-    <div class="nav-it"><a href="<?php echo U('explore')?>" class="btn">☜返回</a></div>
-    <div class="nav-it"><a href="javascript:void(0);" class="btn" id="btn-collect" data-goods_id="<?=$the_goods_id?>">收藏</a></div>
-    <div class="nav-it"><a href="javascript:void(0);" class="btn btn-orange" id="btn-add-to-cart" data-goods_id="<?=$the_goods_id?>">加入购物车</a></div>
+    <div class="c-3-1 nav-it"><a href="<?=$backurl?>" class="btn">☜返回</a></div>
+    <div class="c-3-1 nav-it"><a href="javascript:void(0);" class="btn" id="btn-collect" data-goods_id="<?=$the_goods_id?>">收藏</a></div>
+    <div class="c-3-1 nav-it"><a href="javascript:void(0);" class="btn btn-orange" id="btn-add-to-cart" data-goods_id="<?=$the_goods_id?>">加入购物车</a></div>
 <?php elseif ('cart'==$nav_flag1):?>
     <div class="c-lt checked" id="cart-checkall"><span class="check checked"></span>全选</div>
     <div class="c-rt">

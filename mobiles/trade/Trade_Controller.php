@@ -189,7 +189,8 @@ class Trade_Controller extends Controller {
       $this->v->assign('cartRecNum', count($cartGoods));
     }
     else {
-      
+      $backurl = U('explore');
+      $this->v->assign('backurl', $backurl);
     }
     $response->send($this->v);
   }
@@ -227,7 +228,12 @@ class Trade_Controller extends Controller {
       
     }
     else {
-      
+      $refer = $request->refer();
+      $backurl = U('explore');
+      if (strpos($refer, '/user')!==false) { //来自用户中心
+        $backurl = U('user');
+      }
+      $this->v->assign('backurl', $backurl);
     }
     $response->send($this->v);
   }

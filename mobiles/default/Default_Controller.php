@@ -215,7 +215,12 @@ class Default_Controller extends Controller {
     
     }
     else {
-    
+      $refer = $request->refer();
+      $backurl = U('explore');
+      if ($refer) {
+        $backurl = $refer;
+      }
+      $this->v->assign('backurl', $backurl);
     }
     $response->send($this->v);
   }

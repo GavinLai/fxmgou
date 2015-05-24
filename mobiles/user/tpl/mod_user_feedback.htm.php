@@ -1,34 +1,42 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-  <script>gData.referURI='/user';</script>
-	<form name="feedback" id="feedback" action="<?php echo U('user/feedback')?>" method="post">
-	<div class="mywordsindex">
-    	<h2>我的想法和建议：</h2>
-      <textarea name="content" id="content" cols="" rows=""></textarea>
-      <h2>联系方式（可选）</h2>
-      <input name="contact" id="contact" type="text" class="myinpt"/>
-      <input name="sub" type="submit" class="upbtn" value="发送反馈"/>
-  </div>
-	</form>
+<div class="uc-feedback">
+<form name="frm_feedback" id="frm_feedback" action="<?php echo U('user/feedback')?>" method="post">
+  <h2>我的想法和建议：</h2>
+  <p><textarea name="content" id="frm_content" class="bbsizing"></textarea></p>
+  <h2>联系邮箱(可选)：</h2>
+  <p><input name="contact" id="frm_contact" type="text" class="inptxt" /></p>
+  <p><input name="submit" type="submit" class="btn btn-orange" id="frm_submit" value="发送反馈" /><a class="ret" href="<?php echo U('user')?>">返回</a></p>
+</form>
+</div>
 <?php include T($tpl_footer);?>	
 <script>
-	$('#feedback').bind('submit', function(){
+$(function(){
+	$('#frm_feedback').bind('submit', function(){
+
+		var _btn = $('#frm_submit');
+		_btn.val('发送中...').attr('disabled',true);
+		
 		var post_data = {content:'',contact:''};
-		post_data.content = $('#content').val();
-		post_data.contact = $('#contact').val();
+		post_data.content = $('#frm_content').val().trim();
+		post_data.contact = $('#frm_contact').val().trim();
 		if(post_data.content==''){
 			alert('请输入您的意见');
-			$('contact').focus();
+			$('#frm_content').focus();
 			return false;
 		}
 
-		$.post('<?php echo U('user/feedback')?>', post_data, function(data){
-			if(data.flag=='SUC'){
+		$.post('<?php echo U('user/feedback')?>', post_data, function(ret){
+			_btn.val('发送完成').removeAttr('disabled');
+			if(ret.flag=='SUC'){
 				alert('您的意见我们已经收到，感谢您的反馈');
+				window.location.href = ret.backurl;
 			}else{
-				alert(data.data);
+				_btn.val('发送反馈');
+				alert(ret.msg);
 			}
 		}, 'json');
 
 		return false;
 	});
+});
 </script>

@@ -745,6 +745,55 @@ HERESQL;
     
   }
   
+  /**
+   * 收藏商品
+   * 
+   * @param integer $rec_id
+   * @return boolean
+   */
+  public static function goodsCollectCancel($rec_id) {
+    
+    $ectb = ectable('collect_goods');
+    $collect_goods_id = D()->from($ectb)->where(['rec_id'=>$rec_id])->select('goods_id')->result();
+    if (!empty($collect_goods_id)) {
+      $effrows = D()->delete($ectb, ['rec_id'=>$rec_id], true);
+      if ($effrows==1) {
+        self::changeGoodsCollectCnt($collect_goods_id, -1); //要减去相应的收藏数
+        return true;
+      }
+    }
+    return false;
+    
+  }
+
+  /**
+   * 获取用户收藏列表
+   * 
+   * @return array
+   */
+  static function getUserCollectList() {
+     $user_id = $GLOBALS['user']->ec_user_id;
+     if (!$user_id) return [];
+     
+     $ectb_collect = ectable('collect_goods');
+     $ectb_goods   = ectable('goods');
+     $list = D()->from("{$ectb_collect} cg INNER JOIN {$ectb_goods} g ON cg.`goods_id`=g.`goods_id`")
+                ->where(['user_id'=>$user_id])
+                ->order_by('cg.add_time DESC')
+                ->select('cg.*','g.goods_name','g.goods_thumb')
+                ->fetch_array_all();
+     if (!empty($list)) {
+       foreach ($list AS &$g) {
+         $g['goods_url']   = self::goods_url($g['goods_id']);
+         $g['goods_thumb'] = self::goods_picurl($g['goods_thumb']);
+       }
+       return $list;
+     }
+     
+     return [];
+     
+  }
+  
 }
  
 /*----- END FILE: class.Goods.php -----*/

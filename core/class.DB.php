@@ -495,10 +495,12 @@ class DB {
    * 
    * @param string $tablename
    * @param array $wherearr
+   * @param boolean $rawmode
+   *  whether raw mode, when in raw mode, $tablename use original value, rather than with table prefix
    * @return int
    *   affected rows
    */
-  public function delete($tablename, Array $wherearr) {
+  public function delete($tablename, Array $wherearr, $rawmode = FALSE) {
     $server_mode = self::WRITABLE; //Because of 'DELETE', so use self::WRITABLE
     $where = '';
     if(empty($wherearr)) {
@@ -515,9 +517,11 @@ class DB {
       $where = $wherearr; //unsafe
     }
     
-    $tablename = $this->tablePrefix . $tablename;
+    if (!$rawmode) {
+      $tablename = '`' . $this->tablePrefix . $tablename . '`';
+    }
     $this->realtime_query = TRUE;  //make sure use writable mode
-    $rs = $this->raw_query("DELETE FROM `{$tablename}` WHERE {$where}");
+    $rs = $this->raw_query("DELETE FROM {$tablename} WHERE {$where}");
     $this->realtime_query = FALSE; //restore 
     return $rs->affected_rows();
   }
@@ -589,9 +593,15 @@ class DB {
    * 
    * @param string $fields
    *   SELECT fileds string
+   * @param ...
+   *   Separate writing fields
    * @return DbResult
    */
   public function select($fields = '*') {
+    $args = func_get_args();
+    if (count($args) > 1) {
+      $fields = implode(',', $args);
+    }
     $this->_sql = "SELECT {$fields}".$this->_sql;
     if($this->_select_mode==self::WRITABLE) $this->realtime_query = TRUE;  //make sure use writable mode
     $rs = $this->query(empty($this->_select_cache) ? $this->_sql : array_merge(array($this->_sql), $this->_select_cache));
