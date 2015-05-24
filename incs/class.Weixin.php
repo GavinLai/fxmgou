@@ -1119,7 +1119,7 @@ class WeixinHelper {
       ['title'=>'防晒 | BananaBoat香蕉船', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=1&sn=c9fa26f2bf102a92312bcdc7492ccca0#rd'],
       ['title'=>'Banana Boat 香蕉船运动型防晒霜 SPF50+ 200g', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=2&sn=59dfe537e6b981939c654b754cf8b438#rd'],
       ['title'=>'Swisse护肝排毒片120片', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204971042&idx=1&sn=45609e9aeef25644ff2e798ab0c67c8c#rd'],
-      ['title'=>'女神养成三部曲', 'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204970269&idx=1&sn=de7a6eaba3e87891bc66858af6cb9cbe#rd'],
+      //['title'=>'女神养成三部曲', 'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204970269&idx=1&sn=de7a6eaba3e87891bc66858af6cb9cbe#rd'],
       ['title'=>'澳大利亚保健品市场本土三大品牌Blackmores、Swisse、Bio island', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204965844&idx=1&sn=4158ba58d80ada011707fa4e28c27079#rd']
     ];
     

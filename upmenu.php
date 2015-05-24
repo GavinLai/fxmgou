@@ -12,13 +12,18 @@ $json =<<<HEREDOC
 	"button" : 
 	[
 		{
-			"name" : "最新文章",
 			"type" : "click",
+			"name" : "最新文章",
 			"key"  : "100"
 		},
 		{
-			"name" : "关于小蜜",
+			"type" : "view",
+			"name" : "小蜜商城",
+			"url"  : "http://m.fxmgou.com/"
+		},
+		{
 			"type" : "click",
+			"name" : "关于小蜜",
 			"key"  : "101"
 		}
 	]
