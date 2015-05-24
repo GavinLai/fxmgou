@@ -68,7 +68,7 @@ class Default_Controller extends Controller {
       $ad = Default_Model::getAd($ad_name);
       
       //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('latest',0,6);
+      $goods_latest = Default_Model::getGoodsList('latest','',0,6);
       $this->v->assign('goods_latest',$goods_latest);
       
       //获取一级显示分类
@@ -76,7 +76,7 @@ class Default_Controller extends Controller {
       foreach ($category_top AS &$top) {
         $child_ids = Default_Model::getChildCategoryIds($top['cat_id']);
         $cat_ids   = array_merge([$top['cat_id']], $child_ids);
-        $goods_cate = Default_Model::getGoodsList('category',0,6,['cat_ids'=>$cat_ids]);
+        $goods_cate = Default_Model::getGoodsList('category','latest',0,6,['cat_ids'=>$cat_ids]);
         $top['goods_set'] = $goods_cate;
       }
       $this->v->assign('category_top',$category_top);
@@ -108,40 +108,64 @@ class Default_Controller extends Controller {
     $this->v->set_tplname('mod_default_explore');
     $this->nav_flag1 = 'explore';
     $this->topnav_no = 1; // >0: 表示有topnav bar，具体值标识哪个topnav bar(有多个的情况下)
-
+    
+    // 排序数据
     $order_set = [
       'zonghe'        => ['id' => 'zonghe'       , 'name' => '综合排序'   , 'is_show' => 1, 'is_last' => 0],
       'click'         => ['id' => 'click'        , 'name' => '人气最高'   , 'is_show' => 1, 'is_last' => 0],
       'collect'       => ['id' => 'collect'      , 'name' => '收藏最多'   , 'is_show' => 1, 'is_last' => 0],
       'paid'          => ['id' => 'paid'         , 'name' => '销量最好'   , 'is_show' => 1, 'is_last' => 0],
+      'latest'        => ['id' => 'latest'       , 'name' => '最新添加'   , 'is_show' => 0, 'is_last' => 0],
       'price_low2top' => ['id' => 'price_low2top', 'name' => '价格从低到高', 'is_show' => 1, 'is_last' => 0],
       'price_top2low' => ['id' => 'price_top2low', 'name' => '价格从高到低', 'is_show' => 1, 'is_last' => 1],
-      'latest'        => ['id' => 'latest'       , 'name' => '新品'       , 'is_show' => 0, 'is_last' => 0],
-      'category'      => ['id' => 'category'     , 'name' => '分类'       , 'is_show' => 0, 'is_last' => 0],
     ];
+    $this->v->assign('order_set', $order_set);
     
-    $order = $request->get('o', '');
-    if (''==$order) {
-      $order = 'zonghe';
+    // GET数据
+    $order  = $request->get('o', 'zonghe');
+    $type   = $request->get('t', 'category');
+    $cat_id = $request->get('cid', 0);
+    $cat_id = intval($cat_id);
+    if (!in_array($order, array_keys($order_set))) {
+      $order = 'latest';
     }
+    if (!in_array($type, ['latest','category'])) {
+      $type = 'category';
+    }
+    $cat_name = Default_Model::getCategoryName($cat_id);
+    if (empty($cat_name)) {
+      $cat_name = '分类';
+    }
+    
+    // 顶级分类，用于分类筛选
+    $category_top = Default_Model::getCategory(0, FALSE);
+    $this->v->assign('filter_categories', $category_top);
+    $this->v->assign('filter_category_num', count($category_top));
     
     if ($request->is_hashreq()) {
       
       $goods_list = [];
-      if ('latest'==$order) { //新品
-        $goods_list = Default_Model::getGoodsList('latest',0,20);
+      if ('latest'==$type) { //新品
+        $goods_list = Default_Model::getGoodsList('latest','',0,20);
       }
       else {
-        $goods_list = Default_Model::getGoodsList($order,0,50);
+        $extra = [];
+        if ($cat_id) {
+          $child_ids = Default_Model::getChildCategoryIds($cat_id);
+          $cat_ids   = array_merge([$cat_id], $child_ids);
+          $extra     = ['cat_ids'=>$cat_ids];
+        }
+        $goods_list = Default_Model::getGoodsList('category',$order,0,50,$extra);
       }
       $this->v->assign('goods_list',$goods_list);
       
     }
     else {
-  
+      
     }
     
-    $this->v->assign('order', $order)->assign('order_set', $order_set);
+    $this->v->assign('order', $order)->assign('type', $type);
+    $this->v->assign('the_cat_id', $cat_id)->assign('the_cat_name', $cat_name);
     $response->send($this->v);
   }
   

@@ -1,7 +1,4 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-
-<script>gData.referURI='/';</script>
-
 <div class="mainb">
   <div class="swipe">
     <ul id="slider" class="slider">

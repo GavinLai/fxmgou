@@ -1,5 +1,4 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>gData.referURI='/';</script>
 <?php if(''!==$errmsg):?>
 
 <div class="error"><?=$errmsg?></div>

@@ -1,5 +1,4 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>gData.referURI='/';</script>
 <div class="block block2" id="listyle-1">
   <ul class="liset">
   <?php foreach($goods_list AS $it):?>
@@ -55,13 +54,26 @@
 </div>
 
 <script type="text/html" id="downmenu-html">
-<div id="pageCover"></div>
-<ul class="bbsizing" id="down-sortmenu">
+<div class="pageCover" id="pageCover"></div>
+<ul class="bbsizing downmenu" id="down-sortmenu">
 <?php foreach ($order_set AS $it):?>
   <?php if(!$it['is_show']): continue; endif;?>
   <li class="mit<?php if($it['is_last']): echo ' last';endif;if($order==$it['id']): echo ' on';endif;?>">
-    <a href="<?php echo U('explore','zonghe'==$it['id']?'':'o='.$it['id'])?>" rel="<?=$it['id']?>"><?=$it['name']?></a>
+    <a href="<?php echo U('explore',($the_cat_id?'cid='.$the_cat_id.'&':'').('zonghe'==$it['id']?'':'o='.$it['id']))?>" rel="<?=$it['id']?>"><?=$it['name']?></a>
     <?php if($order==$it['id']): echo '<span>√</span>';endif;?>
+  </li>
+<?php endforeach;?>
+</ul>
+<ul class="bbsizing downmenu" id="down-filter">
+  <li class="mit<?php if($the_cat_id===0): echo ' on';endif;?>">
+    <a href="<?php echo U('explore',($order==''||$order=='zonghe' ? '' : 'o='.$order))?>" rel="0">全部分类</a>
+    <?php if($the_cat_id===0): echo '<span>√</span>';endif;?>
+  </li>
+<?php $i=0; foreach ($filter_categories AS $it):?>
+  <?php ++$i; if(!$it['is_show']): continue; endif;?>
+  <li class="mit<?php if($i==$filter_category_num): echo ' last';endif;if($the_cat_id==$it['cat_id']): echo ' on';endif;?>">
+    <a href="<?php echo U('explore',('cid='.$it['cat_id']).($order==''||$order=='zonghe' ? '' : '&o='.$order))?>" rel="<?=$it['cat_id']?>"><?=$it['cat_name']?></a>
+    <?php if($the_cat_id==$it['cat_id']): echo '<span>√</span>';endif;?>
   </li>
 <?php endforeach;?>
 </ul>
@@ -73,7 +85,12 @@
 $(function(){
 	F.pageactive.append($('#downmenu-html').html());
 	$('#pageCover').click(function(){
-		$('#topnav-btn-change-order').click();
+		if ($('#down-sortmenu').css('display')!='none') {
+			$('#topnav-btn-change-order').click();
+		}
+		else {
+			$('#topnav-btn-filter').click();
+		}
 		return false;
 	});
 });

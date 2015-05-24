@@ -19,10 +19,16 @@ class Default_Model extends Model {
   		return $ad_list;
   	}
   }
+  
+  public static function getCategoryName($cat_id) {
+    $cat_id = intval($cat_id);
+    $cat_name = D()->from(ectable('category'))->where(['cat_id'=>$cat_id])->select('cat_name')->result();
+    return $cat_name;
+  }
 
   public static function getCategory($parent_id = 0, $just_id = FALSE) {
     $ectb  = ectable('category');
-    $sql   = "SELECT `cat_id`,`cat_name` FROM {$ectb} WHERE `is_show`=1 AND `parent_id`=%d ORDER BY `sort_order` ASC";
+    $sql   = "SELECT `cat_id`,`cat_name`,`is_show` FROM {$ectb} WHERE `is_show`=1 AND `parent_id`=%d ORDER BY `sort_order` ASC";
     $ret   = D()->raw_query($sql, $parent_id)->fetch_array_all();
     if ($just_id && !empty($ret)) {
       foreach ($ret AS &$it) {
@@ -43,49 +49,61 @@ class Default_Model extends Model {
     return $output;
   }
   
-  public static function getGoodsList($type, $start = 0, $limit = 10, Array $extra = array()) {
+  public static function getGoodsList($type = '', $order = '', $start = 0, $limit = 10, Array $extra = array()) {
     
     $ectb = ectable('goods');
     $ectb_rel = ectable('order_goods');
     
     $zonghe_order = '';
-    if (''==$type||'zonghe'==$type) { //综合排序，算法：zonghe_order = (click_count * 1 + collect_count * 100 + paid_order_count * 1000)
+    if (''==$order||'zonghe'==$order) { //综合排序，算法：zonghe_order = (click_count * 1 + collect_count * 100 + paid_order_count * 1000)
       $zonghe_order = ",(click_count * 1 + collect_count * 100 + paid_order_count * 1000) AS zonghe_order";
     }
     
     $fields = "`goods_id`,`cat_id`,`goods_sn`,`goods_name`,`click_count`,`collect_count`,`paid_order_count`,`brand_id`,`goods_number`,`market_price`,`shop_price`,`goods_thumb`,`goods_img`,`add_time`,`last_update`{$zonghe_order}";
-    $sqlpre = "SELECT {$fields} FROM {$ectb} WHERE `is_on_sale`=1 AND `goods_img`<>''";
+    $sqlpre = "SELECT {$fields} FROM {$ectb} WHERE `is_on_sale`=1 AND `goods_img`<>'' ";
     $ret    = [];
     
     $sql    = '';
-    if (''==$type||'zonghe'==$type) { //综合排序
-      $sql  = $sqlpre . "ORDER BY `zonghe_order` DESC";
-    }
-    elseif ('click'==$type) { //按点击数
-      $sql  = $sqlpre . "ORDER BY `click_count` DESC";
-    }
-    elseif ('collect'==$type) { //按收藏数
-      $sql  = $sqlpre . "ORDER BY `collect_count` DESC";
-    }
-    elseif ('paid'==$type) { //按订单数
-      $sql  = $sqlpre . "ORDER BY `paid_order_count` DESC";
-    }
-    elseif ('price_low2top'==$type) { //价格从低到高
-      $sql  = $sqlpre . "ORDER BY `shop_price` ASC";
-    }
-    elseif ('price_top2low'==$type) { //价格从高到低
-      $sql  = $sqlpre . "ORDER BY `shop_price` DESC";
-    }
-    elseif ('latest'==$type) { //新品
+    if ('latest'==$type) { //新品
       $sql  = $sqlpre . "ORDER BY `add_time` DESC";
     }
-    elseif ('category'==$type) { //按分类
+    else { //按分类查询
+      
       $cat_id_in = '';
       if (isset($extra['cat_ids']) && !empty($extra['cat_ids'])) {
-        $cat_id_in = implode(',', $extra['cat_ids']);
-        $sql  = $sqlpre . "AND `cat_id` IN({$cat_id_in}) ORDER BY `add_time` DESC";
+        if (is_array($extra['cat_ids'])) {
+          $cat_id_in = implode(',', $extra['cat_ids']);
+          $sqlpre .= "AND `cat_id` IN({$cat_id_in}) ";
+        }
+        else {
+          $sqlpre .= "AND `cat_id`=".$extra['cat_ids']." ";
+        }
       }
+      
+      if (''==$order||'zonghe'==$order) { //综合排序
+        $sql  = $sqlpre . "ORDER BY `zonghe_order` DESC";
+      }
+      elseif ('click'==$order) { //按点击数
+        $sql  = $sqlpre . "ORDER BY `click_count` DESC";
+      }
+      elseif ('collect'==$order) { //按收藏数
+        $sql  = $sqlpre . "ORDER BY `collect_count` DESC";
+      }
+      elseif ('paid'==$order) { //按订单数
+        $sql  = $sqlpre . "ORDER BY `paid_order_count` DESC";
+      }
+      elseif ('price_low2top'==$order) { //价格从低到高
+        $sql  = $sqlpre . "ORDER BY `shop_price` ASC";
+      }
+      elseif ('price_top2low'==$order) { //价格从高到低
+        $sql  = $sqlpre . "ORDER BY `shop_price` DESC";
+      }
+      else { //默认按添加时间倒排
+        $sql  = $sqlpre . "ORDER BY `add_time` DESC";
+      }
+      
     }
+    
     if (''!=$sql) {
       $sql.= " LIMIT %d, %d";
       $ret = D()->raw_query($sql,$start,$limit)->fetch_array_all();

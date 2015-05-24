@@ -1,5 +1,4 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<script>gData.referURI='/';</script>
 <div class="bbsizing about">
   <dl>
     <dt class="tit">关于小蜜</dt>

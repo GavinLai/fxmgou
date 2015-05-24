@@ -5,9 +5,9 @@
 <nav class="topnav">
   <div class="listyle"><a href="javascript:;" onclick="change_list_style(this)"><i class="micon"></i></a></div>
   <div class="mbar clearfix">
-    <a href="javascript:;" class="fl <?php if(!in_array($order,['latest','category'])): echo 'on'; endif;?>" onclick="change_sortorder(this)" rel="1" id="topnav-btn-change-order"><?php echo $order_set[(in_array($order,['latest','category'])?'zonghe':$order)]['name']?><b class="triangle"></b></a>
-    <a href="javascript:;" class="fr"><!-- 筛选<b class="triangle"></b> -->&nbsp;</a>
-    <a href="<?php echo U('explore','o=latest')?>" <?php if($order=='latest'): echo 'class="on"'; endif; ?>>新品</a>
+    <a href="javascript:;" class="fl <?php if($type!='latest'): echo 'on'; endif;?>" onclick="change_sortorder(this)" rel="1" id="topnav-btn-change-order"><?php echo $order_set[$order]['name']?><b class="triangle"></b></a>
+    <a href="javascript:;" class="fr" onclick="to_filter(this)" rel="1" id="topnav-btn-filter"><?=$the_cat_name?><b class="triangle"></b></a>
+    <a href="<?php echo U('explore','t=latest')?>" <?php if($type=='latest'): echo 'class="on"'; endif; ?>>新品&nbsp;&nbsp;&nbsp;</a>
   </div>
 </nav>
 <script>
@@ -31,6 +31,25 @@ function change_sortorder(ele) {
 	if (typeof(me._cover)!='object') {
 		me._cover = $('#pageCover');
 	}
+	to_show_downmenu(ele, me._target, me._cover);
+}
+function to_filter(ele) {
+	var me = to_filter;
+	if (typeof(me._target)!='object') {
+		me._target = $('#down-filter');
+	}
+	if (typeof(me._cover)!='object') {
+		me._cover = $('#pageCover');
+	}
+	to_show_downmenu(ele, me._target, me._cover);
+}
+function to_show_downmenu(ele,target,cover) {
+	if (typeof(target)!='object') {
+		target = $('#'+target);
+	}
+	if (typeof(cover)!='object') {
+		cover = $('#'+cover);
+	}
 	
 	var rel = $(ele).attr('rel');
 	var inPreClass = 'ui-page-pre-in',
@@ -39,21 +58,21 @@ function change_sortorder(ele) {
   if (rel=='1') {
 	  rel = '2';
 	  $(ele).find('.triangle').addClass('triangle-up');
-  	me._cover.show();
-  	me._target.addClass(inPreClass).show();
-  	me._target.animationComplete(function(){
-  		me._target.removeClass(inClass);
+	  cover.show();
+  	target.addClass(inPreClass).show();
+  	target.animationComplete(function(){
+  		target.removeClass(inClass);
     });
-  	me._target.removeClass(inPreClass).addClass(inClass);
+  	target.removeClass(inPreClass).addClass(inClass);
   }
   else {
 	  rel = '1';
 	  $(ele).find('.triangle').removeClass('triangle-up');
-	  me._target.animationComplete(function(){
-		  me._target.removeClass(outClass).hide();
-		  me._cover.hide();
+	  target.animationComplete(function(){
+		  target.removeClass(outClass).hide();
+		  cover.hide();
 	  });
-	  me._target.addClass(outClass);
+	  target.addClass(outClass);
   }
   $(ele).attr('rel',rel);
 }

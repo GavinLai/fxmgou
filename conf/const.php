@@ -20,6 +20,8 @@ define('INTERNAL_ENC_KEY', 'w$zc8kH&cRJ&sVaG74A%DVQuetGpb$6CGYCWLeyz');
 
 /*----------以下为ECSHOP中的常量----------*/
 
+/*原产地分类顶级id*/
+define('ORIGIN_PLACE_TOP_CAT_ID',  30);
 
 /* 商品属性类型常数 */
 define('ATTR_TEXT',                 0);

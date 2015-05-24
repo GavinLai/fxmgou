@@ -133,7 +133,7 @@ a.op { color: #00a0f8;font-size: 14px;font-size: 1.4rem; }
   font-weight: bold;
   margin: 0 3px;
 }
-#pageCover {
+.pageCover {
 	position: absolute;
 	width: 100%;
 	height: 100%;
@@ -190,7 +190,7 @@ a.op { color: #00a0f8;font-size: 14px;font-size: 1.4rem; }
 .topnav .listyle a.ls2 i { background-position:0 -24px; }
 .topnav .mbar { border-right: 1px solid #ddd;margin-right: 60px;text-align: center; }
 .topnav .mbar .fl { width: 110px;text-align: left;padding-left: 10px; }
-.topnav .mbar .fr { width: 60px; }
+.topnav .mbar .fr { /*width: 60px;*/margin-right: 5px; }
 .triangle { display: inline-block;width: 0;height: 0;vertical-align: middle;margin-left: 2px;border-color: #5f646e transparent transparent;border-style: solid;border-width: 5px 5px 0; }
 .triangle-up { border-color: transparent transparent #5f646e;border-width: 0 5px 5px; }
 .on .triangle { border-color: #ff6600 transparent transparent; }
@@ -198,12 +198,12 @@ a.op { color: #00a0f8;font-size: 14px;font-size: 1.4rem; }
 .topnav-cart { text-align: center;line-height: 38px; }
 .topnav-cart .on { color: #f15a0c;border-bottom: 2px solid #f15a0c; }
 
-#down-sortmenu { display: none;width: 100%;padding-left: 15px;position: absolute; z-index: 1001;background: #fff;line-height: 40px; }
-#down-sortmenu .mit { border-bottom: 1px solid #ddd;height: 40px; }
-#down-sortmenu .mit.last { border-bottom: none; }
-#down-sortmenu a { color: #5f646e;display: inline-block;width: 90%;height: 100%; }
-#down-sortmenu .on,#down-sortmenu .on a { color: #ff6600; }
-#down-sortmenu .on span { float: right;display: inline;margin-right: 15px; }
+.downmenu { display: none;width: 100%;padding-left: 15px;position: absolute; z-index: 1001;background: #fff;line-height: 40px; }
+.downmenu .mit { border-bottom: 1px solid #ddd;height: 40px; }
+.downmenu .mit.last { border-bottom: none; }
+.downmenu a { color: #5f646e;display: inline-block;width: 90%;height: 100%; }
+.downmenu .on,.downmenu .on a { color: #ff6600; }
+.downmenu .on span { float: right;display: inline;margin-right: 15px; }
 
 /*pic slider*/
 .swipe{width:100%;min-height:133px;overflow:hidden;position:relative;}
