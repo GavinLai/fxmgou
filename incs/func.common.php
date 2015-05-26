@@ -833,6 +833,18 @@ HEREDOC;
   echo $html;
 }
 
+function require_scroll2old() {
+  $html =<<<HEREDOC
+<script>
+F.scroll2old = true;
+F.onScrollEnd(function(){
+  Cookies.set(F.scroll_cookie_key(),this.y,{path:'/'});
+});
+</script>
+HEREDOC;
+
+  echo $html;
+}
 
 
 

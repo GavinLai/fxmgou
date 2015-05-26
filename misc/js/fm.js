@@ -358,7 +358,7 @@ module.exports.FastClick=e):window.FastClick=e})();
 					this._events[type].splice(index, 1);
 				}
 			},
-			execEvent: function (type) {
+			execEvent: function (type, call_obj) {
 				if ( !this._events[type] ) {
 					return;
 				}
@@ -370,8 +370,9 @@ module.exports.FastClick=e):window.FastClick=e})();
 					return;
 				}
 
+				call_obj = call_obj ? call_obj : this;
 				for ( ; i < l; i++ ) {
-					this._events[type][i].apply(this, [].slice.call(arguments, 1));
+					this._events[type][i].apply(call_obj, [].slice.call(arguments, 2));
 				}
 			},
 			reset: function() {

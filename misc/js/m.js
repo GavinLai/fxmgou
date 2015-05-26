@@ -16,6 +16,12 @@
 	F.scrollarea = $('>'+F.doms.scroller,F.pageactive);
 	F.pagebg     = $('>.pageBg',F.pageactive);
 	
+	// Scroll cookie initialization
+	F.scroll2old = false;
+	F.scroll_cookie_key = function(){
+		return 'LS'+gData.currURI.replace(/(\/|\?|\&|\=|\%|\-)/g,'_');
+	};
+	
 	// Loading effect
 	F.loading_icons  = {};
 	F.loadingStart = function(effect) {
@@ -88,8 +94,8 @@
 		}
 	};
 	// set iScroll object
-	F.set_scroller = function(toTop, runTimeout){
-		if (typeof(toTop)=='undefined') toTop = false;
+	F.set_scroller = function(toY, runTimeout){
+		if (typeof(toY)=='undefined') toY = false;
 		if (typeof(runTimeout)=='undefined') runTimeout = 0;
 		
 		if (typeof(F.set_scroller.timer)=='number') {//避免连续的set_scroller被多次执行
@@ -109,7 +115,15 @@
 			}else{
 				F.oIScroll.refresh();
 			}
-			if(toTop) F.oIScroll.scrollTo(0,0,1000);
+			if (typeof(toY)=='boolean') {
+				if(true===toY) { // is scroll to top
+					F.oIScroll.scrollTo(0,0,1000);
+				}
+			}
+			else {
+				toY = parseInt(toY);
+				F.oIScroll.scrollTo(0,toY);
+			}
 			F.set_scroller.timer = UNDEF;
 		},runTimeout);
 	};
@@ -144,7 +158,7 @@
 				}
 			}
 		}
-		else {
+		else if(this.y > -1) { //avoiding too many calling
 			F.pagebg.hide();
 		}
 		F.event.execEvent('scrolling',this);
@@ -213,7 +227,7 @@
 	
 	//附加到末尾的script
 	F.renderAppend = function() {
-		return '<script type="text/javascript">F.onDocLoad(function(){F.set_scroller(false,100)});$(function(){var c = F.getContainerEle();F._onAjaxDocReady(c);F._onDocLoad(c)});</script>';
+		return '<script type="text/javascript">F.onDocLoad(function(){F.set_scroller(!F.scroll2old?false:Cookies.get(F.scroll_cookie_key()),100)});$(function(){var c = F.getContainerEle();F._onAjaxDocReady(c);F._onDocLoad(c)});</script>';
 	};
 	
 	// Page functions

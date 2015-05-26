@@ -32,7 +32,7 @@
   </div>
   
 </div>
-
+<?php require_scroll2old();?>
 <script>
 $(function(){
 	var $lbod = $('.list-body');

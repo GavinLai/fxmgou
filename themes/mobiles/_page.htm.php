@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <!-- <meta name="apple-mobile-web-app-status-bar-style" content="black"> -->
 <meta name="format-detection" content="telephone=no">
-<link rel="dns-prefetch" href="pc.fxmgou.com" />
+<link rel="dns-prefetch" href="fp.xurl.cn" />
 <link rel="dns-prefetch" href="res.wx.qq.com" />
 <?php if (C('env.usecdn')):?>
 <link rel="dns-prefetch" href="fcdn.qiniudn.com" />

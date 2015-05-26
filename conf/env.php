@@ -32,7 +32,7 @@ return [
   //站点信息
   'site' => [
   	'mobile' => 'http://t.fxmgou.com',
-  	'shop' => 'http://pc.fxmgou.com',
+  	'shop' => 'http://fp.xurl.cn',
   ],
   //debug白名单uid
   //'debug_white_list' => ['10001'],

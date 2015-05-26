@@ -92,6 +92,7 @@
 </script>
 
 <?php include T($tpl_footer);?>
+<?php require_scroll2old();?>
 <script>F.isDownpullDisplay=false;</script>
 <script>
 function show_dmore_cover(target, is_hide) {
@@ -199,21 +200,3 @@ $(function(){
 	});
 });
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

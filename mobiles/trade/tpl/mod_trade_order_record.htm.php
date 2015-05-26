@@ -44,7 +44,7 @@
 <?php endforeach;?>
 
 <?php form_topay_script(U('trade/order/record'));?>
-
+<?php require_scroll2old();?>
 <script>
 $(function(){
 	var $lbod = $('.list-body');

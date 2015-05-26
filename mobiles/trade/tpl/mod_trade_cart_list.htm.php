@@ -41,6 +41,7 @@
 
   </ul>
 </div>
+<?php require_scroll2old();?>
 <script>
 $(function(){
 	$('#cart-list-body .withclickurl').click(function(){
