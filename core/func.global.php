@@ -511,7 +511,7 @@ function gen_salt() {
  * @return encoded password
  */
 function gen_salt_password($password_raw, $salt=NULL, $len=40) {
-  $len = in_array($len,array(32,40)) ? $len : 32;
+  $len = in_array($len,array(32,40)) ? $len : 40;
   $encfunc = $len==40 ? 'sha1' : 'md5';
   $password_enc = preg_match("/^\w{{$len}}$/", $password_raw) ? $password_raw : $encfunc($password_raw);
   if (!isset($salt)) {
