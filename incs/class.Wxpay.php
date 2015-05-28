@@ -67,7 +67,7 @@ class Wxpay {
     }
     
     //统一下单
-    if (empty($order['pay_data1'])) {
+    if (1||empty($order['pay_data1'])) { //订单状态可能会被后台更改，所以同一订单每次支付都要重新生成提交信息
       if (''==$wx_order_body) $wx_order_body = '福小蜜商品';
       $now   = time();
       $input = new WxPayUnifiedOrder();
@@ -84,7 +84,6 @@ class Wxpay {
       $input->SetOpenid($openId);
       
       $order_wx = WxPayApi::unifiedOrder($input);
-      //trace_debug('wxpay_unifiedorder_wxreturn', $order_wx);
       
       if ('SUCCESS'==$order_wx['return_code'] && 'SUCCESS'==$order_wx['result_code']) { //保存信息以防再次重复提交
         $wxpay_data = [
@@ -101,12 +100,10 @@ class Wxpay {
     }
     else {
       $order_wx = json_decode($order['pay_data1'], true);
-      //trace_debug('wxpay_unifiedorder_cachedb', $order_wx);
     }
     
     $jsApiParameters = $tools->GetJsApiParameters($order_wx);
     
-    //trace_debug('wxpay_unifiedorder_jsparams', $jsApiParameters);
     return $jsApiParameters;
     
   }

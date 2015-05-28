@@ -111,6 +111,18 @@ class Order {
     return false;
   }
   
+  /**
+   * 
+   * @param integer $order_id
+   * @return array
+   */
+  static function info($order_id) {
+    if (empty($order_id)) return false;
+    $order_id = intval($order_id);
+    $row = D()->from(ectable('order_info'))->where(['order_id'=>$order_id])->select()->get_one();
+    return $row;
+  }
+  
 }
  
 /*----- END FILE: class.Order.php -----*/

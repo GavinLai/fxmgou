@@ -685,7 +685,7 @@ class Trade_Controller extends Controller {
         Fn::show_error_message('订单为空');
       }
       
-      $order_info = Goods::getOrderInfo($order_id);
+      $order_info = Order::info($order_id);
       if (empty($order_info)) {
         Fn::show_error_message('订单不存在');
       }

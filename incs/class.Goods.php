@@ -268,15 +268,6 @@ class Goods {
     return $ret;
   }
   
-  public static function getOrderInfo($order_id) {
-    if (empty($order_id)) return false;
-    
-    $ectb = ectable('order_info');
-    $sql  = "SELECT * FROM {$ectb} WHERE `order_id`=%d";
-    $row  = D()->get_one($sql, $order_id);
-    return $row;
-  }
-  
   public static function getCartsGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
     if (!is_array($cart_rec_ids)) {
       $cart_rec_ids = [$cart_rec_ids];
