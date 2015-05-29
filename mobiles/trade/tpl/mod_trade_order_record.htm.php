@@ -33,7 +33,7 @@
     </div>
   <?php endforeach;?>
     <div class="right-merge">
-      <p>￥<span class="gprice"><?=$ord['order_amount']?></span></p>
+      <p>￥<span class="gprice"><?php if ($ord['pay_status']==PS_PAYED): echo $ord['money_paid']; else: echo $ord['order_amount']; endif;?></span></p>
       <div class="order-status"><?=$ord['show_status_html']?></div>
     </div>
     
