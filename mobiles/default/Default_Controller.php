@@ -68,7 +68,7 @@ class Default_Controller extends Controller {
       $ad = Default_Model::getAd($ad_name);
       
       //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('latest','',0,6);
+      $goods_latest = Default_Model::getGoodsList('new_arrival','',0,6);
       $this->v->assign('goods_latest',$goods_latest);
       
       //获取一级显示分类
@@ -76,7 +76,7 @@ class Default_Controller extends Controller {
       foreach ($category_top AS &$top) {
         $child_ids = Default_Model::getChildCategoryIds($top['cat_id']);
         $cat_ids   = array_merge([$top['cat_id']], $child_ids);
-        $goods_cate = Default_Model::getGoodsList('category','latest',0,6,['cat_ids'=>$cat_ids]);
+        $goods_cate = Default_Model::getGoodsList('other','latest',0,6,['cat_ids'=>$cat_ids]);
         $top['goods_set'] = $goods_cate;
       }
       $this->v->assign('category_top',$category_top);
@@ -122,42 +122,78 @@ class Default_Controller extends Controller {
     $this->v->assign('order_set', $order_set);
     
     // GET数据
+    $type   = $request->get('t', 'other');
     $order  = $request->get('o', 'zonghe');
-    $type   = $request->get('t', 'category');
-    $cat_id = $request->get('cid', 0);
-    $cat_id = intval($cat_id);
-    if (!in_array($order, array_keys($order_set))) {
-      $order = 'latest';
-    }
-    if (!in_array($type, ['latest','category'])) {
-      $type = 'category';
-    }
-    $cat_name = Default_Model::getCategoryName($cat_id);
-    if (empty($cat_name)) {
-      $cat_name = '分类';
-    }
+    $cat_id     = $request->get('cid', 0);
+    $brand_id   = $request->get('bid', 0);
+    $price_from = $request->get('price_from', 0);
+    $price_to   = $request->get('price_to', 0);
+    $cat_id     = intval($cat_id);
+    $brand_id   = intval($brand_id);
+    $price_from = floatval($price_from);
+    $price_to   = floatval($price_to);
     
-    // 顶级分类，用于分类筛选
-    $category_top = Default_Model::getCategory(0, FALSE);
-    $this->v->assign('filter_categories', $category_top);
-    $this->v->assign('filter_category_num', count($category_top));
+    if (!in_array($order, array_keys($order_set))) {
+      $order = 'zonghe';
+    }
+    if (!in_array($type, ['new_arrival','other'])) {
+      $type = 'other';
+    }
+    if ($price_from && $price_to && $price_from > $price_to) {
+      $t = $price_from;
+      $price_from = $price_to;
+      $price_to   = $t;
+      unset($t);
+    }
     
     if ($request->is_hashreq()) {
       
+      // 顶级分类，用于分类筛选
+      $category_top = Default_Model::getCategory(0, FALSE);
+      $this->v->assign('filter_category', $category_top);
+      $this->v->assign('filter_category_num', count($category_top));
+      $this->v->assign('the_cat_id', $cat_id);
+      
+      // 品牌
+      $brand_list = Goods::getBrandList();
+      $this->v->assign('filter_brand', $brand_list);
+      $this->v->assign('the_brand_id', $brand_id);
+      
+      // 价格区间
+      $this->v->assign('the_price_from', $price_from);
+      $this->v->assign('the_price_to', $price_to);
+      
+      // 获取除排序('o=xxx')部分的查询串
+      $qstr = '';
+      if ($cat_id || $brand_id || $price_from || $price_to) {
+        $qstr = "cid={$cat_id}&bid={$brand_id}&price_from={$price_from}&price_to={$price_to}&";
+      }
+      $this->v->assign('qstr', $qstr);
+      
       $goods_list = [];
-      if ('latest'==$type) { //新品
-        $goods_list = Default_Model::getGoodsList('latest','',0,20);
+      if ('new_arrival'==$type) { //新品
+        $goods_list = Default_Model::getGoodsList($type,'',0,20);
       }
       else {
         $extra = [];
         if ($cat_id) {
           $child_ids = Default_Model::getChildCategoryIds($cat_id);
           $cat_ids   = array_merge([$cat_id], $child_ids);
-          $extra     = ['cat_ids'=>$cat_ids];
+          $extra['cat_ids'] = $cat_ids;
         }
-        $goods_list = Default_Model::getGoodsList('category',$order,0,50,$extra);
+        if ($brand_id) {
+          $extra['brand_id'] = $brand_id;
+        }
+        if ($price_from) {
+          $extra['price_from'] = $price_from;
+        }
+        if ($price_to) {
+          $extra['price_to'] = $price_to;
+        }
+        $goods_list = Default_Model::getGoodsList($type,$order,0,50,$extra);
       }
       $this->v->assign('goods_list',$goods_list);
+      $this->v->assign('goods_num',count($goods_list));
       
     }
     else {
@@ -165,7 +201,6 @@ class Default_Controller extends Controller {
     }
     
     $this->v->assign('order', $order)->assign('type', $type);
-    $this->v->assign('the_cat_id', $cat_id)->assign('the_cat_name', $cat_name);
     $response->send($this->v);
   }
   

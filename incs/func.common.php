@@ -689,16 +689,21 @@ function footscript()
     $goods_info = Goods::getGoodsInfo($goods_id, array('is_on_sale'=>0,'goods_img'=>1));
     if (!empty($goods_info)) {
       
+      $goods_name = str_replace("'", "\\'", $goods_info['goods_name']);
+      
       $cat_chain= Goods::getParentCatesChain($goods_info['cat_id']);
-      $fx_title = '';
+      $cat_pre  = '';
       foreach ($cat_chain AS $c) {
-        $fx_title .= $c['cat_name'] . '//';
+        $cat_pre .= $c['cat_name'] . '//';
       }
-      if (''!=$fx_title) {
-        $fx_title  = rtrim($fx_title,'/');
-        $fx_title .= ' - 福小蜜';
+      if (''!=$cat_pre) {
+        $cat_pre  = rtrim($cat_pre,'/');
+        $cat_pre  = '['.$cat_pre.']';
       }
-      $fx_desc  = str_replace("'", "\\'", $goods_info['goods_name']);
+      
+      //$fx_desc  = str_replace("'", "\\'", $goods_info['goods_name']);
+      $fx_title = $cat_pre. $goods_name;
+      $fx_desc  = $goods_name;
       $fx_link  = $base_url.'item/'.$goods_info['goods_id'];
       $fx_pic   = $shop_url.$goods_info['goods_thumb'];
       

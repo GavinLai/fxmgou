@@ -23,6 +23,11 @@ class Goods {
     return $row;
   }
   
+  public static function getBrandList() {
+    $list = D()->from(ectable('brand'))->where(['is_show'=>1])->order_by('`sort_order` ASC','`brand_name` ASC')->select()->fetch_array_all();
+    return $list;
+  }
+  
   public static function getCategoryInfo($cat_id = 0, $just_show = TRUE, $just_ret_id = FALSE) {
     $ectb  = ectable('category');
     $show  = $just_show ? 'AND `is_show`=1' : '';

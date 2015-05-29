@@ -5,9 +5,9 @@
 <nav class="topnav">
   <div class="listyle"><a href="javascript:;" onclick="change_list_style(this)"><i class="micon"></i></a></div>
   <div class="mbar clearfix">
-    <a href="javascript:;" class="fl <?php if($type!='latest'): echo 'on'; endif;?>" onclick="change_sortorder(this)" rel="1" id="topnav-btn-change-order"><?php echo $order_set[$order]['name']?><b class="triangle"></b></a>
-    <a href="javascript:;" class="fr" onclick="to_filter(this)" rel="1" id="topnav-btn-filter"><?=$the_cat_name?><b class="triangle"></b></a>
-    <a href="<?php echo U('explore','t=latest')?>" <?php if($type=='latest'): echo 'class="on"'; endif; ?>>新品&nbsp;&nbsp;&nbsp;</a>
+    <a href="javascript:;" class="fl <?php if($type!='new_arrival'): echo 'on'; endif;?>" onclick="change_sortorder(this)" rel="1" id="topnav-btn-change-order"><?php echo $order_set[$order]['name']?><b class="triangle"></b></a>
+    <a href="javascript:;" class="fr" onclick="to_filter(this)" rel="1" id="topnav-btn-filter">筛选<b class="triangle"></b></a>
+    <a href="<?php echo U('explore','t=new_arrival')?>" <?php if($type=='new_arrival'): echo 'class="on"'; endif; ?>>新品&nbsp;&nbsp;&nbsp;</a>
   </div>
 </nav>
 <script>
@@ -34,14 +34,21 @@ function change_sortorder(ele) {
 	to_show_downmenu(ele, me._target, me._cover);
 }
 function to_filter(ele) {
-	var me = to_filter;
-	if (typeof(me._target)!='object') {
-		me._target = $('#down-filter');
+	var rel = $(ele).attr('rel');
+	if (rel=='1') {
+		rel = '2';
+		$(ele).find('.triangle').addClass('triangle-up');
 	}
-	if (typeof(me._cover)!='object') {
-		me._cover = $('#pageCover');
+	else {
+		rel = '1';
+		 $(ele).find('.triangle').removeClass('triangle-up');
 	}
-	to_show_downmenu(ele, me._target, me._cover);
+	$(ele).attr('rel', rel);
+	if ($('#topnav-btn-change-order').attr('rel')=='2') {
+		$('#topnav-btn-change-order').click();
+	}
+	show_popdlg('筛选', $('#popfilter-html').html());
+	return false;
 }
 function to_show_downmenu(ele,target,cover) {
 	if (typeof(target)!='object') {

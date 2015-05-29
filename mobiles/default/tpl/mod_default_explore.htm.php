@@ -1,6 +1,7 @@
 <?php defined('IN_SIMPHP') or die('Access Denied');?>
-<div class="block block2" id="listyle-1">
+<div class="block block2<?php if(!$goods_num): echo ' block-empty'; endif;?>" id="listyle-1">
   <ul class="liset">
+<?php if ($goods_num):?>
   <?php foreach($goods_list AS $it):?>
     <li class="liit">
       <div data-href="<?php echo U('item/'.$it['goods_id'])?>" class="liit-content">
@@ -28,11 +29,15 @@
       </div>
     </li>    
   <?php endforeach;?>
+<?php else:?>
+  <li class="liempty">没找到相应的产品</li>
+<?php endif?>
   </ul>
 </div>
 
-<div class="block block3" id="listyle-2">
+<div class="block block3<?php if(!$goods_num): echo ' block-empty'; endif;?>" id="listyle-2">
   <ul class="liset">
+<?php if ($goods_num):?>
   <?php foreach($goods_list AS $it):?>
     <li class="bbsizing liit">
       <div data-href="<?php echo U('item/'.$it['goods_id'])?>" class="liit-content clearfix">
@@ -62,6 +67,9 @@
       </div>
     </li>    
   <?php endforeach;?>
+<?php else:?>
+  <li class="liempty">没找到相应的产品</li>
+<?php endif?>
   </ul>
 </div>
 
@@ -71,24 +79,42 @@
 <?php foreach ($order_set AS $it):?>
   <?php if(!$it['is_show']): continue; endif;?>
   <li class="mit<?php if($it['is_last']): echo ' last';endif;if($order==$it['id']): echo ' on';endif;?>">
-    <a href="<?php echo U('explore',($the_cat_id?'cid='.$the_cat_id.'&':'').('zonghe'==$it['id']?'':'o='.$it['id']))?>" rel="<?=$it['id']?>"><?=$it['name']?></a>
+    <a href="<?php echo U('explore',$qstr.($qstr==''&&'zonghe'==$it['id']?'':'o='.$it['id']))?>" rel="<?=$it['id']?>"><?=$it['name']?></a>
     <?php if($order==$it['id']): echo '<span>√</span>';endif;?>
   </li>
 <?php endforeach;?>
 </ul>
-<ul class="bbsizing downmenu" id="down-filter">
-  <li class="mit<?php if($the_cat_id===0): echo ' on';endif;?>">
-    <a href="<?php echo U('explore',($order==''||$order=='zonghe' ? '' : 'o='.$order))?>" rel="0">全部分类</a>
-    <?php if($the_cat_id===0): echo '<span>√</span>';endif;?>
-  </li>
-<?php $i=0; foreach ($filter_categories AS $it):?>
-  <?php ++$i; if(!$it['is_show']): continue; endif;?>
-  <li class="mit<?php if($i==$filter_category_num): echo ' last';endif;if($the_cat_id==$it['cat_id']): echo ' on';endif;?>">
-    <a href="<?php echo U('explore',('cid='.$it['cat_id']).($order==''||$order=='zonghe' ? '' : '&o='.$order))?>" rel="<?=$it['cat_id']?>"><?=$it['cat_name']?></a>
-    <?php if($the_cat_id==$it['cat_id']): echo '<span>√</span>';endif;?>
-  </li>
+</script>
+
+<script type="text/html" id="popfilter-html">
+<dl id="pop-filter">
+  <dt class="first">商品分类</dt>
+  <dd>
+    <select name="filter_category" id="filter_category" onchange="filter_change(this)">
+      <option value="0">所有分类</option>
+<?php $i=0; foreach ($filter_category AS $it):?>
+      <option value="<?=$it['cat_id']?>" <?php if($the_cat_id==$it['cat_id']): echo 'selected="selected"'; endif; ?>><?=$it['cat_name']?></option>
 <?php endforeach;?>
-</ul>
+    </select>
+  </dd>
+  <dt>商品品牌</dt>
+  <dd>
+    <select name="filter_brand" id="filter_brand" onchange="filter_change(this)">
+      <option value="0">所有品牌</option>
+<?php $i=0; foreach ($filter_brand AS $it):?>
+      <option value="<?=$it['brand_id']?>" <?php if($the_brand_id==$it['brand_id']): echo 'selected="selected"'; endif; ?>><?=$it['brand_name']?></option>
+<?php endforeach;?>
+    </select>
+  </dd>
+  <dt>价格区间</dt>
+  <dd>
+    从 <input type="text" name="filter_price_from" id="filter_price_from" value="<?=$the_price_from?>" onchange="filter_change(this)"/> 到 <input type="text" name="filter_price_to" id="filter_price_to" value="<?=$the_price_to?>" onchange="filter_change(this)"/>
+  </dd>
+</dl>
+<div id="pop-btm">
+<button class="btn btn-white" id="pop-clear" onclick="finish_filter(this)">清除条件</button>
+<button class="btn btn-orange" id="pop-finish" onclick="finish_filter(this)">完 成</button>
+</div>
 </script>
 
 <?php include T($tpl_footer);?>
@@ -141,6 +167,57 @@ function show_dmore_cover(target, is_hide) {
   	target.removeClass(inPreClass).addClass(inClass);
   }
 	*/
+}
+var current_order = '<?=$order?>';
+var form_changed = false;
+function filter_change() {
+	form_changed = true;
+}
+function finish_filter(ele) {
+	var me = finish_filter;
+	if (typeof (me._wrap) == 'undefined') {
+		me._wrap = $('#pop-filter');
+	}
+	$(ele).attr('disabled',true);
+
+	var is_clear = $(ele).attr('id')=='pop-clear' ? true : false;
+	if (is_clear) {
+		$('#filter_category', me._wrap).val('0');
+		$('#filter_brand', me._wrap).val('0');
+		$('#filter_price_from', me._wrap).val('0');
+		$('#filter_price_to', me._wrap).val('0');
+		form_changed = true;
+	}
+	
+	var cid = $('#filter_category', me._wrap).val();
+	var bid = $('#filter_brand', me._wrap).val();
+	var price_from = $('#filter_price_from', me._wrap).val();
+	var price_to   = $('#filter_price_to', me._wrap).val();
+	cid        = parseInt(cid);
+	bid        = parseInt(bid);
+	price_from = parseFloat(price_from);
+	price_to   = parseFloat(price_to);
+	if (price_from && price_to && price_from > price_to) {
+		t = price_from;
+		price_from = price_to;
+		price_to = t;
+	}
+	$('#filter_price_from', me._wrap).val(price_from);
+	$('#filter_price_to', me._wrap).val(price_to);
+
+	var gurl = '<?php echo U('explore')?>';
+	if (form_changed) {
+		gurl += '?cid='+cid+'&bid='+bid+'&price_from='+price_from+'&price_to='+price_to;
+		gurl += '&o='+current_order;
+		hide_popdlg(function(){
+			window.location.href = gurl;
+		});
+	}
+	else {
+		hide_popdlg(function(){
+			$('#topnav-btn-filter').attr('rel',1).find('.triangle').removeClass('triangle-up');
+		});
+	}
 }
 $(function(){
 	F.pageactive.append($('#downmenu-html').html());

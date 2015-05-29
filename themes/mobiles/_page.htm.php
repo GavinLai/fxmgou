@@ -33,8 +33,8 @@
   <div id="loadingCanvas" class="useTopNav-<?=$topnav_no?> useNav-<?=$nav_no?>"></div>
   <div class="hide"><img src="<?php echo ploadingimg()?>" alt=""/></div>
   <?php include T('_nav');?>
+  <?php include T('_popdlg');?>
 </div>
-<?php include T('_popdlg');?>
 </body>
 <?php footscript();?>
 <?php tplholder('FOOT_JS');?>

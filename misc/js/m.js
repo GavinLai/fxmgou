@@ -370,45 +370,39 @@
 }
 
 //显示和隐藏弹出框
-;function show_popdlg(title,content,options) {
-	if (typeof show_popdlg._def == 'undefined') {
-		show_popdlg._def = {
-	    hasTitle: true,
-	    css: {},
-		};
-	}
-	options = options ? options : {};
-	options = $.extend(show_popdlg._def, options);
-	if (typeof show_popdlg._wrap == 'undefined') {
-		show_popdlg._wrap = $('#popdlg');
-	}
-	if (typeof show_popdlg._bg == 'undefined') {
-		show_popdlg._bg = $('#popdlg-bg');
-	}
-	var init_w = typeof(options.css.width)=='undefined' ? 0 : parseInt(options.css.width);
-	if (!init_w) init_w = show_popdlg._wrap.outerWidth();
-	var lt = (F.getBrowserWidth() - init_w)/2;
-	options.css.left = lt+'px';
+;function show_popdlg(title,content) {
+  var me = show_popdlg;
+  if (typeof me._wrap == 'undefined') {
+    me._wrap = $('#popdlg');
+  }
+  me._wrap.find('.poptit .txt').html(title);
+  me._wrap.find('.popcont').html(content);
 	
-	show_popdlg._wrap.find('.poptit .txt').html(title);
-	show_popdlg._wrap.find('.popcont').html(content);
-	
-	var toPreClass = 'ui-page-pre-in',
-	    toClass = 'slideup in';
-	show_popdlg._bg.show();
-	show_popdlg._wrap.addClass(toPreClass).css(options.css).show();
-	show_popdlg._wrap.animationComplete(function(){
-		/*show_popdlg._wrap.removeClass(toClass);*/
-	});
-	show_popdlg._wrap.removeClass(toPreClass).addClass(toClass);
-}
-;function hide_popdlg() {
-	var toClass = 'slideup out reverse';
-	show_popdlg._wrap.animationComplete(function(){
-		show_popdlg._bg.hide();
-		show_popdlg._wrap.hide().removeClass(toClass);
+  var inPreClass = 'ui-page-pre-in',
+	     inClass = 'slideup in';
+  me._wrap.addClass(inPreClass).show();
+  me._wrap.animationComplete(function(){
+    me._wrap.removeClass(inClass);
   });
-	show_popdlg._wrap.removeClass('slideup in').addClass(toClass);
+  me._wrap.removeClass(inPreClass).addClass(inClass);
+}
+;function hide_popdlg(callback) {
+  var outClass = 'slideup out reverse';
+  show_popdlg._wrap.animationComplete(function(){
+    show_popdlg._wrap.removeClass(outClass).hide();
+    var to = typeof callback;
+    if (to!='undefined') {
+    	if (to=='function') {
+    		callback();
+    	}
+    	else { //是一个dom元素
+    		if ($('#topnav-btn-filter').size()>0) {
+    			$('#topnav-btn-filter').attr('rel',1).find('.triangle').removeClass('triangle-up');
+    		}
+    	}
+    }
+  });
+  show_popdlg._wrap.addClass(outClass);
 }
 
 //主导航显示和隐藏
