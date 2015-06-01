@@ -301,6 +301,8 @@ class Weixin {
             break;
           case '101': //关于小蜜
             $contentText = $this->helper->about();
+            $this->getMaterialCount();
+            $this->getMaterialList();
             break;
         }
         break;
@@ -569,6 +571,55 @@ class Weixin {
   public function request_access_token($code)
   {
     return $this->oauth->request_access_token($code);
+  }
+  
+  /**
+   * 获取素材总数
+   * 
+   * @return boolean|array
+   */
+  public function getMaterialCount()
+  {
+    $ret    = array();
+    $params = array();
+    $access_token = $this->fecthAccessToken();
+    $ret = $this->apiCall("/material/get_materialcount?access_token={$access_token}", $params);
+    trace_debug('weixin_get_material_count', $ret);
+    if (!empty($ret['errcode'])) {
+      return false;
+    }
+    return $ret;
+  }
+  
+  /**
+   * 获取素材列表
+   * 
+   * @param string  $type    素材类型
+   * @param integer $count   返回的素材数量
+   * @param integer $offset  返回的开始偏移位置
+   * @return array
+   */
+  public function getMaterialList($type = 'news', $count = 5, $offset = 0)
+  {
+    if (!in_array($type, array('news','image','video','voice'))) {
+      $type = 'news';
+    }
+    if (!is_int($count) || $count < 1 || $count > 20) {
+      $count = 5;
+    }
+    $ret    = array();
+    $params = array(
+      'type'   => $type,
+      'offset' => $offset,
+      'count'  => $count
+    );
+    $access_token = $this->fecthAccessToken();
+    $ret = $this->apiCall("/material/batchget_material?access_token={$access_token}", json_encode($params), 'post');
+    trace_debug('weixin_get_material_list', $ret);
+    if (!empty($ret['errcode'])) {
+      return false;
+    }
+    return $ret;
   }
   
   //~ the following is some util functions
@@ -921,7 +972,6 @@ class WeixinHelper {
    */
   public function onSubscribe($openid, $reqtime, $toUsername = '') {
     $uinfo = $this->wx->userInfo($openid);
-    //trace_debug('weixin_user_info_base',print_r($uinfo,true));
     if (empty($uinfo['errcode'])) {
       $from  = $this->from;
       $udata = ['openid' => $openid, 'subscribe' => $uinfo['subscribe']];

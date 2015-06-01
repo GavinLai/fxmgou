@@ -49,7 +49,7 @@ class ApiRequest implements ApiRequestInterface {
                'encfunc'=> 'sha1',      //加密算法函数: md5/sha1
                'debug'  => FALSE,       //是否打印输出调试信息
            'sign_params'=> array(),     //如果此数组不为空，则签名时只让该数组成员参与签名
-    'urlencode_level'   => 3,           //urlencode级别:
+    'urlencode_level'   => 2,           //urlencode级别:
                                         //  3: rawurlencode key 和 value
                                         //  2: 仅rawurlencode value
                                         //  1: 仅rawurlencode key
@@ -83,7 +83,7 @@ class ApiRequest implements ApiRequestInterface {
 	 *                  'encfunc' => 'sha1',   //加密算法函数
 	 *                  'debug'   => FALSE,    //是否打印输出调试信息
 	 *               'sign_params'=> array(),  //如果此数组不为空，则签名时只让该数组成员参与签名
-	 *        'urlencode_level'   => 3,        //urlencode级别
+	 *        'urlencode_level'   => 2,        //urlencode级别
 	 *                                         //  3: rawurlencode key 和 value
 	 *                                         //  2: 仅rawurlencode value
 	 *                                         //  1: 仅rawurlencode key
@@ -237,7 +237,7 @@ class ApiRequest implements ApiRequestInterface {
 	 *        0 => neither key nor value rawurlencode
 	 * @return String
 	 */
-	public function makeQueryString($params,$encode_level=3) {
+	public function makeQueryString($params,$encode_level=2) {
 		if (is_string($params)) {
 			return $params;
 		}
@@ -415,7 +415,7 @@ class ApiRequest implements ApiRequestInterface {
 	 * @param int $urlencode_level, like $signinfo['urlencode_level']
 	 * @return string
 	 */
-	public function getFinalUrl($urlencode_level=3) {
+	public function getFinalUrl($urlencode_level=2) {
 		$url = $this->url;
 		if ('get'==$this->method) {
 			$url .= (FALSE===strrpos($url,'?') ? '?' : '&') . $this->makeQueryString($this->params,$urlencode_level);
