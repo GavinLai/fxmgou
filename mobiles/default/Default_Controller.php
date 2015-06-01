@@ -68,7 +68,7 @@ class Default_Controller extends Controller {
       $ad = Default_Model::getAd($ad_name);
       
       //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('new_arrival','',0,6);
+      $goods_latest = Default_Model::getGoodsList('new_arrival','latest',0,6);
       $this->v->assign('goods_latest',$goods_latest);
       
       //获取一级显示分类
@@ -165,8 +165,13 @@ class Default_Controller extends Controller {
       
       // 获取除排序('o=xxx')部分的查询串
       $qstr = '';
-      if ($cat_id || $brand_id || $price_from || $price_to) {
-        $qstr = "cid={$cat_id}&bid={$brand_id}&price_from={$price_from}&price_to={$price_to}&";
+      if ('new_arrival'==$type) {
+        $qstr = "t=new_arrival&";
+      }
+      else {
+        if ($cat_id || $brand_id || $price_from || $price_to) {
+          $qstr = "cid={$cat_id}&bid={$brand_id}&price_from={$price_from}&price_to={$price_to}&";
+        }
       }
       $this->v->assign('qstr', $qstr);
       
