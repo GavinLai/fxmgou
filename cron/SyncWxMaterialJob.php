@@ -5,14 +5,24 @@
  * @author Gavin<laigw.vip@gmail.com>
  */
 class SyncWxMaterialJob extends CronJob {
-
-  //素材类型集合
-  const TYPE_SET = ['news','image','video','voice'];
   
-  //微信素材列表返回素材的最大数量(微信接口限制为1~20)
+  /**
+   * 微信素材列表返回素材的最大数量(微信接口限制为1~20)
+   * @var constant
+   */
   const MAX_COUNT = 20;
   
+  /**
+   * 素材表
+   * @var constant
+   */
   const TABLE = 'material_wx';
+  
+  /**
+   * 素材类型集合
+   * @var array
+   */
+  private static $type_set = ['news','image','video','voice'];
 
   /**
    * 作业主入口
@@ -23,11 +33,12 @@ class SyncWxMaterialJob extends CronJob {
     $total = $wx->getMaterialCount();
     
     //按素材类型逐个获取列表
-    foreach (self::TYPE_SET AS $type) {
+    foreach (self::$type_set AS $type) {
       
       $type_total = $total[$type.'_count'];
       $offset = 0;
       $count  = $type_total > self::MAX_COUNT ? self::MAX_COUNT : $type_total;
+      $this->log("Type={$type}...");
       
       do {
         
@@ -44,11 +55,12 @@ class SyncWxMaterialJob extends CronJob {
         foreach ($ret['item'] AS $it) {
           
           $data_base = [
-            'type'        => $type, 
-            'media_id'    => $it['media_id'],
-            'update_time' => $it['update_time'],
-            'is_multiple' => 0, 
-            'add_time'    => simphp_time()
+            'type'           => $type, 
+            'media_id'       => $it['media_id'],
+            'show_cover_pic' => 0,
+            'update_time'    => $it['update_time'],
+            'is_multiple'    => 0, 
+            'add_time'       => simphp_time()
           ];
           
           if ($type == 'news') { //图文消息相比其他消息复杂特殊
@@ -82,8 +94,11 @@ class SyncWxMaterialJob extends CronJob {
                 
                 // 下载图片并保存
                 if ($nid) {
-                  if ($wx->getMaterial($it['media_id'], $outfile)) {
-                    $this->save_thumb_media_url($nid, $outfile);
+                  $outfile = '';
+                  if ($wx->getMaterial($cont['thumb_media_id'], $outfile)) {
+                    if ($outfile) {
+                      $this->save_thumb_media_url($nid, $outfile);
+                    }
                   }
                 }
                 
@@ -112,7 +127,7 @@ class SyncWxMaterialJob extends CronJob {
       } while($offset < $type_total);
       
       
-    } //END foreach (self::TYPE_SET AS $type)
+    } //END foreach (self::$type_set AS $type)
     
   }
   
@@ -161,8 +176,9 @@ class SyncWxMaterialJob extends CronJob {
    */
   private function check_latest_uptime($type) {
     $res = D()->from(self::TABLE)->where(['type'=>$type])->select("MAX(update_time) AS max_uptime")->result();
+    $res = $res ? intval($res) : 0;
     $this->log('Local max uptime: '.$res);
-    return $res ? intval($res) : 0;
+    return $res;
   }
   
   /**

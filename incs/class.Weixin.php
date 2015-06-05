@@ -642,16 +642,17 @@ class Weixin {
       'media_id' => $media_id
     );
     $access_token = $this->fecthAccessToken();
-    if (''==$outfile) {
-      $outfile = SIMPHP_ROOT . "/a/wx/{$media_id}.jpg";
+    if (!$outfile) {
+      $outfile = SIMPHP_ROOT . "/a/wx/".md5($media_id).".jpg";
     }
-    trace_debug('weixin_get_material_outfile', $outfile);
     $ret = $this->apiCall("/material/get_material?access_token={$access_token}", $params, 'post', 'api_cgi', $outfile);
     $outfile = str_replace(SIMPHP_ROOT, '', $outfile); //去掉前缀
-    trace_debug('weixin_get_material', is_resource($ret)? base64_encode($ret) : $ret );
     if (!empty($ret['errcode'])) {
+      $outfile = false;
       return false;
     }
+    if (!$ret) $outfile = false;
+    
     return $ret;
   }
   

@@ -62,7 +62,7 @@ class JobManager {
     $j = new $job;
     $j->log("{$job} Beginning...");
     $j->job($argc, $argv);
-    $j->log("{$job} Finished!");
+    $j->log("{$job} Finished!\n");
   }
   
 }
