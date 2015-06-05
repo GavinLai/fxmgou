@@ -301,8 +301,9 @@ class Weixin {
             break;
           case '101': //关于小蜜
             $contentText = $this->helper->about();
-            $this->getMaterialCount();
-            $this->getMaterialList();
+            //$this->getMaterialCount();
+            //$this->getMaterialList();
+            //$this->getMaterial('-F65ngPm5FgC2MkjlByRQ6q0nI1VlV84wNeaPC0odeY');
             break;
         }
         break;
@@ -445,9 +446,10 @@ class Weixin {
    * @param array $params 对应请求参数
    * @param string $method http请求方法：GET,POST
    * @param string $type API地址类型，对应self::$apiUrlPrefix的key部分：api_cgi,api_sns,open_conn
+   * @param string $outfile 下载地址
    * @return mixed JSON Array or string
    */
-  public function apiCall($uri_path, $params=array(), $method='get', $type='api_cgi')
+  public function apiCall($uri_path, $params=array(), $method='get', $type='api_cgi', $outfile = '')
   {
     if (!in_array($type, array_keys(self::$apiUrlPrefix))) {
       return false;
@@ -459,9 +461,16 @@ class Weixin {
     if (empty($uri_path)) {
       return false;
     }
+    if ($method=='post' && is_array($params)) {
+      $params = json_encode($params, JSON_UNESCAPED_UNICODE);
+    }
     
     $requrl = self::$apiUrlPrefix[$type] . $uri_path;
-    $req = new ApiRequest(['method'=>$method,'protocol'=>'https','timeout'=>60,'timeout_connect'=>30]);
+    $apiConfig = ['method'=>$method,'protocol'=>'https','timeout'=>60,'timeout_connect'=>30];
+    if (''!==$outfile) {
+      $apiConfig['outfile'] = $outfile;
+    }
+    $req = new ApiRequest($apiConfig);
     return $req->setUrl($requrl)->setParams($params)->send()->recv(TRUE);
   }
   
@@ -505,7 +514,6 @@ class Weixin {
   public function createMenu($data = '')
   {
     if (empty($data)) return false;
-    if (is_array($data)) $data = json_encode($data, JSON_UNESCAPED_UNICODE);
     $access_token = $this->fecthAccessToken();
     $ret = $this->apiCall("/menu/create?access_token={$access_token}", $data, 'post');
     if (0===$ret['errcode']) {
@@ -584,7 +592,6 @@ class Weixin {
     $params = array();
     $access_token = $this->fecthAccessToken();
     $ret = $this->apiCall("/material/get_materialcount?access_token={$access_token}", $params);
-    trace_debug('weixin_get_material_count', $ret);
     if (!empty($ret['errcode'])) {
       return false;
     }
@@ -595,17 +602,17 @@ class Weixin {
    * 获取素材列表
    * 
    * @param string  $type    素材类型
-   * @param integer $count   返回的素材数量
    * @param integer $offset  返回的开始偏移位置
+   * @param integer $count   返回的素材数量
    * @return array
    */
-  public function getMaterialList($type = 'news', $count = 5, $offset = 0)
+  public function getMaterialList($type = 'news', $offset = 0, $count = 10)
   {
     if (!in_array($type, array('news','image','video','voice'))) {
       $type = 'news';
     }
     if (!is_int($count) || $count < 1 || $count > 20) {
-      $count = 5;
+      $count = 10;
     }
     $ret    = array();
     $params = array(
@@ -614,8 +621,34 @@ class Weixin {
       'count'  => $count
     );
     $access_token = $this->fecthAccessToken();
-    $ret = $this->apiCall("/material/batchget_material?access_token={$access_token}", json_encode($params), 'post');
-    trace_debug('weixin_get_material_list', $ret);
+    $ret = $this->apiCall("/material/batchget_material?access_token={$access_token}", $params, 'post');
+    if (!empty($ret['errcode'])) {
+      return false;
+    }
+    return $ret;
+  }
+  
+  /**
+   * 获取单个素材信息
+   * 
+   * @param string $media_id
+   * @param string $outfile
+   * @return boolean|array
+   */
+  public function getMaterial($media_id, &$outfile = '')
+  {
+    $ret    = array();
+    $params = array(
+      'media_id' => $media_id
+    );
+    $access_token = $this->fecthAccessToken();
+    if (''==$outfile) {
+      $outfile = SIMPHP_ROOT . "/a/wx/{$media_id}.jpg";
+    }
+    trace_debug('weixin_get_material_outfile', $outfile);
+    $ret = $this->apiCall("/material/get_material?access_token={$access_token}", $params, 'post', 'api_cgi', $outfile);
+    $outfile = str_replace(SIMPHP_ROOT, '', $outfile); //去掉前缀
+    trace_debug('weixin_get_material', is_resource($ret)? base64_encode($ret) : $ret );
     if (!empty($ret['errcode'])) {
       return false;
     }

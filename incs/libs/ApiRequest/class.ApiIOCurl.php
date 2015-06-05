@@ -44,10 +44,25 @@ class ApiIOCurl extends ApiIO {
 			}
 		}
 		curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, TRUE); //may set to FALSE to debug DNS 
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $request->timeout_connect);
 		curl_setopt($ch, CURLOPT_TIMEOUT,        $request->timeout);
 		curl_setopt($ch, CURLOPT_HEADER,         FALSE);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+		
+		// check whether outfile
+		$fp = NULL;
+		if (''!==$request->outfile && 'STDOUT'!==$request->outfile) {
+		  $dir = dirname($request->outfile);
+		  if (!is_dir($dir)) {
+		    $mode = 0755;
+		    mkdir($dir, $mode, TRUE);
+		    chmod($dir, $mode);
+		  }
+		  $fp = @fopen($request->outfile, 'w');
+		  if ($fp) {
+		    curl_setopt($ch, CURLOPT_FILE, $fp);
+		  }
+		}
 
 		// disable 100-continue
 		curl_setopt($ch, CURLOPT_HTTPHEADER,     array('Expect:'));
@@ -105,6 +120,11 @@ class ApiIOCurl extends ApiIO {
 			);
 		}
 		curl_close($ch);
+		
+		if (is_resource($fp)) {
+		  fflush($fp);
+		  fclose($fp);
+		}
 		
 		$request->setResponse($response);
 		

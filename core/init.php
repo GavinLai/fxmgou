@@ -71,7 +71,7 @@ SimPHP::registerAutoload();
  * Log dir
  * @var string constant
  */
-define('LOG_DIR', Config::get('env.log_dir', '/var/log'));
+define('LOG_DIR', SIMPHP_ROOT.Config::get('env.log_dir', '/var/log'));
 
 /**
  * Whether on production env

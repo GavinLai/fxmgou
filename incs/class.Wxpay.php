@@ -12,7 +12,7 @@ define('WXPAY_SDK_ROOT', __DIR__.'/libs/wxpay/');
 require_once WXPAY_SDK_ROOT."lib/WxPay.Api.php";
 
 //初始化日志
-$logHandler= new CLogFileHandler(SIMPHP_ROOT.LOG_DIR."/wxpay_".date('Y-m-d').'.log');
+$logHandler= new CLogFileHandler(LOG_DIR."/wxpay_".date('Y-m-d').'.log');
 $log = Log::Init($logHandler, 15);
 
 class Wxpay {
