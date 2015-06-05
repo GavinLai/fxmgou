@@ -7,6 +7,17 @@
 //~ require init.php
 require (__DIR__.'/core/init.php');
 
+SimPHP::I()->boot();
+
+if (!defined('BR')) {
+  define('BR', IS_CLI ? "\n" : "<br>");
+}
+
+if (!IS_CLI) {
+  echo "该脚本请在服务器运行";
+  exit;
+}
+
 $json =<<<HEREDOC
 {
 	"button" : 
@@ -17,14 +28,34 @@ $json =<<<HEREDOC
 			"url"  : "http://m.fxmgou.com/"
 		},
 		{
-			"type" : "click",
-			"name" : "最新文章",
-			"key"  : "100"
+      "name" : "我的",
+      "sub_button" : [
+        {
+    			"type" : "click",
+    			"name" : "最新文章",
+    			"key"  : "200"
+        },
+        {
+    			"type" : "view",
+    			"name" : "我的订单",
+    			"url"  : "http://m.fxmgou.com/trade/order/record"
+        },
+        {
+    			"type" : "view",
+    			"name" : "我的收藏",
+    			"url"  : "http://m.fxmgou.com/user/collect"
+        }
+      ]
 		},
-		{
-			"type" : "click",
-			"name" : "关于小蜜",
-			"key"  : "101"
+    {
+      "name" : "使用帮助",
+      "sub_button" : [
+        {
+    			"type" : "click",
+    			"name" : "关于小蜜",
+    			"key"  : "300"
+        }
+      ]
 		}
 	]
 }
@@ -33,10 +64,9 @@ HEREDOC;
 $menuConfig = json_decode($json, TRUE);
 config_set('wxmenu', $menuConfig, 'J');
 
-header('Content-Type: text/plain;charset=utf-8');
-$msg = '菜单更新失败';
+$msg = 'update menu fail'.BR;
 if((new Weixin([],'fxmgou'))->createMenu($menuConfig)){
-  $msg = '菜单更新成功';
+  $msg = 'update menu success'.BR;
 }
 
 echo $msg;

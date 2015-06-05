@@ -296,14 +296,21 @@ class Weixin {
       case 'CLICK':
         $base_url = Config::get('env.site.mobile');
         switch ($postObj->EventKey) {
-          case '100': //最新文章
-            $contentText = $this->helper->latestArticles();
+          case '200': //最新文章
+            $latest_news = $this->helper->latestArticles();
+            $item  = '';
+            foreach ($latest_news AS $news) {
+              $title = $news['title'];
+              $desc  = $news['digest'];
+              $pic   = $base_url.$news['thumb_media_url'];
+              $link  = $news['url'];
+              $item .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
+            }
+            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($latest_news), $item);
+            return $responseText;
             break;
-          case '101': //关于小蜜
+          case '300': //关于小蜜
             $contentText = $this->helper->about();
-            //$this->getMaterialCount();
-            //$this->getMaterialList();
-            //$this->getMaterial('-F65ngPm5FgC2MkjlByRQ6q0nI1VlV84wNeaPC0odeY');
             break;
         }
         break;
@@ -1199,22 +1206,14 @@ class WeixinHelper {
    * @return string
    */
   public function latestArticles() {
-    $article_set = [
-      ['title'=>'防晒 | BananaBoat香蕉船', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=1&sn=c9fa26f2bf102a92312bcdc7492ccca0#rd'],
-      ['title'=>'Banana Boat 香蕉船运动型防晒霜 SPF50+ 200g', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=205180249&idx=2&sn=59dfe537e6b981939c654b754cf8b438#rd'],
-      ['title'=>'Swisse护肝排毒片120片', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204971042&idx=1&sn=45609e9aeef25644ff2e798ab0c67c8c#rd'],
-      //['title'=>'女神养成三部曲', 'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204970269&idx=1&sn=de7a6eaba3e87891bc66858af6cb9cbe#rd'],
-      ['title'=>'澳大利亚保健品市场本土三大品牌Blackmores、Swisse、Bio island', 'url'=>'http://mp.weixin.qq.com/s?__biz=MzAwNjQyNzA2NA==&mid=204965844&idx=1&sn=4158ba58d80ada011707fa4e28c27079#rd']
-    ];
+    $exclude_media_ids = array(
+      "-F65ngPm5FgC2MkjlByRQ9OArBXfSA_EXwClAVDaeho"
+    );
+    $exclude_media_ids_str = "'" . implode("','",$exclude_media_ids) . "'";
+    $news = D()->from('material_wx')->where("`type`='news' AND `media_id` NOT IN({$exclude_media_ids_str})")
+               ->order_by("`update_time` DESC")->limit(5)->select()->fetch_array_all();
     
-    $text = "最新文章";
-    $i = 1;
-    foreach($article_set AS $_url) {
-      $text.= "\n\n{$i}、<a href=\"{$_url['url']}\">{$_url['title']}</a>";
-      $i++;
-    }
-    
-    return $text;
+    return $news ? : [];
   }
 
   /**
