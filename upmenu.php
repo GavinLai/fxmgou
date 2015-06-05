@@ -44,6 +44,11 @@ $json =<<<HEREDOC
     			"type" : "view",
     			"name" : "我的收藏",
     			"url"  : "http://m.fxmgou.com/user/collect"
+        },
+        {
+    			"type" : "view",
+    			"name" : "意见反馈",
+    			"url"  : "http://m.fxmgou.com/user/feedback"
         }
       ]
 		},
