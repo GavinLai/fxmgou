@@ -16,8 +16,8 @@
     <ul class="autoflow">
       <li class="c-2-1"><span>品牌：</span><em><?php echo isset($goods_info['brand_info']['brand_name']) ? $goods_info['brand_info']['brand_name'] : ''?></em></li>
       <li class="c-2-1"><span>原产地：</span><em><?=$goods_info['origin_place_name']?></em></li>
-      <li class="c-2-1"><span>剩余：</span><em id="stock-num"><?=$goods_info['goods_number']?></em></li>
-      <li class="c-2-1"><span>运　费：</span><em><?php if($goods_info['is_shipping']):echo '免运费';else:echo '免运费';endif;?></em></li>
+      <li class="c-2-1"><span>运费：</span><em><?php if($goods_info['is_shipping']):echo '免运费';else:echo '免运费';endif;?></em></li>
+      <li class="c-2-1"><span>剩　余：</span><?php if($goods_info['booking_days']): echo "需预订,约".get_booking_days_list($goods_info['booking_days']).'到货';?><?php endif;?><em id="stock-num" <?php if($goods_info['booking_days']): echo 'class="hide"';?><?php endif;?>><?=$goods_info['goods_number']?></em></li>
     </ul>
   </div>
   <article class="gdesc">

@@ -851,7 +851,27 @@ HEREDOC;
   echo $html;
 }
 
+/**
+ * 获取预定时间列表(跟ecshop中的一致)
+ * 
+ * @param integer $day
+ * @return array 预定天数 => name
+ */
+function get_booking_days_list( $day = NULL )
+{
+  static $booking_day_list = array(
+    '0'    =>  '现货',
+    '7'    =>  '1周内',
+    '14'   =>  '2周内',
+    '21'   =>  '3周内',
+    '28'   =>  '4周内',
+    '30'   =>  '1个月内',
+    '45'   =>  '1个半月',
+    '60'   =>  '2个月内',
+  );
 
+  return isset($day) ? $booking_day_list[$day] :  $booking_day_list;
+}
 
 
 
