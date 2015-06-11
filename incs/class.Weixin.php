@@ -1192,6 +1192,18 @@ class WeixinHelper {
       if (empty($result)) return '';
       $result_type = 'arr_goods';
     }
+    elseif (preg_match('/商城/', $keyword)) {
+      $result = "请访问: <a href=\"http://m.fxmgou.com/\">小蜜商城</a>";
+    }
+    elseif (preg_match('/订单/', $keyword)) {
+      $result = "请访问: <a href=\"http://m.fxmgou.com/trade/order/record\">我的订单</a>";
+    }
+    elseif (preg_match('/收藏/', $keyword)) {
+      $result = "请访问: <a href=\"http://m.fxmgou.com/user/collect\">我的收藏</a>";
+    }
+    elseif (preg_match('/反馈/', $keyword)) {
+      $result = "请访问: <a href=\"http://m.fxmgou.com/user/feedback\">我要反馈</a>";
+    }
     elseif (preg_match('/^http(s)?:\/\//i', $keyword)) {
       $result = "请访问: <a href=\"{$keyword}\">{$keyword}</a>";
     }
