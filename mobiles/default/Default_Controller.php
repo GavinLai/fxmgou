@@ -68,15 +68,15 @@ class Default_Controller extends Controller {
       $ad = Default_Model::getAd($ad_name);
       
       //获取最新上架
-      $goods_latest = Default_Model::getGoodsList('new_arrival','latest',0,6);
+      $goods_latest = Goods::getGoodsList('new_arrival','latest',0,6);
       $this->v->assign('goods_latest',$goods_latest);
       
       //获取一级显示分类
-      $category_top = Default_Model::getCategory(0, FALSE);
+      $category_top = Goods::getCategory(0, FALSE);
       foreach ($category_top AS &$top) {
-        $child_ids = Default_Model::getChildCategoryIds($top['cat_id']);
+        $child_ids = Goods::getChildCategoryIds($top['cat_id']);
         $cat_ids   = array_merge([$top['cat_id']], $child_ids);
-        $goods_cate = Default_Model::getGoodsList('other','latest',0,6,['cat_ids'=>$cat_ids]);
+        $goods_cate = Goods::getGoodsList('other','latest',0,6,['cat_ids'=>$cat_ids]);
         $top['goods_set'] = $goods_cate;
       }
       $this->v->assign('category_top',$category_top);
@@ -149,7 +149,7 @@ class Default_Controller extends Controller {
     if ($request->is_hashreq()) {
       
       // 顶级分类，用于分类筛选
-      $category_top = Default_Model::getCategory(0, FALSE);
+      $category_top = Goods::getCategory(0, FALSE);
       $this->v->assign('filter_category', $category_top);
       $this->v->assign('filter_category_num', count($category_top));
       $this->v->assign('the_cat_id', $cat_id);
@@ -166,7 +166,7 @@ class Default_Controller extends Controller {
       // 获取除排序('o=xxx')部分的查询串
       $qstr = '';
       if ('new_arrival'==$type) {
-        $qstr = "t=new_arrival&";
+        //$qstr = "t=new_arrival&"; //若要排序也对“新品”有效，则打开之
       }
       else {
         if ($cat_id || $brand_id || $price_from || $price_to) {
@@ -177,12 +177,12 @@ class Default_Controller extends Controller {
       
       $goods_list = [];
       if ('new_arrival'==$type) { //新品
-        $goods_list = Default_Model::getGoodsList($type,'',0,20);
+        $goods_list = Goods::getGoodsList($type,'',0,20);
       }
       else {
         $extra = [];
         if ($cat_id) {
-          $child_ids = Default_Model::getChildCategoryIds($cat_id);
+          $child_ids = Goods::getChildCategoryIds($cat_id);
           $cat_ids   = array_merge([$cat_id], $child_ids);
           $extra['cat_ids'] = $cat_ids;
         }
@@ -195,7 +195,7 @@ class Default_Controller extends Controller {
         if ($price_to) {
           $extra['price_to'] = $price_to;
         }
-        $goods_list = Default_Model::getGoodsList($type,$order,0,50,$extra);
+        $goods_list = Goods::getGoodsList($type,$order,0,50,$extra);
       }
       $this->v->assign('goods_list',$goods_list);
       $this->v->assign('goods_num',count($goods_list));
@@ -223,7 +223,7 @@ class Default_Controller extends Controller {
       $errmsg   = '';
       
       //获取商品信息
-      $goods_info = Default_Model::getGoodsInfo($goods_id);
+      $goods_info = Goods::getGoodsInfo($goods_id);
       if (empty($goods_info)) {
         $errmsg = "查询商品不存在或已下架(商品id: {$goods_id})";
       }

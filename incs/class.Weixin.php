@@ -19,6 +19,7 @@ class Weixin {
 	public $encodingAesKey= '';
 	public $paySignKey    = '';
 	public $caFile        = '';
+	public $siteUrl       = '';
 	
 	/**
 	 * Allow weixin public account
@@ -32,6 +33,14 @@ class Weixin {
 	 */
 	const PLUGIN_JSSDK  = 'jssdk';
 	const PLUGIN_JSADDR = 'jsaddr';
+	
+	const MSG_TYPE_TEXT  = 'text';
+	const MSG_TYPE_IMAGE = 'image';
+	const MSG_TYPE_VOICE = 'voice';
+	const MSG_TYPE_VIDEO = 'video';
+	const MSG_TYPE_MUSIC = 'music';
+	const MSG_TYPE_NEWS  = 'news';
+	const MSG_TYPE_NEWS_ITEM = 'news_item';
 	
 	/**
 	 * All weixin plugins name
@@ -172,6 +181,8 @@ class Weixin {
 		$this->paySignKey= $wx_config['paySignKey'];
 		$this->caFile    = SIMPHP_INCS.'/incs/libs/weixin/cacerts.pem';
 		
+		$this->siteUrl   = Config::get('env.site.mobile');
+		
 		$this->helper    = new WeixinHelper($this);
 		$this->oauth     = new OAuth2(array('client_id'=>$this->appId,'secret_key'=>$this->appSecret,'response_type'=>'code','scope'=>'snsapi_base','state'=>'base'),'weixin');
 		if (in_array(self::PLUGIN_JSSDK, $plugins)) {
@@ -277,16 +288,16 @@ class Weixin {
    */
   private function dealEventMsg($postObj)
   {
-    $fromUsername= $postObj->FromUserName;
-    $toUsername  = $postObj->ToUserName;
-    $openid      = $fromUsername;
+    $fromUserName= $postObj->FromUserName;
+    $toUserName  = $postObj->ToUserName;
+    $openid      = $fromUserName;
     $reqtime     = intval($postObj->CreateTime);
-    $restime     = time();
+    
     $contentText = '';
     $responseText= '';
     switch ($postObj->Event) {
       case 'subscribe':
-        $contentText = $this->helper->onSubscribe($openid, $reqtime, $toUsername);
+        $contentText = $this->helper->onSubscribe($openid, $reqtime, $toUserName);
         break;
       case 'unsubscribe':
         $this->helper->onUnsubscribe($openid, $reqtime);
@@ -294,19 +305,19 @@ class Weixin {
       case 'SCAN':
         break;
       case 'CLICK':
-        $base_url = Config::get('env.site.mobile');
         switch ($postObj->EventKey) {
           case '200': //最新文章
             $latest_news = $this->helper->latestArticles();
             $item  = '';
             foreach ($latest_news AS $news) {
-              $title = $news['title'];
-              $desc  = $news['digest'];
-              $pic   = $base_url.$news['thumb_media_url'];
-              $link  = $news['url'];
-              $item .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
+              $extra = array();
+              $extra['title']       = $news['title'];
+              $extra['description'] = $news['digest'];
+              $extra['picUrl']      = $this->siteUrl.$news['thumb_media_url'];
+              $extra['url']         = $news['url'];
+              $item .= self::packMsg(self::MSG_TYPE_NEWS_ITEM, '', '', $extra);
             }
-            $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($latest_news), $item);
+            $responseText = self::packMsg(self::MSG_TYPE_NEWS, $fromUserName, $toUserName, array('articleCount'=>count($latest_news), 'articles'=>$item));
             return $responseText;
             break;
           case '300': //关于小蜜
@@ -328,8 +339,8 @@ class Weixin {
         //未知事件
     }
     
-    if (!empty($contentText)) {
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
+    if (''!=$contentText) { //默认返回text文本
+      $responseText = self::packMsg(self::MSG_TYPE_TEXT, $fromUserName, $toUserName, array('content' => $contentText));
     }
     return $responseText;
   }
@@ -338,65 +349,55 @@ class Weixin {
    * 处理文本消息
    * 
    * @param SimpleXMLElement $postObj
+   * @param boolean          $is_voice
    * @return response msg string
    */
-  private function dealTextMsg($postObj)
+  private function dealTextMsg($postObj, $is_voice = FALSE)
   {
-    $fromUsername = $postObj->FromUserName;
-    $toUsername   = $postObj->ToUserName;
+    $fromUserName = $postObj->FromUserName;
+    $toUserName   = $postObj->ToUserName;
     $keyword      = trim($postObj->Content);
-    $openid       = $fromUsername;
+    $openid       = $fromUserName;
     $reqtime      = intval($postObj->CreateTime);
-    $restime      = time();
-    trace_debug('weixin_reply_text',$keyword);
-    $contentText  = $this->helper->onTextQuery($keyword, $openid, $reqtime);
+    trace_debug('weixin_reply_'.($is_voice?'voice':'text'), $keyword);
+    
     $responseText = '';
-    if (!empty($contentText)&&!is_array($contentText)) {
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
+    $queryResult  = $this->helper->onTextQuery($keyword, $result_type);
+    if (empty($queryResult)) {//没查找到任何可回复的信息
+      $baidu_sou  = $this->helper->sou($keyword);
+      $contentText  = "抱歉，没有找到你想要的东西！小蜜帮你<a href=\"{$baidu_sou}\">度娘一下</a>吧/::P";
+      $responseText = self::packMsg(self::MSG_TYPE_TEXT, $fromUserName, $toUserName, array('content' => $contentText));
     }
-    elseif(!empty($contentText)&&is_array($contentText)){
-      //msgTpl
-      $text = '';
-      $base_url = Config::get('env.site.mobile');
-      foreach($contentText as $val){
-        switch ($val['type_id']) {
-          case 'word':
-            $title = "\n".$val['content'];
-            $desc = $val['content'];
-            $pic = '';
-            $link = $base_url."/node/{$val['nid']}/edit";
-            break;
-          case 'card':
-            $title = $val['content']=='' ? $val['title']:$val['content'];
-            $desc = $val['content'];
-            $pic  = preg_match("!^(http|https):\/\/!i", $val['cover_url']) ? $val['cover_url'] : $base_url.$val['cover_url'];
-            $link = $base_url."/node/{$val['nid']}/edit";
-            break;
-          case 'music':
-            $title = $val['title'].' - '.$val['singer_name'];
-            $desc = $val['title'].' - '.$val['singer_name'];
-            $pic  = preg_match("!^(http|https):\/\/!i", $val['bg_url']) ? $val['bg_url'] : $base_url.$val['bg_url'];
-            $link = $base_url."/node/{$val['nid']}/edit";
-            break;
-          case 'gift':
-            $title = $val['title'];
-            $desc = $val['title'].' - '.strip_tags($val['desc']);
-            $pic  = preg_match("!^(http|https):\/\/!i", $val['goods_url']) ? $val['goods_url'] : $base_url.$val['goods_url'];
-            $link = $base_url."/mall/detail/{$val['nid']}";
-            break;                                           
-          default:
-            # code...
-            break;
-        }
-        $text .= sprintf(self::$msgTpl['news_item'], $title, $desc, $pic, $link);
+    else {
+      if ('string'==$result_type) { //一般文本
+        $responseText = self::packMsg(self::MSG_TYPE_TEXT, $fromUserName, $toUserName, array('content' => $queryResult));
       }
-      $responseText= sprintf(self::$msgTpl['news'], $fromUsername, $toUsername, $restime, count($contentText),$text);
+      elseif ('arr_article'==$result_type) { //最新文章
+        $item  = '';
+        foreach ($queryResult AS $news) {
+          $extra = array();
+          $extra['title']       = $news['title'];
+          $extra['description'] = $news['digest'];
+          $extra['picUrl']      = $this->siteUrl.$news['thumb_media_url'];
+          $extra['url']         = $news['url'];
+          $item .= self::packMsg(self::MSG_TYPE_NEWS_ITEM, '', '', $extra);
+        }
+        $responseText = self::packMsg(self::MSG_TYPE_NEWS, $fromUserName, $toUserName, array('articleCount'=>count($queryResult), 'articles'=>$item));
+      }
+      elseif ('arr_goods'==$result_type) { //匹配搜索的商品
+        $item  = '';
+        foreach ($queryResult AS $goods) {
+          $extra = array();
+          $extra['title']       = $goods['goods_name'];
+          $extra['description'] = $goods['goods_name'];
+          $extra['picUrl']      = preg_match('/^http:\/\//', $goods['goods_thumb']) ? $goods['goods_thumb'] : Goods::goods_picurl($goods['goods_thumb']);
+          $extra['url']         = Goods::goods_url($goods['goods_id'], TRUE);
+          $item .= self::packMsg(self::MSG_TYPE_NEWS_ITEM, '', '', $extra);
+        }
+        $responseText = self::packMsg(self::MSG_TYPE_NEWS, $fromUserName, $toUserName, array('articleCount'=>count($queryResult), 'articles'=>$item));
+      }
     }
-    else{
-      $baidu_sou = "https://www.baidu.com/s?wd={$keyword}";
-      $contentText = "抱歉，没有找到你想要的东西！小蜜帮你<a href=\"{$baidu_sou}\">度娘一下</a>吧/::P";
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
-    }
+    
     return $responseText;
   }
   
@@ -408,31 +409,18 @@ class Weixin {
    */
   private function dealVoiceMsg($postObj)
   {
+    $fromUserName = $postObj->FromUserName;
+    $toUserName   = $postObj->ToUserName;
     $keyword      = trim($postObj->Recognition);
-    trace_debug('weixin_reply_voice',$keyword);
-    $fromUsername = $postObj->FromUserName;
-    $toUsername   = $postObj->ToUserName;
-    $openid       = $fromUsername;
-    $reqtime      = intval($postObj->CreateTime);
-    $restime      = time();
     
     if (''==$keyword) {
       $contentText = "抱歉，没听清你说什么，请重试？";
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
+      $responseText= self::packMsg(self::MSG_TYPE_TEXT, $fromUserName, $toUserName, array('content' => $contentText));
       return $responseText;
     }
     
-    $contentText  = $this->helper->onVoiceQuery($keyword, $openid, $reqtime);
-    $responseText = '';
-    if (!empty($contentText)) {
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
-    }
-    else {
-      $baidu_sou = "https://www.baidu.com/s?wd={$keyword}";
-      $contentText = "抱歉，没找到你说的：\n“{$keyword}”\n小蜜帮你<a href=\"{$baidu_sou}\">度娘一下</a>吧/::P";
-      $responseText= sprintf(self::$msgTpl['text'], $fromUsername, $toUsername, $restime, $contentText);
-    }
-    return $responseText;
+    $postObj->Content = $keyword;
+    return $this->dealTextMsg($postObj, TRUE);
   }
   
   /**
@@ -444,6 +432,82 @@ class Weixin {
   private function dealImageMsg($postObj)
   {
     return '';    
+  }
+  
+  /**
+   * 打包组合响应消息
+   * 
+   * @param string $msgType      消息类型，可选值：text, image, voice, video, music, news, news_item
+   * @param string $toUserName   发送目标用户openid
+   * @param string $fromUserName 发送源openid(自身)
+   * @param string $createTime   消息响应时间
+   * @param string $extra <br>
+   *   $msgType = 'text' : $extra['content' => 'xx'] <br>
+   *   $msgType = 'image': $extra['mediaId' => 'xx'] <br>
+   *   $msgType = 'voice': $extra['mediaId' => 'xx'] <br>
+   *   $msgType = 'video': $extra['mediaId' => 'xx', 'title' => 'xx', 'description' => 'xx'] <br>
+   *   $msgType = 'music': $extra['title' => 'xx', 'description' => 'xx', 'musicUrl' => 'xx', 'hqMusicUrl' => 'xx', 'thumbMediaId' => 'xx'] <br>
+   *   $msgType = 'news': $extra['articleCount' => 'xx', 'articles' => 'xx'] <br>
+   *   $msgType = 'news_item': $extra['title' => 'xx', 'description' => 'xx', 'picUrl' => 'xx', 'url' => 'xx'] <br><br>
+   * @return string
+   */
+  public static function packMsg($msgType, $toUserName, $fromUserName, $extra = array())
+  {
+    if (!in_array($msgType, ['text','image','voice','video','music','news','news_item'])) {
+      return '';
+    }
+
+    $createTime = time();
+    switch ($msgType) {
+      case 'text':
+        if (empty($extra['content'])) {
+          return '';
+        }
+        return sprintf(self::$msgTpl[$msgType], $toUserName, $fromUserName, $createTime,
+                       $extra['content']);
+        break;
+      case 'image':
+      case 'voice':
+      case 'video':
+        if (empty($extra['mediaId'])) {
+          return '';
+        }
+        return sprintf(self::$msgTpl[$msgType], $toUserName, $fromUserName, $createTime,
+                       $extra['mediaId'],
+                       isset($extra['title'])       ? $extra['title']       : '',
+                       isset($extra['description']) ? $extra['description'] : '');
+        break;
+      case 'music':
+        if (empty($extra['thumbMediaId'])) {
+          return '';
+        }
+        return sprintf(self::$msgTpl[$msgType], $toUserName, $fromUserName, $createTime,
+                       isset($extra['title'])       ? $extra['title']       : '',
+                       isset($extra['description']) ? $extra['description'] : '',
+                       isset($extra['musicUrl'])    ? $extra['musicUrl']    : '',
+                       isset($extra['hqMusicUrl'])  ? $extra['hqMusicUrl']  : '',
+                       $extra['thumbMediaId']);
+        break;
+      case 'news':
+        if (empty($extra['articleCount']) || empty($extra['articles'])) {
+          return '';
+        }
+        return sprintf(self::$msgTpl[$msgType], $toUserName, $fromUserName, $createTime,
+                       $extra['articleCount'],
+                       $extra['articles']);
+        break;
+      case 'news_item':
+        return sprintf(self::$msgTpl[$msgType],
+                       isset($extra['title'])       ? $extra['title']       : '',
+                       isset($extra['description']) ? $extra['description'] : '',
+                       isset($extra['picUrl'])      ? $extra['picUrl']      : '',
+                       isset($extra['url'])         ? $extra['url']         : '');
+        break;
+      default:
+        return '';
+    }
+    
+    return '';
   }
   
   /**
@@ -1008,10 +1072,10 @@ class WeixinHelper {
    *
    * @param string $openid
    * @param integer $reqtime
-   * @param string $toUsername
+   * @param string $toUserName
    * @return string
    */
-  public function onSubscribe($openid, $reqtime, $toUsername = '') {
+  public function onSubscribe($openid, $reqtime, $toUserName = '') {
     $uinfo = $this->wx->userInfo($openid);
     if (empty($uinfo['errcode'])) {
       $from  = $this->from;
@@ -1072,13 +1136,20 @@ class WeixinHelper {
   /**
    * 文本关键词查询事件
    *
-   * @param string $keyword
-   * @param string $openid
-   * @param integer $reqtime
+   * @param string  $keyword     关键词
+   * @param string  $result_type 输出返回结果类型: <br>
+   *   'string'      : 一个纯字符串内容，默认<br>
+   *   'arr_article' : 文章数组<br>
+   *   'arr_goods'   : 商品数组<br><br>
+   * @return string|array
    */
-  public function onTextQuery($keyword, $openid, $reqtime) {
-    $result = '';
+  public function onTextQuery($keyword, &$result_type = 'string') {
+    if (''==$keyword) {
+      return '';
+    }
     
+    $result = '';
+    $result_type = 'string';
     if (in_array($keyword, array('小蜜','关于小蜜','关于','福小蜜'))) {
       $result = $this->about();
     }
@@ -1090,11 +1161,12 @@ class WeixinHelper {
     }
     elseif (in_array($keyword, array('最新文章','最新资讯','文章','资讯'))) {
       $result = $this->latestArticles();
+      $result_type = 'arr_article';
     }
     elseif (preg_match('/百度|度娘/', $keyword)) {
       $result = '这是她的地址：<a href="http://www.baidu.com">www.baidu.com</a>';
     }
-    elseif (preg_match('/错了|不喜欢|不感兴趣|不爱|无用|干扰|骚扰/', $keyword)) {
+    elseif (preg_match('/错了|不喜欢|不好玩|不感兴趣|不爱|无用|干扰|骚扰/', $keyword)) {
       $result = '不好意思/::~';
     }
     elseif (preg_match('/喜欢|很好|感兴趣|大爱|太棒|真棒|棒极|哇塞|不错|太酷|忒酷|真酷/', $keyword)) {
@@ -1109,15 +1181,19 @@ class WeixinHelper {
         "智者乐山山如画，\n仁者乐水水无涯。\n从从容容一杯酒，\n平平淡淡一杯茶。\n\n细雨朦胧小石桥，\n春风荡漾小竹筏。\n夜无明月花独舞，\n腹有诗书气自华。",
         "浮名浮利，虚苦劳神。\n叹隙中驹，石中火，梦中身。\n几时归去，作个闲人。\n\n网事已成空，还如一梦中。\n相见争如不见，有情还是无情。\n今朝有酒今朝醉，管他对错是与非。",
       ];
-      $idx = mt_rand(0, count($poems)-1);
-      $result = $poems[$idx];
-      $result.= "\n\n还不解聊？去调戏度娘吧：“度娘，<a http=\"https://www.baidu.com/s?wd={$keyword}\">{$keyword}</a>”";
+      $rand_idx = mt_rand(0, 100000);
+      $rand_idx = $rand_idx % count($poems);
+      $result = $poems[$rand_idx];
+      $baidu_sou = $this->sou($keyword);
+      $result.= "\n\n还不解聊？去调戏度娘吧：“度娘，<a href=\"{$baidu_sou}\">{$keyword}</a>”";
     }
     elseif (preg_match('/有什么/', $keyword)) {
-      $result = '你好，非常感谢你对小蜜的关注，我们近期将会上线产品模块，敬请留意！';
+      $result = Goods::getGoodsList('','latest');
+      if (empty($result)) return '';
+      $result_type = 'arr_goods';
     }
     elseif (preg_match('/^http(s)?:\/\//i', $keyword)) {
-      $result = "请访问: <a http=\"{$keyword}\">{$keyword}</a>";
+      $result = "请访问: <a href=\"{$keyword}\">{$keyword}</a>";
     }
     elseif(in_array($keyword, array('?','？','阿','啊','在','在?','在？','哈哈','呵呵','哈','呵','哼'))
       || is_numeric($keyword)
@@ -1127,34 +1203,12 @@ class WeixinHelper {
       $result = $this->defaultHello();
     }
     else { //查询数据库
-      /*
-      import('node/Node_Model','mobiles');
-      $page_size = 10;
-      $recordes = Node_Model::searchNode($keyword,$page_size);
-      if(empty($recordes)){
-        $recordes = Node_Model::searchNode($keyword,$page_size, 1);
-      }
-
-      $nodes = [];
-      foreach($recordes as $v){
-        $record = Node_Model::getNodeInfo($v['nid']);
-        $nodes[] = $record;
-      }
-      $result = $nodes;
-      */
+      $result = Goods::search($keyword,10);
+      if (empty($result)) return '';
+      $result_type = 'arr_goods';
     }
+    
     return $result;
-  }
-
-  /**
-   * 语音关键词查询事件
-   *
-   * @param string $keyword
-   * @param string $openid
-   * @param integer $reqtime
-   */
-  public function onVoiceQuery($keyword, $openid, $reqtime) {
-    return $this->onTextQuery($keyword, $openid, $reqtime);
   }
 
   /**
@@ -1190,7 +1244,6 @@ class WeixinHelper {
   public function about($type = 0) {
     $ext = $ext2 = '';
     if (1==$type) {
-      //$ext = "祝你五一好心情，玩得开心哟，参加滦河马拉松赛事的话预祝你取得好成绩！/:,@-D\n\n";
       $ext2= "，小蜜还会定期为你发布一些可能会对你有用的资讯文章";
     }
     elseif (2==$type) {
@@ -1199,6 +1252,21 @@ class WeixinHelper {
     }
     $text = "你好，欢迎关注小蜜/:rose\n\n{$ext}你可以将底部菜单切换到回复模式跟小蜜文字或语音对话，希望能给你带来点小惊喜/::$\n\n福小蜜海外购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品{$ext2}。\n\n觉得小蜜还行的话就帮忙向好友推荐一下吧，这是小蜜的公众号：fxmgou，\n谢谢/::*";
     return $text;
+  }
+  
+  /**
+   * 返回搜索地址
+   * 
+   * @param string $keyword
+   * @param string $type    'baidu'...
+   * @return string
+   */
+  public function sou($keyword, $type = 'baidu') {
+    if (empty($keyword)) return '';
+    if ('baidu'==$type) {
+      return "https://www.baidu.com/s?wd={$keyword}";
+    }
+    return '';
   }
   
   /**

@@ -8,38 +8,46 @@ defined('IN_SIMPHP') or die('Access Denied');
 
 class Goods {
   
-  public static function goods_url($goods_id, $with_prefix = FALSE) {
+  static function goods_url($goods_id, $with_prefix = FALSE) {
     return U('item/'.$goods_id,'',$with_prefix);
   }
   
-  public static function goods_picurl($goods_pic) {
+  static function goods_picurl($goods_pic) {
     static $urlpre;
     if (!isset($urlpre)) $urlpre = C('env.site.shop').'/';
     return $urlpre.$goods_pic;
   }
   
-  public static function getBrandInfo($brand_id) {
+  static function getBrandInfo($brand_id) {
     $row = D()->from(ectable('brand'))->where(['brand_id'=>intval($brand_id)])->select()->get_one();
     return $row;
   }
   
-  public static function getBrandList() {
+  static function getBrandList() {
     $list = D()->from(ectable('brand'))->where(['is_show'=>1])->order_by('`sort_order` ASC','`brand_name` ASC')->select()->fetch_array_all();
     return $list;
   }
   
-  public static function getCategoryInfo($cat_id = 0, $just_show = TRUE, $just_ret_id = FALSE) {
-    $ectb  = ectable('category');
-    $show  = $just_show ? 'AND `is_show`=1' : '';
-    $sql   = "SELECT `cat_id`,`cat_name`,`parent_id`,`is_show` FROM {$ectb} WHERE `cat_id`=%d {$show}";
-    $ret   = D()->get_one($sql, $cat_id);
+  static function getCategoryName($cat_id) {
+    $cat_id = intval($cat_id);
+    if (empty($cat_id)) return false;
+    $cat_name = D()->from(ectable('category'))->where(['cat_id'=>$cat_id])->select('cat_name')->result();
+    return $cat_name;
+  }
+  
+  static function getCategoryInfo($cat_id = 0, $just_show = TRUE, $just_ret_id = FALSE) {
+    $where = ['cat_id' => intval($cat_id)];
+    if ($just_show) {
+      $where['is_show'] = 1;
+    }
+    $ret   = D()->from(ectable('category'))->where($where)->select("`cat_id`,`cat_name`,`parent_id`,`is_show`")->get_one();
     if ($just_ret_id && !empty($ret)) {
       return $ret['cat_id'];
     }
     return $ret;
   }
   
-  public static function getParentCatesChain($cat_id, Array &$output = []) {
+  static function getParentCatesChain($cat_id, Array &$output = []) {
     $currCateInfo = self::getCategoryInfo($cat_id, FALSE, FALSE);
     if (!empty($currCateInfo)) {
       if (0!=$currCateInfo['parent_id']) {
@@ -49,8 +57,115 @@ class Goods {
     }
     return $output;
   }
+
+  static function getCategory($parent_id = 0, $just_id = FALSE) {
+    $ret = D()->from(ectable('category'))->where("`parent_id`=%d AND `is_show`=1", $parent_id)->order_by("`sort_order` ASC")
+              ->select("`cat_id`,`cat_name`,`parent_id`,`is_show`")->fetch_array_all();
+    if ($just_id && !empty($ret)) {
+      foreach ($ret AS &$it) {
+        $it = $it['cat_id'];
+      }
+    }
+    return $ret;
+  }
   
-  public static function getGoodsInfo($goods_id, Array $ctrl = array('is_on_sale'=>1,'goods_img'=>1)) {
+  static function getChildCategoryIds($parent_id = 0, Array &$output = array()) {
+    $child_ids_cur = self::getCategory($parent_id, TRUE);
+    if (!empty($child_ids_cur)) {
+      $output = array_merge($output,$child_ids_cur);
+      foreach ($child_ids_cur AS $child_id) {
+        self::getChildCategoryIds($child_id, $output);
+      }
+    }
+    return $output;
+  }
+  
+  static function getGoodsList($type = '', $order = '', $start = 0, $limit = 10, Array $extra = array()) {
+  
+    $ectb = ectable('goods');
+    $ectb_coll = ectable('collect_goods');
+  
+    $zonghe_order = '';
+    if (''==$order||'zonghe'==$order) { //综合排序，算法：zonghe_order = (click_count * 1 + collect_count * 100 + paid_order_count * 1000)
+      $zonghe_order = ",(g.click_count * 1 + g.collect_count * 100 + g.paid_order_count * 1000) AS zonghe_order";
+    }
+  
+    $user_id= $GLOBALS['user']->ec_user_id;
+    $user_id= intval($user_id);
+    $fields = "g.`goods_id`,g.`cat_id`,g.`goods_sn`,g.`goods_name`,g.`click_count`,g.`collect_count`,g.`paid_order_count`,g.`brand_id`,g.`goods_number`,g.`market_price`,g.`shop_price`,g.`goods_thumb`,g.`goods_img`,g.`add_time`,g.`last_update`{$zonghe_order}";
+    $fields.= ",IF(cg.goods_id is NULL, 0, 1) AS collected";
+    $sqlpre = "SELECT {$fields} FROM {$ectb} g LEFT JOIN {$ectb_coll} cg ON cg.user_id={$user_id} AND g.goods_id=cg.goods_id WHERE g.`is_on_sale`=1 AND g.`goods_img`<>''";
+    $ret    = [];
+  
+    if ('new_arrival'==$type) { //新品
+      $sqlpre .= " AND g.`is_new`=1";
+    }
+    else { //按条件查询
+  
+      // 条件查询
+      $cat_id_in = '';
+      if (isset($extra['cat_ids']) && !empty($extra['cat_ids'])) {
+        if (is_array($extra['cat_ids'])) {
+          $cat_id_in = implode(',', $extra['cat_ids']);
+          $sqlpre .= " AND g.`cat_id` IN({$cat_id_in})";
+        }
+        else {
+          $sqlpre .= " AND g.`cat_id`=".$extra['cat_ids'];
+        }
+      }
+      if (isset($extra['brand_id']) && !empty($extra['brand_id'])) {
+        $sqlpre .= " AND g.`brand_id`=".$extra['brand_id'];
+      }
+      if (isset($extra['price_from']) && !empty($extra['price_from'])) {
+        $sqlpre .= " AND g.`shop_price`>=".$extra['price_from'];
+      }
+      if (isset($extra['price_to']) && !empty($extra['price_to'])) {
+        $sqlpre .= " AND g.`shop_price`<=".$extra['price_to'];
+      }
+  
+    }
+  
+    // 排序
+    $sql    = '';
+    if (''==$order||'zonghe'==$order) { //综合排序
+      $sql  = $sqlpre . " ORDER BY `zonghe_order` DESC";
+    }
+    elseif ('click'==$order) { //按点击数
+      $sql  = $sqlpre . " ORDER BY g.`click_count` DESC";
+    }
+    elseif ('collect'==$order) { //按收藏数
+      $sql  = $sqlpre . " ORDER BY g.`collect_count` DESC";
+    }
+    elseif ('paid'==$order) { //按订单数
+      $sql  = $sqlpre . " ORDER BY g.`paid_order_count` DESC";
+    }
+    elseif ('price_low2top'==$order) { //价格从低到高
+      $sql  = $sqlpre . " ORDER BY g.`shop_price` ASC";
+    }
+    elseif ('price_top2low'==$order) { //价格从高到低
+      $sql  = $sqlpre . " ORDER BY g.`shop_price` DESC";
+    }
+    else { //默认按添加时间倒排
+      $sql  = $sqlpre . " ORDER BY g.`add_time` DESC";
+    }
+  
+    if (''!=$sql) {
+      $sql.= " LIMIT %d, %d";
+      $ret = D()->raw_query($sql,$start,$limit)->fetch_array_all();
+    }
+  
+    if (!empty($ret)) {
+      $purl = C('env.site.shop').'/';
+      foreach ($ret AS &$it) {
+        $it['goods_thumb'] = $purl . $it['goods_thumb'];
+        $it['goods_img']   = $purl . $it['goods_img'];
+      }
+    }
+  
+    return $ret;
+  }
+  
+  static function getGoodsInfo($goods_id, Array $ctrl = array('is_on_sale'=>1,'goods_img'=>1)) {
     if (empty($goods_id) || !is_numeric($goods_id)) {
       return FALSE;
     }
@@ -69,7 +184,7 @@ class Goods {
     return $ret;
   }
   
-  public static function getGoodsGallery($goods_id) {
+  static function getGoodsGallery($goods_id) {
     if (empty($goods_id) || !is_numeric($goods_id)) {
       return FALSE;
     }
@@ -79,7 +194,7 @@ class Goods {
     return $ret;
   }
   
-  public static function getUserCartNum($userid_or_sessid = NULL, $target_goods_id = NULL) {
+  static function getUserCartNum($userid_or_sessid = NULL, $target_goods_id = NULL) {
     if (is_null($userid_or_sessid)) $userid_or_sessid = $GLOBALS['user']->ec_user_id;
     $ectb = ectable('cart');
     $where= self::getCartOwnerSql($userid_or_sessid);
@@ -91,7 +206,7 @@ class Goods {
     return $ret;
   }
   
-  public static function getUserCart($userid_or_sessid = NULL) {
+  static function getUserCart($userid_or_sessid = NULL) {
     if (is_null($userid_or_sessid)) $userid_or_sessid = $GLOBALS['user']->ec_user_id;
     $ectb = ectable('cart');
     $where= self::getCartOwnerSql($userid_or_sessid);
@@ -107,7 +222,7 @@ class Goods {
     return $ret;
   }
   
-  public static function getCartOwnerSql($userid_or_sessid) {
+  static function getCartOwnerSql($userid_or_sessid) {
     $where= '';
     if (strlen($userid_or_sessid) > 10) { //$userid_or_sessid is session id
       $where = "`session_id`='%s'";
@@ -118,7 +233,7 @@ class Goods {
     return $where;
   }
   
-  public static function checkCartGoodsExist($userid_or_sessid, $goods_id) {
+  static function checkCartGoodsExist($userid_or_sessid, $goods_id) {
     $ectb = ectable('cart');
     $where= self::getCartOwnerSql($userid_or_sessid);
     $sql  = "SELECT `rec_id` FROM {$ectb} WHERE {$where} AND `goods_id`=%d";
@@ -135,7 +250,7 @@ class Goods {
    * @param boolean $is_cart_rec_id , when $is_cart_rec_id is true,  $goods_id indicating the cart record id
    * @param boolean $is_fixed_value , when $is_fixed_value is true, $inc is a fixed value, not an increment
    */
-  public static function changeCartGoodsNum($userid_or_sessid, $goods_id, $inc = 1, $is_cart_rec_id = false, $is_fixed_value = false) {
+  static function changeCartGoodsNum($userid_or_sessid, $goods_id, $inc = 1, $is_cart_rec_id = false, $is_fixed_value = false) {
     $ectb = ectable('cart');
     if ($is_cart_rec_id) {
       $where = "`rec_id`=%d";
@@ -166,7 +281,7 @@ class Goods {
    *   ['code' => -2, 'msg' => '商品库存不足']
    *   ['code' =>-10, 'msg' => '添加失败']
    */
-  public static function addToCart($goods_id, $num = 1, $user_id = NULL) {
+  static function addToCart($goods_id, $num = 1, $user_id = NULL) {
     if (!$user_id) $user_id = $GLOBALS['user']->ec_user_id;
     
     $ret = ['code' => 0, 'msg' => '添加成功'];
@@ -244,7 +359,7 @@ class Goods {
    *   ['code'=> >0,'msg'=>'删除成功']
    *   ['code'=> -1,'msg'=>'删除失败']
    */
-  public static function deleteCartGoods($rec_ids, $user_id) {
+  static function deleteCartGoods($rec_ids, $user_id) {
     $ret = ['code'=>0,'msg'=>'没有要删除的记录'];
     if (empty($rec_ids)) {
       return $ret;
@@ -273,7 +388,7 @@ class Goods {
     return $ret;
   }
   
-  public static function getCartsGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
+  static function getCartsGoods($cart_rec_ids, $userid_or_sessid = NULL, &$total_price = NULL) {
     if (!is_array($cart_rec_ids)) {
       $cart_rec_ids = [$cart_rec_ids];
     }
@@ -303,7 +418,7 @@ class Goods {
     return empty($ret) ? [] : $ret;
   }
   
-  public static function getRegionName($region_id) {
+  static function getRegionName($region_id) {
     $ectb = ectable('region');
     $sql  = "SELECT `region_name` FROM {$ectb} WHERE `region_id`=%d";
     $row  = D()->raw_query($sql,$region_id)->get_one();
@@ -318,7 +433,7 @@ class Goods {
    * @param integer $region_type 地区类型：0:国家，1:省份，2:市级，3:区级
    * @param integer $parent_id 当地区类型是市级和区级时，需要$parent_id来区分，因为有可能是重名的
    */
-  public static function getRegionId($region_name, $region_type = 1, $parent_id = 0) {
+  static function getRegionId($region_name, $region_type = 1, $parent_id = 0) {
     $ectb = ectable('region');
     $sql  = "SELECT `region_id` FROM {$ectb} WHERE `region_type`=%d AND ";
     if (0===$region_type) { //国家需精确匹配
@@ -344,7 +459,7 @@ class Goods {
    * @param integer $ec_user_id
    * @return array
    */
-  public static function getUserAddress($ec_user_id) {
+  static function getUserAddress($ec_user_id) {
     $ectb = ectable('user_address');
     $sql  = "SELECT * FROM {$ectb} WHERE `user_id`=%d ORDER BY `address_id` DESC";
     $ret  = D()->raw_query($sql,$ec_user_id)->fetch_array_all();
@@ -388,7 +503,7 @@ class Goods {
    * @param integer $address_id
    * @return array
    */
-  public static function getAddressInfo($address_id) {
+  static function getAddressInfo($address_id) {
     $ectb = ectable('user_address');
     $sql  = "SELECT * FROM {$ectb} WHERE `address_id`=%d";
     $row  = D()->raw_query($sql,$address_id)->get_one();
@@ -402,7 +517,7 @@ class Goods {
    * @param integer $address_id 地址id，当为0时表示新插入，否则表示更新
    * @return boolean
    */
-  public static function saveUserAddress(Array $data, $address_id = 0) {
+  static function saveUserAddress(Array $data, $address_id = 0) {
     
     //补全地区信息
     if (empty($data['country']) && !empty($data['country_name'])) {
@@ -434,7 +549,7 @@ class Goods {
    * @param integer $pay_id
    * @return array
    */
-  public static function getPaymentInfo($pay_id) {
+  static function getPaymentInfo($pay_id) {
     $ectb = ectable('payment');
     $sql  = "SELECT * FROM {$ectb} WHERE `pay_id`=%d AND `enabled`=1";
     $row  = D()->raw_query($sql,$pay_id)->get_one();
@@ -447,7 +562,7 @@ class Goods {
    * @param integer $shipping_id
    * @return array
    */
-  public static function getShippingInfo($shipping_id) {
+  static function getShippingInfo($shipping_id) {
     $ectb = ectable('shipping');
     $sql  = "SELECT * FROM {$ectb} WHERE `shipping_id`=%d AND `enabled`=1";
     $row  = D()->raw_query($sql,$shipping_id)->get_one();
@@ -461,7 +576,7 @@ class Goods {
    * @param integer $chnum, 大于0时增加库存，小于0时减少库存
    * @return boolean
    */
-  public static function changeGoodsStock($goods_id, $chnum = 1) {
+  static function changeGoodsStock($goods_id, $chnum = 1) {
     $ectb_goods = ectable('goods');
     $chnum = intval($chnum);
     D()->raw_query("UPDATE {$ectb_goods} SET `goods_number`=`goods_number`+%d WHERE `goods_id`=%d", $chnum, $goods_id);
@@ -477,7 +592,7 @@ class Goods {
    * @param integer $order_id
    * @return array
    */
-  public static function getOrderGoods($order_id) {
+  static function getOrderGoods($order_id) {
     if (empty($order_id)) return [];
     
     $ectb_goods = ectable('goods');
@@ -504,7 +619,7 @@ class Goods {
    * @param integer $user_id
    * @return array
    */
-  public static function getOrderList($user_id) {
+  static function getOrderList($user_id) {
     if (empty($user_id)) return [];
     
     $start = 0;
@@ -543,7 +658,7 @@ class Goods {
    * @param array $order
    * @return string
    */
-  public static function genStatusHtml(Array &$order) {
+  static function genStatusHtml(Array &$order) {
     
     $html = '';
     
@@ -588,7 +703,7 @@ class Goods {
    * @param integer $inc
    * @return boolean
    */
-  public static function addGoodsClickCnt($goods_id, $inc = 1) {
+  static function addGoodsClickCnt($goods_id, $inc = 1) {
     if (!$goods_id) return false;
   
     $ectb = ectable('goods');
@@ -606,7 +721,7 @@ class Goods {
    * @param integer $inc
    * @return boolean
    */
-  public static function changeGoodsCollectCnt($goods_id, $inc = 1) {
+  static function changeGoodsCollectCnt($goods_id, $inc = 1) {
     if (!$goods_id) return false;
   
     $ectb = ectable('goods');
@@ -623,7 +738,7 @@ class Goods {
    * @param integer $goods_id
    * @return boolean
    */
-  public static function updateGoodsOrderCnt($goods_id) {
+  static function updateGoodsOrderCnt($goods_id) {
     $goods_id = intval($goods_id);
     if (empty($goods_id)) return false;
     
@@ -654,7 +769,7 @@ HERESQL;
    * @param integer $order_id
    * @return boolean
    */
-  public static function updateGoodsOrderCntByOrderid($order_id) {
+  static function updateGoodsOrderCntByOrderid($order_id) {
     $order_id = intval($order_id);
     if (empty($order_id)) return false;
     
@@ -686,7 +801,7 @@ HERESQL;
    * @param integer $order_id
    * @return boolean 
    */
-  public static function orderUpdate(Array $updata, $order_id) {
+  static function orderUpdate(Array $updata, $order_id) {
     if (!$order_id) return false;
     D()->update(ectable('order_info'), $updata, ['order_id'=>$order_id], true);
     if (D()->affected_rows()==1) {
@@ -698,7 +813,7 @@ HERESQL;
   /**
    * 检查是否已经收藏
    */
-  public static function isCollected($goods_id, $ec_user_id) {
+  static function isCollected($goods_id, $ec_user_id) {
     
     if (!$ec_user_id) $ec_user_id = $GLOBALS['user']->ec_user_id;
     
@@ -715,7 +830,7 @@ HERESQL;
    *   'new_collect' : 成功新收藏
    *   'collect_fail': 收藏失败
    */
-  public static function goodsCollecting($goods_id, $ec_user_id) {
+  static function goodsCollecting($goods_id, $ec_user_id) {
     
     if (!$ec_user_id) $ec_user_id = $GLOBALS['user']->ec_user_id;
     
@@ -747,7 +862,7 @@ HERESQL;
    * @param integer $rec_id
    * @return boolean
    */
-  public static function goodsCollectCancel($rec_id) {
+  static function goodsCollectCancel($rec_id) {
     
     $ectb = ectable('collect_goods');
     $collect_goods_id = D()->from($ectb)->where(['rec_id'=>$rec_id])->select('goods_id')->result();
@@ -788,6 +903,53 @@ HERESQL;
      
      return [];
      
+  }
+  
+  /**
+   * 搜索产品库，先搜索产品分类，如果为空则搜索品牌，如果再为空就搜索产品名称
+   * 
+   * @param string  $keyword
+   * @param integer $limit
+   * @return array
+   */
+  static function search($keyword, $limit = 10) {
+    
+    $result_final = [];
+    $keyword = strtolower($keyword);
+    
+    // 先搜索分类名称
+    $cat_ids = D()->from(ectable('category'))->where("`is_show`=1 AND LOWER(`cat_name`) like '%%%s%%'", $keyword)->select("`cat_id`")->fetch_column('cat_id');
+    $all_cat_ids = [];
+    if (!empty($cat_ids)) {
+      foreach ($cat_ids AS $id) {
+        $all_cat_ids = array_merge($all_cat_ids, [$id], self::getChildCategoryIds($id));
+      }
+    }
+    $result_cat = [];
+    if (!empty($all_cat_ids)) {
+      $all_cat_ids = array_unique($all_cat_ids);
+      $result_cat  = D()->from(ectable('goods'))->where("`cat_id` IN(%s)", implode(',', $all_cat_ids))->order_by("`add_time` DESC")->limit($limit)->select()->fetch_array_all();
+    }
+    
+    if (empty($result_cat)) { //搜索分类产品结果为空，则继续搜索品牌
+      $brand_ids = D()->from(ectable('brand'))->where("`is_show`=1 AND LOWER(`brand_name`) like '%%%s%%'", $keyword)->select("`brand_id`")->fetch_column('brand_id');
+      $result_brand = [];
+      if (!empty($brand_ids)) {
+        $result_brand  = D()->from(ectable('goods'))->where("`brand_id` IN(%s)", implode(',', $brand_ids))->order_by("`add_time` DESC")->limit($limit)->select()->fetch_array_all();
+      }
+      
+      if (empty($result_brand)) { //搜索品牌下的产品结果也为空，则继续搜索产品名称
+        $result_final = D()->from(ectable('goods'))->where("`goods_name` like '%%%s%%'", $keyword)->order_by("`add_time` DESC")->limit($limit)->select()->fetch_array_all();
+      }
+      else {
+        $result_final = $result_brand;
+      }
+    }
+    else {
+      $result_final = $result_cat;
+    }
+    
+    return $result_final;
   }
   
 }
