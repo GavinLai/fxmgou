@@ -177,7 +177,7 @@ class Default_Controller extends Controller {
       
       $goods_list = [];
       if ('new_arrival'==$type) { //新品
-        $goods_list = Goods::getGoodsList($type,'',0,20);
+        $goods_list = Goods::getGoodsList($type,'latest',0,20);
       }
       else {
         $extra = [];
