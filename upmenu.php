@@ -59,6 +59,11 @@ $json =<<<HEREDOC
     			"type" : "click",
     			"name" : "关于小蜜",
     			"key"  : "300"
+        },
+        {
+    			"type" : "click",
+    			"name" : "联系小蜜",
+    			"key"  : "301"
         }
       ]
 		}

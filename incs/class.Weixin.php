@@ -323,6 +323,9 @@ class Weixin {
           case '300': //关于小蜜
             $contentText = $this->helper->about();
             break;
+          case '301': //联系小蜜
+            $contentText = $this->helper->contact();
+            break;
         }
         break;
       case 'LOCATION':
@@ -419,7 +422,7 @@ class Weixin {
       return $responseText;
     }
     
-    $postObj->Content = $keyword;
+    $postObj->Content = rtrim($keyword,'！');
     return $this->dealTextMsg($postObj, TRUE);
   }
   
@@ -1263,6 +1266,17 @@ class WeixinHelper {
       return $text;
     }
     $text = "你好，欢迎关注小蜜/:rose\n\n{$ext}你可以将底部菜单切换到回复模式跟小蜜文字或语音对话，希望能给你带来点小惊喜/::$\n\n福小蜜海外购，让你足不出户即可享受来自澳洲、新西兰、加拿大等海外的放心商品{$ext2}。\n\n觉得小蜜还行的话就帮忙向好友推荐一下吧，这是小蜜的公众号：fxmgou，\n谢谢/::*";
+    return $text;
+  }
+  
+  /**
+   * "联系小蜜" 的返回文字
+   * 
+   * @return string
+   */
+  public function contact() {
+    $text = "联系微信号：\n\n购物相关：cloverzhaoyue\n业务合作：GavinLan\n公众号　：fxmgou";
+    $text.= "\n\n也可以在当前公众号下切换到回复模式直接咨询。";
     return $text;
   }
   
