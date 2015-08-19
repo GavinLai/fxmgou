@@ -108,7 +108,16 @@
   </dd>
   <dt>价格区间</dt>
   <dd>
-    从 <input type="text" name="filter_price_from" id="filter_price_from" value="<?=$the_price_from?>" onchange="filter_change(this)"/> 到 <input type="text" name="filter_price_to" id="filter_price_to" value="<?=$the_price_to?>" onchange="filter_change(this)"/>
+    从 <select name="filter_price_from" id="filter_price_from" onchange="filter_change(this)" style="width:40%">
+<?php for($i=0; $i<=1000; $i+=50):?>
+      <option value="<?=$i?>" <?php if($the_price_from===$i): echo 'selected="selected"'; endif; ?>><?=$i?></option>
+<?php endfor;?>
+			<option value="1001">1000以上</option>
+    </select> 到 <select name="filter_price_to" id="filter_price_to" onchange="filter_change(this)" style="width:40%">
+<?php for($i=0; $i<=1000; $i+=50):?>
+      <option value="<?=$i?>" <?php if($the_price_to===$i): echo 'selected="selected"'; endif; ?>><?=$i?></option>
+<?php endfor;?>
+    </select>
   </dd>
 </dl>
 <div id="pop-btm">
@@ -170,8 +179,18 @@ function show_dmore_cover(target, is_hide) {
 }
 var current_order = '<?=$order?>';
 var form_changed = false;
-function filter_change() {
+function filter_change(ele) {
 	form_changed = true;
+	var eid = $(ele).attr('id');
+	eid = typeof(eid)=='undefined'?'':eid;
+	if (eid==='filter_price_from') {
+		if ($(ele).val()>1000) {
+			$('#filter_price_to').val('0');
+		}
+	}
+	else if (eid==='filter_price_to') {
+		
+	}
 }
 function finish_filter(ele) {
 	var me = finish_filter;
