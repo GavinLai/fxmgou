@@ -158,7 +158,7 @@
 				}
 			}
 		}
-		else if(this.y > -1) { //avoiding too many calling
+		else { //avoiding too many calling
 			F.pagebg.hide();
 		}
 		F.event.execEvent('scrolling',this);

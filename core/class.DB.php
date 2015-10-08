@@ -277,6 +277,10 @@ class DB {
       $append = FALSE;
       $sql = array_shift($args);
     }
+
+    if (isset($args[0]) && is_array($args[0])) { // 'All arguments in one array', but the array is the second income argument(the first is the sql statement)
+      $args = $args[0];
+    }
     
     $server_mode = $this->check_server_mode($sql);
     $this->connect($server_mode);
