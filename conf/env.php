@@ -32,7 +32,8 @@ return [
   //站点信息
   'site' => [
   	'mobile' => 'http://t.fxmgou.com',
-  	'shop' => 'http://fp.xurl.cn',
+  	//'shop' => 'http://fp.xurl.cn',
+  	'shop' => 'http://pic.fxmgou.com',
   ],
   //debug白名单uid
   //'debug_white_list' => ['10001'],
